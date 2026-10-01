@@ -12,6 +12,10 @@ dependencies {
     implementation(libs.tomlkt)
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 // Copied from KotlinDslExtensions.kt
 fun DependencyHandler.plugin(dependency: Provider<PluginDependency>): Dependency =
     dependency.get().run { create("$pluginId:$pluginId.gradle.plugin:$version") }

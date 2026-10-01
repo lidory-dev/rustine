@@ -23,6 +23,10 @@ kotlin {
     if (propertyIsTrue("gobley.projects.jvmTests")) {
         jvmToolchain(17)
         jvm()
+        // Gradle 9 no longer provides the JUnit Platform launcher implicitly.
+        sourceSets.getByName("jvmTest").dependencies {
+            runtimeOnly(libs.junit.platform.launcher)
+        }
     }
     if (propertyIsTrue("gobley.projects.nativeTests")) {
         hostNativeTarget {

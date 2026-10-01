@@ -15,6 +15,8 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 abstract class GobleyGradleBuildExtension(private val project: Project) {
     val uniffiBindgenManifest = CargoManifest.fromFile(
@@ -77,6 +79,16 @@ private fun Project.configureProjectProperties(
 private fun Project.configureKotlinProperties() {
     extensions.configure(KotlinJvmProjectExtension::class.java) {
         jvmToolchain(17)
+    }
+    // Consumer build scripts are compiled by Gradle's embedded Kotlin compiler, which reads Kotlin metadata at most one
+    // version newer than itself. Pin the language/API version to 2.2, the value `kotlin-dsl` uses on Gradle 9, so every
+    // published module (including gobley-gradle, which does not use `kotlin-dsl`) emits metadata 2.2.0 whatever the
+    // Kotlin Gradle plugin version is. Configured on the tasks because `kotlin-dsl` sets these at the task level too.
+    tasks.withType<KotlinCompile>().configureEach {
+        compilerOptions {
+            apiVersion.set(KotlinVersion.KOTLIN_2_2)
+            languageVersion.set(KotlinVersion.KOTLIN_2_2)
+        }
     }
 }
 

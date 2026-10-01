@@ -5,3 +5,7 @@ plugins {
 dependencies {
     compileOnly(gradleKotlinDsl())
 }
+
+kotlin {
+    jvmToolchain(17)
+}

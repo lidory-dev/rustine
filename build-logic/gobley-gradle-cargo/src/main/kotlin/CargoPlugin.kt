@@ -6,7 +6,6 @@
 
 package gobley.gradle.cargo
 
-import com.android.build.gradle.internal.tasks.factory.dependsOn
 import gobley.gradle.AppleSdk
 import gobley.gradle.GobleyHost
 import gobley.gradle.InternalGobleyGradleApi
@@ -622,7 +621,7 @@ class CargoPlugin : Plugin<Project> {
         }
 
         kotlinTarget.compilations.getByName("main") {
-            compileTaskProvider.dependsOn(buildTask)
+            compileTaskProvider.configure { dependsOn(buildTask) }
         }
 
         tasks.named("check") {

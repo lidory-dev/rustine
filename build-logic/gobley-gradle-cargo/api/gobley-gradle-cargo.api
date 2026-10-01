@@ -36,6 +36,7 @@ public final class gobley/gradle/cargo/CargoTargetKind : java/lang/Enum {
 	public static final field SystemStaticLibrary Lgobley/gradle/cargo/CargoTargetKind;
 	public static final field Test Lgobley/gradle/cargo/CargoTargetKind;
 	public final fun getCrateType ()Lgobley/gradle/rust/CrateType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun isNormalLibrary ()Z
 	public fun toString ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lgobley/gradle/cargo/CargoTargetKind;

@@ -33,6 +33,7 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.kotest.assertions.core)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 @Suppress("UnstableApiUsage")
