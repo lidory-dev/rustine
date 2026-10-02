@@ -91,7 +91,13 @@ class CargoPlugin : Plugin<Project> {
         cargoExtension.jvmPublishingVariant.convention(Variant.Release)
         cargoExtension.nativeVariant.convention(Variant.Debug)
         cargoExtension.wasmVariant.convention(Variant.Debug)
-        cargoExtension.androidVariant.convention(Variant.Debug)
+        // Android modules without build types have a single variant, which is used by both debug
+        // and release builds of the apps depending on them. Use the release build when release
+        // builds or publishing are requested.
+        @OptIn(InternalGobleyGradleApi::class)
+        cargoExtension.androidVariant.convention(
+            if (GradleUtils.requestsReleaseBuild(target.gradle)) Variant.Release else Variant.Debug
+        )
         readVariantsFromXcode()
         cargoExtension.builds.native {
             nativeVariant.convention(

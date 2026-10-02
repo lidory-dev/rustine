@@ -402,9 +402,13 @@ class UniFfiPlugin : Plugin<Project> {
     @OptIn(InternalGobleyGradleApi::class)
     private fun availableAndroidVariants(build: CargoBuild<*>): List<Variant> {
         return when {
-            // Android modules without build types embed the variant specified by the user.
-            ::androidDelegate.isInitialized && !androidDelegate.hasBuildTypes ->
-                listOf(((build as? HasAndroidVariant) ?: cargoExtension).androidVariant.get())
+            // Android modules without build types embed `androidVariant`. Prefer it so that
+            // generating bindings does not require building another variant.
+            ::androidDelegate.isInitialized && !androidDelegate.hasBuildTypes -> {
+                val androidVariant =
+                    ((build as? HasAndroidVariant) ?: cargoExtension).androidVariant.get()
+                (listOf(androidVariant) + Variant.entries).distinct()
+            }
 
             else -> Variant.entries
         }

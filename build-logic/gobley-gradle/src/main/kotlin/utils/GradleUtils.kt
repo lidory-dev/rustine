@@ -67,6 +67,18 @@ object GradleUtils {
         }
     }
 
+    /**
+     * Returns `true` when a task requested in the command line looks like a release build or a
+     * publishing task, i.e., its name contains `release` or starts with `publish`. For example,
+     * `assembleRelease`, `:app:bundleRelease`, and `publishToMavenLocal`.
+     */
+    fun requestsReleaseBuild(gradle: Gradle): Boolean {
+        return gradle.startParameter.taskNames.any { taskPath ->
+            val taskName = taskPath.substringAfterLast(':')
+            taskName.contains("release", ignoreCase = true) || taskName.startsWith("publish")
+        }
+    }
+
     fun runTaskDuringSync(project: Project, vararg paths: Any) {
         if (!invokedByIdeSync()) return
         try {

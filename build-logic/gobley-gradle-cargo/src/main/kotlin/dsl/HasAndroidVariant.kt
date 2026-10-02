@@ -13,8 +13,11 @@ interface HasAndroidVariant {
     /**
      * The variant to embed into Android modules without build types, which are Kotlin
      * Multiplatform libraries using the `com.android.kotlin.multiplatform.library` plugin.
-     * Defaults to [Variant.Debug]. Setting this will override the `androidVariant` properties in
-     * outer blocks. For example, in the following DSL:
+     * Defaults to [Variant.Release] when a task requested in the command line looks like a release
+     * build or a publishing task (its name contains `release` or starts with `publish`, e.g.,
+     * `assembleRelease`, `bundleRelease`, or `publishToMavenLocal`), and to [Variant.Debug]
+     * otherwise. Setting this will override the `androidVariant` properties in outer blocks. For
+     * example, in the following DSL:
      * ```kotlin
      * cargo {
      *   androidVariant = Variant.Release
@@ -29,16 +32,16 @@ interface HasAndroidVariant {
      * where the build type of each Android variant decides the variant: [Variant.Debug] when the
      * name of the build type contains `debug`, and [Variant.Release] otherwise.
      *
-     * In modules without build types, the UniFFI plugin also uses this property to determine the
-     * variant of the Android build used to generate bindings.
+     * In modules without build types, the UniFFI plugin also uses this variant of the Android build
+     * to generate bindings unless another variant is specified.
      *
-     * **FOR LIBRARY DEVELOPERS**: Unlike [HasJvmVariant], [HasAndroidVariant] does not distinguish
-     * the publishing variant and the Android variant. It is very likely that you are using
-     * [Variant.Debug] for library publishing. Use Gradle properties or environment variables to
-     * control this property, and set this to [Variant.Release] for publishing.
+     * Since the default value depends on the requested task names, tasks requested in other ways
+     * (e.g., `./gradlew build`, `./gradlew assemble`, or abbreviated task names) use
+     * [Variant.Debug]. Use Gradle properties or environment variables to control this property in
+     * such cases.
      * ```kotlin
      * cargo {
-     *   androidVariant = Variant(findProperty("my.project.android.variant")?.toString() ?: "debug")
+     *   findProperty("my.project.android.variant")?.let { androidVariant = Variant(it.toString()) }
      * }
      * ```
      */
