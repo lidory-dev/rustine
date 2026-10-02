@@ -23,7 +23,9 @@ kotlin.targets.withType(KotlinNativeTarget::class) {
     val kotlinTarget = this
     compilations.getByName("main") {
         cinterops.register("rustBindings") {
-            includeDirs(layout.buildDirectory.dir("generated"))
+            // Must not contain the output directories of other tasks, e.g., the Java compile tasks
+            // of the JVM target, which write to `build/generated/sources`.
+            includeDirs(layout.buildDirectory.dir("generated/cbindgen"))
             tasks.named(interopProcessingTaskName) {
                 cargo.builds.native.configureEach {
                     if (kotlinTargets.contains(kotlinTarget)) {

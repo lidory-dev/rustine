@@ -17,7 +17,7 @@ fn main() {
         .with_cpp_compat(false)
         .generate()
         .unwrap()
-        .write_to_file("build/generated/bindings.h");
+        .write_to_file("build/generated/cbindgen/bindings.h");
 
     println!("cargo:rustc-env=OPT_LEVEL={}", env::var("OPT_LEVEL").unwrap());
 
