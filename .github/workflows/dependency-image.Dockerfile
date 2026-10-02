@@ -62,11 +62,10 @@ ENV ANDROID_HOME=/android-sdk
 RUN mkdir -p $ANDROID_HOME
 RUN sdkmanager --install \
     "cmake;3.22.1" \
-    "build-tools;34.0.0" \
-    "build-tools;35.0.1" \
+    "build-tools;36.0.0" \
     "platform-tools;35.0.2" \
     "platforms;android-35" \
-    "ndk;27.0.12077973"
+    "ndk;28.2.13676358"
 # RUN mkdir -p $ANDROID_HOME/licenses && \
 #     touch $ANDROID_HOME/licenses/android-sdk-license && \
 #     echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> $ANDROID_HOME/licenses/android-sdk-license && \
