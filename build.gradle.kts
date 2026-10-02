@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -34,4 +35,6 @@ yarn.apply {
         }.toString()
     }
     lockFileName = "yarn${postfix}.lock"
+    // Kotlin/Wasm uses a separate lock file in kotlin-js-store/wasm. Use the same name for it.
+    WasmYarnRootExtension[project].lockFileName = lockFileName
 }
