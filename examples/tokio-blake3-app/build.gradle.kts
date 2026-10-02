@@ -1,6 +1,7 @@
 import gobley.gradle.GobleyHost
 import gobley.gradle.cargo.dsl.android
 import gobley.gradle.cargo.dsl.appleMobile
+import gobley.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,10 +9,17 @@ plugins {
     id("dev.gobley.cargo")
     id("dev.gobley.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     id(libs.plugins.kotlin.serialization.get().pluginId)
+}
+
+cargo {
+    builds.android {
+        // The Android Kotlin Multiplatform library plugin has no ABI filters.
+        embedRustLibrary = rustTarget == RustAndroidTarget.Arm64
+    }
 }
 
 if (GobleyHost.Platform.Windows.isCurrent) {
@@ -19,11 +27,12 @@ if (GobleyHost.Platform.Windows.isCurrent) {
         cargo {
             // A workaround for #207
             builds.android {
+                // Like the Gobley plugins, use the latest NDK installed in the SDK directory. The
+                // NDK of Android Kotlin Multiplatform libraries can only be configured using the
+                // `com.android.settings` plugin.
                 val envVariables = rustTarget.ndkEnvVariables(
-                    sdkRoot = android.sdkDirectory,
-                    apiLevel = android.defaultConfig.minSdk ?: 21,
-                    ndkVersion = android.ndkVersion,
-                    ndkRoot = android.ndkPath?.let(::File),
+                    sdkRoot = androidComponents.sdkComponents.sdkDirectory.get().asFile,
+                    apiLevel = kotlin.android.minSdk ?: 21,
                 ).toMutableMap()
                 val envVariableNamesToModify = arrayOf(
                     "ANDROID_HOME",
@@ -76,7 +85,18 @@ uniffi {
 }
 
 kotlin {
-    androidTarget {
+    // The Android application is in the androidApp subproject.
+    android {
+        namespace = "dev.gobley.uniffi.examples.tokioblake3app.kotlin"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = 24
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
@@ -103,40 +123,6 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(libs.kotlinx.serialization.json)
-        }
-
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-        }
-    }
-}
-
-android {
-    namespace = "dev.gobley.uniffi.examples.tokioblake3app"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.tokioblake3app"
-        minSdk = 24
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1"
-        ndk.abiFilters.add("arm64-v8a")
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

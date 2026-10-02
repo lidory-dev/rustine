@@ -1,18 +1,26 @@
 import gobley.gradle.GobleyHost
+import gobley.gradle.cargo.dsl.android
 import gobley.gradle.cargo.dsl.appleMobile
 import gobley.gradle.rust.dsl.rustVersion
 import gobley.gradle.rust.dsl.useRustUpLinker
+import gobley.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
+    // The Android Gradle Plugin is applied before the Gobley plugins on purpose to test whether
+    // Gobley works regardless of the plugin order.
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     id("dev.gobley.cargo")
     id("dev.gobley.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
-    alias(libs.plugins.android.library)
 }
 
 cargo {
+    builds.android {
+        // The Android Kotlin Multiplatform library plugin has no ABI filters.
+        embedRustLibrary = rustTarget == RustAndroidTarget.Arm64
+    }
     builds.appleMobile {
         variants {
             if (rustTarget.tier(project.rustVersion.get()) >= 3) {
@@ -35,7 +43,20 @@ uniffi {
 }
 
 kotlin {
-    androidTarget {
+    android {
+        namespace = "dev.gobley.uniffi.examples.arithmeticpm"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = 21
+
+        // Run commonTest as Android host tests.
+        withHostTest {}
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
@@ -79,27 +100,6 @@ kotlin {
                 implementation(libs.kotest.assertions.core)
             }
         }
-    }
-}
-
-android {
-    namespace = "dev.gobley.uniffi.examples.arithmeticpm"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        consumerProguardFiles("proguard-rules.pro")
-        ndk.abiFilters.add("arm64-v8a")
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

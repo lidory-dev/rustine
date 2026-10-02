@@ -1,6 +1,7 @@
 import gobley.gradle.GobleyHost
 import gobley.gradle.cargo.dsl.android
 import gobley.gradle.cargo.dsl.appleMobile
+import gobley.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,10 +9,17 @@ plugins {
     id("dev.gobley.cargo")
     id("dev.gobley.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     id(libs.plugins.kotlin.serialization.get().pluginId)
+}
+
+cargo {
+    builds.android {
+        // The Android Kotlin Multiplatform library plugin has no ABI filters.
+        embedRustLibrary = rustTarget == RustAndroidTarget.Arm64
+    }
 }
 
 uniffi {
@@ -50,7 +58,18 @@ if (GobleyHost.Platform.MacOS.isCurrent) {
 }
 
 kotlin {
-    androidTarget {
+    // The Android application is in the androidApp subproject.
+    android {
+        namespace = "dev.gobley.uniffi.examples.tokioboringapp.kotlin"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = 24
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
@@ -76,40 +95,6 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-        }
-
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-        }
-    }
-}
-
-android {
-    namespace = "dev.gobley.uniffi.examples.tokioboringapp"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.tokioboringapp"
-        minSdk = 24
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1"
-        ndk.abiFilters.add("arm64-v8a")
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

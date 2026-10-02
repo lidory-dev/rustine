@@ -7,13 +7,27 @@ import org.jetbrains.kotlin.konan.target.Architecture
 plugins {
     kotlin("multiplatform")
     id("dev.gobley.rust")
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
-    androidTarget {
+    // The Android application is in the androidApp subproject.
+    android {
+        namespace = "dev.gobley.uniffi.examples.app.kotlin"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = 24
+
+        // Run commonTest as Android host tests.
+        withHostTest {}
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
@@ -124,25 +138,36 @@ kotlin {
                 GobleyHost.Platform.MacOS -> "darwin-x86_64"
                 GobleyHost.Platform.Linux -> "linux-x86_64"
             }
-            val toolchainDir = android.ndkDirectory
-                .resolve("toolchains/llvm/prebuilt")
-                .resolve(ndkHostTag)
-            val clangResourceDir = toolchainDir
-                .resolve("lib/clang")
-                .listFiles()
-                ?.firstOrNull { file -> !file.name.startsWith(".") }
-                ?: error("Couldn't find Clang resource directory")
-            val clangRuntimeDir = clangResourceDir
-                .resolve("lib/linux")
-                .resolve(
-                    when (it.konanTarget.architecture) {
-                        Architecture.ARM64 -> "aarch64"
-                        Architecture.ARM32 -> "arm"
-                        Architecture.X64 -> "x86_64"
-                        Architecture.X86 -> "i386"
-                    }
+            val architecture = it.konanTarget.architecture
+            // Resolve the NDK directory lazily, only when a link task is scheduled. This is the
+            // default NDK of AGP, while Gobley builds the Rust libraries of Android Kotlin
+            // Multiplatform libraries using the newest installed NDK.
+            val clangRuntimeDir = androidComponents.sdkComponents.ndkDirectory.map { ndkDirectory ->
+                val toolchainDir = ndkDirectory.asFile
+                    .resolve("toolchains/llvm/prebuilt")
+                    .resolve(ndkHostTag)
+                val clangResourceDir = toolchainDir
+                    .resolve("lib/clang")
+                    .listFiles()
+                    ?.firstOrNull { file -> !file.name.startsWith(".") }
+                    ?: error("Couldn't find Clang resource directory")
+                clangResourceDir
+                    .resolve("lib/linux")
+                    .resolve(
+                        when (architecture) {
+                            Architecture.ARM64 -> "aarch64"
+                            Architecture.ARM32 -> "arm"
+                            Architecture.X64 -> "x86_64"
+                            Architecture.X86 -> "i386"
+                        }
+                    )
+            }
+            linkTaskProvider.configure {
+                // Same as linkerOpts("-L..."), which doesn't accept providers.
+                toolOptions.freeCompilerArgs.addAll(
+                    clangRuntimeDir.map { listOf("-linker-option", "-L${it.absolutePath}") }
                 )
-            linkerOpts("-L${clangRuntimeDir.absolutePath}")
+            }
         }
     }
 
@@ -228,7 +253,6 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
-            implementation(libs.androidx.activity.compose)
         }
 
         // val gtkMain by creating
@@ -250,37 +274,6 @@ kotlin {
 
 composeCompiler {
     targetKotlinPlatforms = setOf(KotlinPlatformType.androidJvm)
-}
-
-android {
-    namespace = "dev.gobley.uniffi.examples.app"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.app"
-        minSdk = 24
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1"
-        ndk.abiFilters.add("arm64-v8a")
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
-    }
 }
 
 java {
