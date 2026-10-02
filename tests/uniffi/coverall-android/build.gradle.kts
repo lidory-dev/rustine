@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("android")
     id("dev.gobley.cargo")
     id("dev.gobley.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
@@ -21,25 +20,19 @@ kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
     }
-    sourceSets {
-        test {
-            dependencies {
-                implementation(libs.junit)
-                implementation(libs.androidx.test.core)
-                implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        androidTest {
-            dependencies {
-                implementation(libs.junit)
-                implementation(libs.androidx.test.core)
-                implementation(libs.androidx.test.runner)
-                implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-    }
+}
+
+dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotest.assertions.core)
+
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotest.assertions.core)
 }
 
 android {

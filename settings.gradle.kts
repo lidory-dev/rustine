@@ -31,6 +31,8 @@ fun ExtraPropertiesExtension.propertyIsTrue(propertyName: String, default: Boole
 }
 
 if (ext.propertyIsTrue("gobley.projects.gradleTests")) {
+    include(":tests:gradle:android-application")
+    include(":tests:gradle:android-application-plain-dep")
     include(":tests:gradle:android-linking")
     include(":tests:gradle:cargo-only")
     include(":tests:gradle:js-only")

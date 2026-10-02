@@ -5,6 +5,7 @@ members = [
 
     "tests/build-common",
 
+    "tests/gradle/android-application",
     "tests/gradle/android-linking",
     "tests/gradle/cargo-only",
     "tests/gradle/js-only",

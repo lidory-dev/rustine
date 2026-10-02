@@ -1,11 +1,9 @@
-import com.android.build.gradle.internal.tasks.factory.dependsOn
 import gobley.gradle.GobleyHost
 import gobley.gradle.cargo.dsl.android
 import gobley.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("android")
     id("dev.gobley.cargo")
     alias(libs.plugins.android.library)
 }
@@ -21,28 +19,35 @@ val anotherCustomCppLibraryCmakeOutputDirectories = androidTargets.associateWith
 val anotherCustomCppLibraryLocations = anotherCustomCppLibraryCmakeOutputDirectories.mapValues {
     it.value.file("libanother-android-linking-cpp.so")
 }
-val androidSdkCMakeDirectory = android.sdkDirectory
-    .resolve("cmake")
-    .listFiles()
-    ?.firstOrNull { file -> file.name.startsWith("3.") }
-    ?.resolve("bin") ?: error("CMake is not installed in Android SDK")
-val androidSdkCMake =
-    androidSdkCMakeDirectory.resolve(GobleyHost.Platform.current.convertExeName("cmake"))
-val androidSdkNinja =
-    androidSdkCMakeDirectory.resolve(GobleyHost.Platform.current.convertExeName("ninja"))
+// The SDK and NDK directories are resolved when the tasks below are configured, so the build can
+// be configured even when CMake or the NDK is not installed.
+val androidSdkCMakeDirectory = androidComponents.sdkComponents.sdkDirectory.map { sdkDirectory ->
+    sdkDirectory.asFile
+        .resolve("cmake")
+        .listFiles()
+        ?.firstOrNull { file -> file.name.startsWith("3.") }
+        ?.resolve("bin") ?: error("CMake is not installed in Android SDK")
+}
+val androidSdkCMake = androidSdkCMakeDirectory.map {
+    it.resolve(GobleyHost.Platform.current.convertExeName("cmake"))
+}
+val androidSdkNinja = androidSdkCMakeDirectory.map {
+    it.resolve(GobleyHost.Platform.current.convertExeName("ninja"))
+}
+val androidNdkDirectory = androidComponents.sdkComponents.ndkDirectory.map { it.asFile }
 val anotherCustomCppLibraryBuildTasks = androidTargets.associateWith {
     val cmakeOutputDirectory = anotherCustomCppLibraryCmakeOutputDirectories[it]!!
     val libraryLocation = anotherCustomCppLibraryLocations[it]!!
     val configureTask = tasks.register<Exec>("configureCustomCppLibraryCMake${it.friendlyName}") {
         commandLine(
-            androidSdkCMake,
+            androidSdkCMake.get(),
             "-H$anotherCustomCppLibraryRoot",
             "-B$cmakeOutputDirectory",
             "-DANDROID_ABI=${it.androidAbiName}",
             "-DANDROID_PLATFORM=29",
-            "-DANDROID_NDK=${android.ndkDirectory}",
-            "-DCMAKE_TOOLCHAIN_FILE=${android.ndkDirectory}/build/cmake/android.toolchain.cmake",
-            "-DCMAKE_MAKE_PROGRAM=$androidSdkNinja",
+            "-DANDROID_NDK=${androidNdkDirectory.get()}",
+            "-DCMAKE_TOOLCHAIN_FILE=${androidNdkDirectory.get()}/build/cmake/android.toolchain.cmake",
+            "-DCMAKE_MAKE_PROGRAM=${androidSdkNinja.get()}",
             "-G",
             "Ninja",
         )
@@ -53,7 +58,7 @@ val anotherCustomCppLibraryBuildTasks = androidTargets.associateWith {
 
     tasks.register<Exec>("buildCustomCppLibrary${it.friendlyName}") {
         commandLine(
-            androidSdkCMake,
+            androidSdkCMake.get(),
             "--build",
             "$cmakeOutputDirectory"
         )
@@ -70,7 +75,9 @@ cargo {
         val libraryLocation = anotherCustomCppLibraryLocations[rustTarget]!!
         dynamicLibraries.addAll("c++_shared", libraryLocation.asFile.absolutePath)
         variants {
-            findDynamicLibrariesTaskProvider.dependsOn(anotherCustomCppLibraryBuildTask)
+            findDynamicLibrariesTaskProvider.configure {
+                dependsOn(anotherCustomCppLibraryBuildTask)
+            }
         }
     }
 }
@@ -79,15 +86,12 @@ kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
     }
-    sourceSets {
-        androidTest {
-            dependencies {
-                implementation(libs.junit)
-                implementation(libs.androidx.test.core)
-                implementation(libs.androidx.test.runner)
-            }
-        }
-    }
+}
+
+dependencies {
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }
 
 android {
