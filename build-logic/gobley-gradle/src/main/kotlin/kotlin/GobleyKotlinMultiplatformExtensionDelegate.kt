@@ -10,7 +10,6 @@ import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.PluginIds
 import gobley.gradle.Variant
 import org.gradle.api.DomainObjectCollection
-import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetType
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
@@ -47,8 +45,10 @@ class GobleyKotlinMultiplatformExtensionDelegate(
     override val jvmTarget: KotlinTarget?
         get() = targets.firstOrNull { it is KotlinJvmTarget }
 
+    // The target of the `com.android.kotlin.multiplatform.library` plugin is not a
+    // `KotlinAndroidTarget`.
     override val androidTarget: KotlinTarget?
-        get() = targets.firstOrNull { it is KotlinAndroidTarget }
+        get() = targets.firstOrNull { it.platformType == KotlinPlatformType.androidJvm }
 }
 
 @OptIn(InternalGobleyGradleApi::class)
@@ -56,37 +56,42 @@ private fun GobleyKotlinSourceSetCollection(
     targets: DomainObjectCollection<KotlinTarget>,
     sourceSets: NamedDomainObjectContainer<KotlinSourceSet>,
 ): GobleyKotlinSourceSetCollection {
-    return object :
-        NamedDomainObjectCollection<KotlinSourceSet> by sourceSets,
-        GobleyKotlinSourceSetCollection {
+    return object : GobleyKotlinSourceSetCollection {
         override val commonMain: KotlinSourceSet
             get() = sourceSets.getByName("commonMain")
 
-        private fun androidTarget(): KotlinAndroidTarget {
-            return targets.filterIsInstance<KotlinAndroidTarget>().firstOrNull()
-                ?: error("Android target not present")
+        private fun androidTarget(): KotlinTarget? {
+            return targets.firstOrNull { it.platformType == KotlinPlatformType.androidJvm }
         }
 
-        override fun androidMain(variant: Variant?): KotlinSourceSet {
-            val androidTarget = androidTarget()
-            return sourceSets.maybeCreate(
-                when (variant) {
-                    Variant.Debug -> "${androidTarget.name}Debug"
-                    Variant.Release -> "${androidTarget.name}Release"
-                    null -> "androidMain"
-                }
-            )
+        // The compilations of the `com.android.kotlin.multiplatform.library` plugin are `main`,
+        // `hostTest`, and `deviceTest`, whose default source sets are `androidMain`,
+        // `androidHostTest`, and `androidDeviceTest`. `hostTest` exists only when host tests are
+        // enabled using `withHostTest {}`.
+        override val androidMain: KotlinSourceSet?
+            get() = androidTarget()?.compilations?.findByName("main")?.defaultSourceSet
+
+        override fun androidMainConfigurations(variant: Variant?): GobleyConfigurationNames? {
+            return when (variant) {
+                // There is a single variant without build type source sets.
+                Variant.Debug, Variant.Release -> null
+                null -> androidMain?.configurationNames
+            }
         }
 
-        override fun androidUnitTest(variant: Variant?): KotlinSourceSet {
-            val androidTarget = androidTarget()
-            return sourceSets.maybeCreate(
-                when (variant) {
-                    Variant.Debug -> "${androidTarget.name}UnitTestDebug"
-                    Variant.Release -> "${androidTarget.name}UnitTestRelease"
-                    null -> "${androidTarget.name}UnitTest"
-                }
-            )
+        override fun androidUnitTestConfigurations(variant: Variant?): List<GobleyConfigurationNames> {
+            return when (variant) {
+                // Host tests use the debug Rust library for the host.
+                Variant.Debug, null -> listOfNotNull(
+                    androidTarget()
+                        ?.compilations
+                        ?.findByName("hostTest")
+                        ?.defaultSourceSet
+                        ?.configurationNames
+                )
+
+                Variant.Release -> emptyList()
+            }
         }
 
         private fun getSourceSetByTarget(

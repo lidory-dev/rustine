@@ -23,7 +23,15 @@ interface HasEmbeddableRustLibrary {
      *
      * When the host does not support building for this target, this property is ignored and considered `false`.
      * When NDK ABI filters in the `android {}` block are configured to ignore this target, this property
-     * is ignored as well.
+     * is ignored as well. As the `com.android.kotlin.multiplatform.library` plugin does not support ABI filters,
+     * use this property to exclude Android ABIs in such modules:
+     * ```kotlin
+     * cargo {
+     *   builds.android {
+     *     embedRustLibrary = rustTarget == RustAndroidTarget.Arm64
+     *   }
+     * }
+     * ```
      *
      * [embedRustLibrary] in [CargoBuild] is set to the convention value of [embedRustLibrary] in
      * [CargoBuildVariant]. The value in [CargoBuildVariant] is used.

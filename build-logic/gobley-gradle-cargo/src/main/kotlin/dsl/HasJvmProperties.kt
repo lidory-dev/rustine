@@ -23,6 +23,11 @@ interface HasJvmProperties : HasJvmVariant, HasDynamicLibraries {
      * the build host's JVM, so it is required to include the Desktop Rust library in your Android `.jar` library. This
      * property defaults to `true` when this build targets your machine and `false` otherwise. For builds for Android
      * local unit tests, [jvmVariant] will be ignored and the plugin will select the variant automatically.
+     *
+     * In `com.android.application` and `com.android.library` modules, the library is added to the local unit tests of
+     * each build type: the debug library when the name of the build type contains `debug`, and the release library
+     * otherwise. In `com.android.kotlin.multiplatform.library` modules, the debug library is added to the host tests,
+     * which are enabled using `kotlin { android { withHostTest {} } }`.
      */
     val androidUnitTest: Property<Boolean>
 }

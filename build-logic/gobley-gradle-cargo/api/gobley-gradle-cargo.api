@@ -47,7 +47,7 @@ public final class gobley/gradle/cargo/CargoTargetKind$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public abstract class gobley/gradle/cargo/dsl/CargoAndroidBuild : gobley/gradle/cargo/dsl/DefaultCargoBuild, gobley/gradle/cargo/dsl/CargoMobileBuild, gobley/gradle/cargo/dsl/CargoNativeBuild, gobley/gradle/cargo/dsl/HasDynamicLibraries {
+public abstract class gobley/gradle/cargo/dsl/CargoAndroidBuild : gobley/gradle/cargo/dsl/DefaultCargoBuild, gobley/gradle/cargo/dsl/CargoMobileBuild, gobley/gradle/cargo/dsl/CargoNativeBuild, gobley/gradle/cargo/dsl/HasAndroidVariant, gobley/gradle/cargo/dsl/HasDynamicLibraries {
 	public fun <init> (Lorg/gradle/api/Project;Lgobley/gradle/rust/targets/RustAndroidTarget;Lgobley/gradle/cargo/dsl/CargoExtension;)V
 	public synthetic fun getRustTarget ()Lgobley/gradle/rust/targets/RustMobileTarget;
 	public synthetic fun getRustTarget ()Lgobley/gradle/rust/targets/RustNativeTarget;
@@ -251,7 +251,7 @@ public abstract interface class gobley/gradle/cargo/dsl/CargoDesktopBuildVariant
 	public abstract fun getBuild ()Lgobley/gradle/cargo/dsl/CargoDesktopBuild;
 }
 
-public abstract class gobley/gradle/cargo/dsl/CargoExtension : gobley/gradle/cargo/dsl/HasFeatures, gobley/gradle/cargo/dsl/HasJvmVariant, gobley/gradle/cargo/dsl/HasNativeVariant, gobley/gradle/cargo/dsl/HasVariants, gobley/gradle/cargo/dsl/HasWasmVariant, org/jetbrains/kotlin/gradle/plugin/HasProject {
+public abstract class gobley/gradle/cargo/dsl/CargoExtension : gobley/gradle/cargo/dsl/HasAndroidVariant, gobley/gradle/cargo/dsl/HasFeatures, gobley/gradle/cargo/dsl/HasJvmVariant, gobley/gradle/cargo/dsl/HasNativeVariant, gobley/gradle/cargo/dsl/HasVariants, gobley/gradle/cargo/dsl/HasWasmVariant, org/jetbrains/kotlin/gradle/plugin/HasProject {
 	public fun <init> (Lorg/gradle/api/Project;)V
 	public final fun getBuilds ()Lgobley/gradle/cargo/dsl/CargoBuildCollection;
 	public final fun getCargoPackage ()Lorg/gradle/api/provider/Provider;
@@ -370,6 +370,10 @@ public abstract class gobley/gradle/cargo/dsl/DefaultCargoBuildVariant : gobley/
 	public final fun getProject ()Lorg/gradle/api/Project;
 	public fun getRustTarget ()Lgobley/gradle/rust/targets/RustTarget;
 	public final fun getVariant ()Lgobley/gradle/Variant;
+}
+
+public abstract interface class gobley/gradle/cargo/dsl/HasAndroidVariant {
+	public abstract fun getAndroidVariant ()Lorg/gradle/api/provider/Property;
 }
 
 public abstract interface class gobley/gradle/cargo/dsl/HasDynamicLibraries : gobley/gradle/cargo/dsl/HasEmbeddableRustLibrary {

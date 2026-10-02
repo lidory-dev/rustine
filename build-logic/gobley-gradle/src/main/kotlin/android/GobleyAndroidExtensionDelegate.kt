@@ -6,163 +6,139 @@
 
 package gobley.gradle.android
 
-import com.android.build.api.dsl.ApplicationBuildType
-import com.android.build.api.dsl.BuildType
-import com.android.build.api.dsl.LibraryBuildType
-import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
-import com.android.build.gradle.internal.lint.LintModelWriterTask
-import com.android.build.gradle.internal.tasks.ExtractProguardFiles
-import com.android.build.gradle.internal.tasks.MergeConsumerProguardFilesTask
-import com.android.build.gradle.tasks.MergeSourceSetFolders
 import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.Variant
-import gobley.gradle.getByVariant
-import gobley.gradle.variant
 import org.gradle.api.Project
-import org.gradle.api.file.Directory
+import org.gradle.api.Task
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.withType
 import java.io.File
 
+/**
+ * The Android Gradle Plugin applied to the project.
+ */
+@InternalGobleyGradleApi
+enum class GobleyAndroidPluginKind {
+    /**
+     * `com.android.application`
+     */
+    Application,
+
+    /**
+     * `com.android.library`
+     */
+    Library,
+
+    /**
+     * `com.android.kotlin.multiplatform.library`
+     */
+    KotlinMultiplatformLibrary,
+}
+
+/**
+ * Wraps the Android Gradle Plugin extensions. Instances are created by
+ * [gobley.gradle.utils.PluginUtils.withAndroidPlugin] when the Android Gradle Plugin is applied.
+ *
+ * The properties read the Android DSL, so read them only after the build script is evaluated.
+ */
 @InternalGobleyGradleApi
 interface GobleyAndroidExtensionDelegate {
+    val kind: GobleyAndroidPluginKind
+
+    /**
+     * `false` when the project has a single variant without a build type, which is the case of
+     * `com.android.kotlin.multiplatform.library`.
+     */
+    val hasBuildTypes: Boolean
+
     val androidSdkRoot: File
     val androidMinSdk: Int
     val androidNdkRoot: File?
     val androidNdkVersion: String?
     val abiFilters: Set<String>
 
-    fun addMainSourceDir(
-        variant: Variant? = null,
-        sourceDirectory: Provider<Directory>,
+    /**
+     * Registers [action] to be invoked for every Android variant. As the Android Gradle Plugin
+     * rejects callbacks registered after its `afterEvaluate` callback, this must be called when the
+     * plugin is applied. [action] is invoked during the `afterEvaluate` callback of the Android
+     * Gradle Plugin, which may run before the `afterEvaluate` callbacks of Gobley plugins. Tasks
+     * registered in the `afterEvaluate` callbacks of Gobley plugins must not be retrieved in
+     * [action].
+     */
+    fun onVariants(action: (GobleyAndroidVariant) -> Unit)
+
+    /**
+     * Adds the given ProGuard rule file to every Android variant when [enabled] is `true`.
+     * Application modules use the file to minify the application, while library modules publish
+     * the file as a consumer rule file as well. Must be called when the plugin is applied.
+     */
+    fun addProguardFile(file: Provider<RegularFile>, enabled: Provider<Boolean>)
+}
+
+/**
+ * Wraps a variant of the Android Gradle Plugin Variant API.
+ */
+@InternalGobleyGradleApi
+interface GobleyAndroidVariant {
+    val name: String
+
+    /**
+     * `null` when the Android module has no build types, i.e., when the module is using the
+     * `com.android.kotlin.multiplatform.library` plugin.
+     */
+    val buildType: String?
+
+    /**
+     * The Gobley variant corresponding to [buildType]: [Variant.Debug] when the name of the build
+     * type contains `debug`, and [Variant.Release] otherwise. `null` when [buildType] is `null`.
+     */
+    val variant: Variant?
+        get() = buildType?.let(::androidBuildTypeVariant)
+
+    /**
+     * Adds the output directory of [task] as a generated `jniLibs` directory of this variant. The
+     * directory must be laid out as `<ABI name>/lib*.so`.
+     */
+    fun <T : Task> addGeneratedJniLibsDirectory(
+        task: TaskProvider<T>,
+        wiredWith: (T) -> DirectoryProperty,
     )
 
-    fun addMainJniDir(
-        project: Project,
-        variant: Variant,
-        jniTask: TaskProvider<*>,
-        jniDirectory: Provider<Directory>,
+    /**
+     * Adds the output directory of [task] as a generated Kotlin source directory of this variant.
+     */
+    fun <T : Task> addGeneratedKotlinDirectory(
+        task: TaskProvider<T>,
+        wiredWith: (T) -> DirectoryProperty,
     )
 
-    fun addProguardFiles(
-        project: Project,
-        proguardFile: RegularFile,
-        generationTask: TaskProvider<*>,
-    )
+    /**
+     * Makes the pre-build lifecycle task of this variant depend on [dependencies], so that the
+     * tasks of this variant run after [dependencies]. [dependencies] follow the rules of
+     * [Task.dependsOn].
+     */
+    fun registerPreBuildDependencies(vararg dependencies: Any)
+}
+
+/**
+ * Returns the Gobley variant used by the Android build type named [buildType]: [Variant.Debug] when
+ * the name contains `debug`, and [Variant.Release] otherwise.
+ */
+internal fun androidBuildTypeVariant(buildType: String): Variant {
+    return if (buildType.contains("debug", ignoreCase = true)) Variant.Debug else Variant.Release
 }
 
 @InternalGobleyGradleApi
-fun GobleyAndroidExtensionDelegate(project: Project): GobleyAndroidExtensionDelegate {
-    return GobleyAndroidExtensionDelegateImpl(project)
-}
-
-@OptIn(InternalGobleyGradleApi::class)
-private class GobleyAndroidExtensionDelegateImpl(project: Project) :
-    GobleyAndroidExtensionDelegate {
-    private val androidExtension: BaseExtension = project.extensions.getByType()
-
-    override val androidSdkRoot: File
-        get() = androidExtension.sdkDirectory
-
-    // TODO: Read <uses-sdk> from AndroidManifest.xml
-    // androidExtension.sourceSets.getByName("main").manifest.srcFile
-    override val androidMinSdk: Int
-        get() = androidExtension.defaultConfig.minSdk ?: 21
-    override val androidNdkRoot: File?
-        get() = androidExtension.ndkPath?.let(::File)
-    override val androidNdkVersion: String?
-        get() = androidExtension.ndkVersion.takeIf(String::isNotEmpty)
-    override val abiFilters: Set<String>
-        get() = androidExtension.defaultConfig.ndk.abiFilters
-
-    override fun addMainSourceDir(
-        variant: Variant?,
-        sourceDirectory: Provider<Directory>,
-    ) {
-        androidExtension.sourceSets { sourceSets ->
-            val testSourceSet = if (variant != null) {
-                sourceSets.getByVariant(variant)
-            } else {
-                sourceSets.getByName("main")
-            }
-            testSourceSet.java.srcDir(sourceDirectory)
-        }
-    }
-
-    override fun addMainJniDir(
-        project: Project,
-        variant: Variant,
-        jniTask: TaskProvider<*>,
-        jniDirectory: Provider<Directory>
-    ) {
-        project.tasks.withType<MergeSourceSetFolders> {
-            if (name.lowercase().contains("jni")) {
-                if (variant == this.variant!!) {
-                    inputs.dir(jniDirectory)
-                    dependsOn(jniTask)
-                }
-            }
-        }
-
-        androidExtension.sourceSets { sourceSets ->
-            val mainSourceSet = sourceSets.getByVariant(variant)
-            mainSourceSet.jniLibs.srcDir(jniDirectory)
-        }
-    }
-
-    override fun addProguardFiles(
-        project: Project,
-        proguardFile: RegularFile,
-        generationTask: TaskProvider<*>,
-    ) {
-        androidExtension.buildTypes.configureEach { buildType ->
-            addProguardFilesToBuildType(project, proguardFile, buildType, generationTask)
-        }
-    }
-
-    private fun addProguardFilesToBuildType(
-        project: Project,
-        proguardFile: RegularFile,
-        buildType: BuildType,
-        generationTask: TaskProvider<*>,
-    ) {
-        // For some reason, androidExtension.buildTypes.getByName returns a internal BuildType
-        // that implements both ApplicationBuildType and LibraryBuildType.
-
-        if (buildType is ApplicationBuildType) {
-            buildType.proguardFile(proguardFile)
-        }
-
-        // extractProguardFiles
-        project.tasks.withType<ExtractProguardFiles> {
-            dependsOn(generationTask)
-        }
-        // lintVitalAnalyze<variant>
-        project.tasks.withType<AndroidLintAnalysisTask> {
-            if (name.lowercase().contains(buildType.name.lowercase())) {
-                dependsOn(generationTask)
-            }
-        }
-
-        if (buildType is LibraryBuildType) {
-            buildType.consumerProguardFile(proguardFile)
-        }
-
-        // merge<variant>ConsumerProguardFiles
-        project.tasks.withType<MergeConsumerProguardFilesTask> {
-            if (name.lowercase().contains(buildType.name.lowercase())) {
-                dependsOn(generationTask)
-            }
-        }
-        // generate<variant>LintModel
-        project.tasks.withType<LintModelWriterTask> {
-            if (name.lowercase().contains(buildType.name.lowercase())) {
-                dependsOn(generationTask)
-            }
-        }
+fun GobleyAndroidExtensionDelegate(
+    project: Project,
+    kind: GobleyAndroidPluginKind,
+): GobleyAndroidExtensionDelegate {
+    return when (kind) {
+        GobleyAndroidPluginKind.Application -> GobleyAndroidApplicationExtensionDelegate(project)
+        GobleyAndroidPluginKind.Library -> GobleyAndroidLibraryExtensionDelegate(project)
+        GobleyAndroidPluginKind.KotlinMultiplatformLibrary ->
+            GobleyAndroidKotlinMultiplatformLibraryExtensionDelegate(project)
     }
 }

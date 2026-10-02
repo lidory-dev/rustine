@@ -12,6 +12,7 @@ import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.PluginIds
 import gobley.gradle.Variant
 import gobley.gradle.android.GobleyAndroidExtensionDelegate
+import gobley.gradle.android.GobleyAndroidVariant
 import gobley.gradle.cargo.dsl.CargoAndroidBuild
 import gobley.gradle.cargo.dsl.CargoAndroidBuildVariant
 import gobley.gradle.cargo.dsl.CargoExtension
@@ -21,11 +22,13 @@ import gobley.gradle.cargo.dsl.CargoNativeBuild
 import gobley.gradle.cargo.dsl.CargoNativeBuildVariant
 import gobley.gradle.cargo.dsl.CargoWasmBuild
 import gobley.gradle.cargo.dsl.CargoWasmBuildVariant
+import gobley.gradle.cargo.dsl.android
 import gobley.gradle.cargo.dsl.jvm
 import gobley.gradle.cargo.dsl.native
 import gobley.gradle.cargo.dsl.wasm
 import gobley.gradle.cargo.tasks.CargoCleanTask
 import gobley.gradle.cargo.tasks.CargoTask
+import gobley.gradle.cargo.tasks.CopyCargoJniLibsTask
 import gobley.gradle.cargo.tasks.InstallWasmTransformerTask
 import gobley.gradle.cargo.tasks.RustUpTargetAddTask
 import gobley.gradle.cargo.tasks.RustUpTask
@@ -40,7 +43,6 @@ import gobley.gradle.tasks.useGlobalLock
 import gobley.gradle.utils.DependencyUtils
 import gobley.gradle.utils.GradleUtils
 import gobley.gradle.utils.PluginUtils
-import gobley.gradle.variant
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -53,15 +55,14 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.kotlin.dsl.withType
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinWithJavaTarget
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
@@ -90,6 +91,7 @@ class CargoPlugin : Plugin<Project> {
         cargoExtension.jvmPublishingVariant.convention(Variant.Release)
         cargoExtension.nativeVariant.convention(Variant.Debug)
         cargoExtension.wasmVariant.convention(Variant.Debug)
+        cargoExtension.androidVariant.convention(Variant.Debug)
         readVariantsFromXcode()
         cargoExtension.builds.native {
             nativeVariant.convention(
@@ -103,6 +105,9 @@ class CargoPlugin : Plugin<Project> {
         }
         cargoExtension.builds.wasm {
             wasmVariant.convention(cargoExtension.wasmVariant)
+        }
+        cargoExtension.builds.android {
+            androidVariant.convention(cargoExtension.androidVariant)
         }
         @OptIn(InternalGobleyGradleApi::class)
         target.useGlobalLock()
@@ -140,36 +145,29 @@ class CargoPlugin : Plugin<Project> {
             kotlinExtensionDelegate = delegate
             kotlinExtensionDelegate.targets.configureEach { planBuilds() }
         }
+        // Android Gradle Plugin callbacks must be registered here, as the Android Gradle Plugin
+        // may be applied before this plugin, in which case its afterEvaluate callback runs
+        // before ours.
         PluginUtils.withAndroidPlugin(this) { delegate ->
             androidDelegate = delegate
-            val abiFilters = androidDelegate.abiFilters
             cargoExtension.androidTargetsToBuild.convention(project.provider {
+                // Read the ABI filters after the build script is evaluated.
+                val abiFilters = delegate.abiFilters
                 if (abiFilters.isNotEmpty()) {
                     abiFilters.map(::RustAndroidTarget)
                 } else {
-                    RustAndroidTarget.values().toList()
+                    RustAndroidTarget.entries
                 }
             })
+            delegate.onVariants { androidVariant ->
+                registerAndroidJniLibsTask(androidVariant)
+            }
         }
     }
 
     private fun Project.checkRequiredPlugins() {
         @OptIn(InternalGobleyGradleApi::class)
-        PluginUtils.ensurePluginIsApplied(
-            this,
-            PluginUtils.PluginInfo(
-                "Kotlin Multiplatform",
-                PluginIds.KOTLIN_MULTIPLATFORM
-            ),
-            PluginUtils.PluginInfo(
-                "Kotlin Android",
-                PluginIds.KOTLIN_ANDROID,
-            ),
-            PluginUtils.PluginInfo(
-                "Kotlin JVM",
-                PluginIds.KOTLIN_JVM,
-            ),
-        )
+        PluginUtils.ensureKotlinPluginIsApplied(this, ::kotlinExtensionDelegate.isInitialized)
     }
 
     private fun KotlinTarget.planBuilds() {
@@ -245,7 +243,7 @@ class CargoPlugin : Plugin<Project> {
 
     private fun Project.configureBuildTasks() {
         val androidTarget = cargoExtension.builds.firstNotNullOfOrNull { build ->
-            build.kotlinTargets.firstNotNullOfOrNull { it as? KotlinAndroidTarget }
+            build.kotlinTargets.firstOrNull { it.platformType == KotlinPlatformType.androidJvm }
         }
         val jvmTarget = cargoExtension.builds.firstNotNullOfOrNull { build ->
             build.kotlinTargets.firstOrNull {
@@ -332,7 +330,7 @@ class CargoPlugin : Plugin<Project> {
                                         kotlinTarget,
                                         // cargoBuild.jvmVariant is checked inside
                                         this,
-                                        kotlinTarget as KotlinAndroidTarget,
+                                        kotlinTarget,
                                     )
                                 }
                             }
@@ -347,7 +345,7 @@ class CargoPlugin : Plugin<Project> {
                                     ndkRoot = androidDelegate.androidNdkRoot,
                                 ),
                             )
-                            Variant.values().forEach {
+                            Variant.entries.forEach {
                                 configureAndroidPostBuildTasks(cargoBuild.variant(it))
                             }
                         }
@@ -377,11 +375,11 @@ class CargoPlugin : Plugin<Project> {
     }
 
     private fun Project.configureJvmPostBuildTasks(
-        // kotlinTarget can be KotlinAndroidTarget when the JVM target is not present. This is for
+        // kotlinTarget can be an Android target when the JVM target is not present. This is for
         // Android local unit tests.
         kotlinTarget: KotlinTarget,
         cargoBuildVariant: CargoJvmBuildVariant<*>,
-        androidTarget: KotlinAndroidTarget?,
+        androidTarget: KotlinTarget?,
     ) {
         val buildTask = cargoBuildVariant.buildTaskProvider
         val checkTask = cargoBuildVariant.checkTaskProvider
@@ -426,7 +424,7 @@ class CargoPlugin : Plugin<Project> {
 
         @OptIn(InternalGobleyGradleApi::class)
         if (
-            kotlinTarget !is KotlinAndroidTarget
+            kotlinTarget.platformType != KotlinPlatformType.androidJvm
             && cargoBuildVariant.embedRustLibrary.get()
             && cargoBuildVariant.variant == cargoBuildVariant.build.jvmVariant.get()
         ) {
@@ -454,7 +452,7 @@ class CargoPlugin : Plugin<Project> {
 
         @OptIn(InternalGobleyGradleApi::class)
         if (
-            kotlinTarget !is KotlinAndroidTarget
+            kotlinTarget.platformType != KotlinPlatformType.androidJvm
             && cargoBuildVariant.embedRustLibrary.get()
             && cargoBuildVariant.variant == cargoBuildVariant.build.jvmPublishingVariant.get()
             && cargoExtension.publishJvmArtifacts.get()
@@ -483,10 +481,14 @@ class CargoPlugin : Plugin<Project> {
                 cargoBuildVariant.variant,
                 jarTask,
             )
-            with(kotlinExtensionDelegate.sourceSets.androidUnitTest(cargoBuildVariant.variant)) {
-                dependencies {
-                    runtimeOnly(files(jarTask.flatMap { it.archiveFile }))
-                }
+            val unitTestConfigurations = kotlinExtensionDelegate.sourceSets
+                .androidUnitTestConfigurations(cargoBuildVariant.variant)
+            for (configurations in unitTestConfigurations) {
+                DependencyUtils.addDependency(
+                    this,
+                    configurations.runtimeOnly,
+                    files(jarTask.flatMap { it.archiveFile }),
+                )
             }
             // Only support debug mode Compose previews.
             // Since one of the dependencies of Compose previews, androidx.compose.ui:ui-tooling,
@@ -497,17 +499,22 @@ class CargoPlugin : Plugin<Project> {
             if (cargoBuildVariant.variant == Variant.Debug
                 && cargoBuildVariant.variant == GradleUtils.getComposePreviewVariant(gradle)
             ) {
-                with(kotlinExtensionDelegate.sourceSets.androidMain(Variant.Debug)) {
-                    dependencies {
-                        runtimeOnly(files(jarTask.flatMap { it.archiveFile }))
+                kotlinExtensionDelegate.sourceSets
+                    .androidMainConfigurations(Variant.Debug)
+                    ?.let { configurations ->
+                        DependencyUtils.addDependency(
+                            this,
+                            configurations.runtimeOnly,
+                            files(jarTask.flatMap { it.archiveFile }),
+                        )
                     }
-                }
             }
         }
     }
 
+    // The Rust libraries are added to Android variants by the tasks registered in
+    // registerAndroidJniLibsTask.
     private fun Project.configureAndroidPostBuildTasks(cargoBuildVariant: CargoAndroidBuildVariant) {
-        val buildTask = cargoBuildVariant.buildTaskProvider
         val checkTask = cargoBuildVariant.checkTaskProvider
         val findDynamicLibrariesTask = cargoBuildVariant.findDynamicLibrariesTaskProvider
         cargoBuildVariant.dynamicLibrarySearchPaths.add(
@@ -530,37 +537,53 @@ class CargoPlugin : Plugin<Project> {
         if (!cargoBuildVariant.embedRustLibrary.get())
             return
 
-        val copyDestination =
-            layout.buildDirectory.dir("intermediates/rust/${cargoBuildVariant.rustTarget.rustTriple}/${cargoBuildVariant.variant}")
-
-        val copyTask = tasks.register<Copy>({
-            +"android"
-            +cargoBuildVariant
-        }) {
-            group = TASK_GROUP
-            from(
-                buildTask.flatMap { task -> task.libraryFileByCrateType.map { it[CrateType.SystemDynamicLibrary]!! } },
-                findDynamicLibrariesTask.flatMap { it.libraryPaths },
-            )
-            into(copyDestination.map { it.dir(cargoBuildVariant.rustTarget.androidAbiName) })
-            dependsOn(buildTask, findDynamicLibrariesTask)
-        }
-
-        tasks.withType<Jar> {
-            if (name.lowercase().contains("android") && variant != null) {
-                if (cargoBuildVariant.variant == variant!!) {
-                    inputs.dir(copyDestination)
-                    dependsOn(copyTask)
-                }
-            }
-        }
-
-        @OptIn(InternalGobleyGradleApi::class)
-        androidDelegate.addMainJniDir(this, cargoBuildVariant.variant, copyTask, copyDestination)
-
         tasks.named("check") {
             dependsOn(checkTask)
         }
+    }
+
+    /**
+     * Registers a task copying the Rust libraries for each Android ABI to the `jniLibs` directory of
+     * [androidVariant]. This is invoked by the Android Gradle Plugin, possibly before the
+     * afterEvaluate callback of this plugin. Thus, the task must be configured lazily, and must not
+     * refer to tasks registered in the afterEvaluate callback.
+     */
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun Project.registerAndroidJniLibsTask(androidVariant: GobleyAndroidVariant) {
+        val androidVariantName = androidVariant.name
+        // When the Android module has no build types, use the variant specified by the user.
+        val variantFromBuildType = androidVariant.variant
+        val jniLibsTask = tasks.register<CopyCargoJniLibsTask>(
+            "copyCargoJniLibs${androidVariantName.uppercaseFirstChar()}"
+        ) {
+            group = TASK_GROUP
+            description = "Copies the Rust libraries for the $androidVariantName Android variant."
+            val androidTargetsToBuild = cargoExtension.androidTargetsToBuild.get()
+            for (cargoBuild in cargoExtension.builds.withType(CargoAndroidBuild::class.java)) {
+                if (!androidTargetsToBuild.contains(cargoBuild.rustTarget))
+                    continue
+
+                val cargoBuildVariant = cargoBuild.variant(
+                    variantFromBuildType ?: cargoBuild.androidVariant.get()
+                )
+                if (!cargoBuildVariant.embedRustLibrary.get())
+                    continue
+
+                val buildTask = cargoBuildVariant.buildTaskProvider
+                val findDynamicLibrariesTask = cargoBuildVariant.findDynamicLibrariesTaskProvider
+                abi(cargoBuild.rustTarget.androidAbiName) {
+                    libraries.from(
+                        buildTask.flatMap { task ->
+                            task.libraryFileByCrateType.map { it[CrateType.SystemDynamicLibrary]!! }
+                        },
+                        findDynamicLibrariesTask.flatMap { it.libraryPaths },
+                    )
+                }
+                // libraryFileByCrateType does not carry the dependency on the build task.
+                dependsOn(buildTask, findDynamicLibrariesTask)
+            }
+        }
+        androidVariant.addGeneratedJniLibsDirectory(jniLibsTask) { it.outputDirectory }
     }
 
     private fun Project.configureNativeCompilation(

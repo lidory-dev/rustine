@@ -16,6 +16,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.Provider
@@ -131,29 +132,17 @@ object DependencyUtils {
         configuration: Configuration,
     ) {
         val variant = Variant(configuration.attributes.getAttribute(rustVariantAttribute)!!)
-        val dependencies = configuration.incoming
-        val dependencyJars =
-            currentProject.files(dependencies.artifacts.resolvedArtifacts.map { artifacts ->
-                artifacts.mapNotNull { artifact ->
-                    artifact.file.takeIf {
-                        artifact.variant.attributes.getAttribute(kindAttribute) == KIND_RUST
-                    }
-                }
-            })
+        val dependencyJars = currentProject.files(configuration.resolvedArtifactFiles(KIND_RUST))
         val composePreviewVariant = GradleUtils.getComposePreviewVariant(currentProject.gradle)
         PluginUtils.withKotlinPlugin(currentProject) { delegate ->
             if (delegate.androidTarget != null) {
                 if (variant == composePreviewVariant) {
-                    with(delegate.sourceSets.androidMain(variant)) {
-                        dependencies {
-                            runtimeOnly(dependencyJars)
-                        }
+                    delegate.sourceSets.androidMainConfigurations(variant)?.let { configurations ->
+                        addDependency(currentProject, configurations.runtimeOnly, dependencyJars)
                     }
                 }
-                with(delegate.sourceSets.androidUnitTest(variant)) {
-                    dependencies {
-                        runtimeOnly(dependencyJars)
-                    }
+                for (configurations in delegate.sourceSets.androidUnitTestConfigurations(variant)) {
+                    addDependency(currentProject, configurations.runtimeOnly, dependencyJars)
                 }
             }
         }
@@ -225,11 +214,19 @@ object DependencyUtils {
     fun getExternalPackageUniFfiConfigurations(currentProject: Project): Provider<List<File>>? {
         val configuration = currentProject.configurations.findByName("uniFfiConfiguration")
             ?: return null
-        val dependencies = configuration.incoming
-        return dependencies.artifacts.resolvedArtifacts.map { artifacts ->
-            artifacts.mapNotNull { artifact ->
+        return configuration.resolvedArtifactFiles(KIND_UNIFFI)
+    }
+
+    // Every project dependency is added to the Gobley configurations, including projects without
+    // Gobley plugins. As the variants of such projects don't have the Gobley attributes, Gradle may
+    // fail to choose one of them, e.g., between the variants of different build types of plain
+    // Android libraries. Resolve leniently to skip such projects, and keep the Gobley artifacts.
+    private fun Configuration.resolvedArtifactFiles(kind: String): Provider<List<File>> {
+        val artifacts = incoming.artifactView { it.lenient(true) }.artifacts
+        return artifacts.resolvedArtifacts.map { resolvedArtifacts ->
+            resolvedArtifacts.mapNotNull { artifact ->
                 artifact.file.takeIf {
-                    artifact.variant.attributes.getAttribute(kindAttribute) == KIND_UNIFFI
+                    artifact.variant.attributes.getAttribute(kindAttribute) == kind
                 }
             }
         }
@@ -240,35 +237,71 @@ object DependencyUtils {
         PluginUtils.withKotlinPlugin(currentProject) { delegate ->
             if (delegate.androidTarget != null) {
                 if (composePreviewVariant != null) {
-                    with(delegate.sourceSets.androidMain(composePreviewVariant)) {
-                        dependencies {
-                            runtimeOnly("net.java.dev.jna:jna") {
-                                version {
-                                    it.prefer(DependencyVersions.JNA)
-                                }
-                            }
-                        }
+                    delegate.sourceSets.androidMainConfigurations(composePreviewVariant)?.let { configurations ->
+                        addDependency(
+                            currentProject,
+                            configurations.runtimeOnly,
+                            "net.java.dev.jna:jna",
+                            preferredVersion = DependencyVersions.JNA,
+                        )
                     }
                 }
-                with(delegate.sourceSets.androidUnitTest) {
-                    dependencies {
-                        runtimeOnly("net.java.dev.jna:jna") {
-                            version {
-                                it.prefer(DependencyVersions.JNA)
-                            }
-                        }
-                    }
+                for (configurations in delegate.sourceSets.androidUnitTestConfigurations()) {
+                    addDependency(
+                        currentProject,
+                        configurations.runtimeOnly,
+                        "net.java.dev.jna:jna",
+                        preferredVersion = DependencyVersions.JNA,
+                    )
                 }
             }
         }
     }
+
+    /**
+     * Adds a dependency to the configuration named [configurationName] when the configuration
+     * exists or once it is created. Dependencies are added this way when the configuration may not
+     * exist, for example, configurations of Android build types or Android local unit tests.
+     *
+     * When [preferredVersion] is not `null`, [dependencyNotation] must denote an external module.
+     */
+    fun addDependency(
+        currentProject: Project,
+        configurationName: String,
+        dependencyNotation: Any,
+        preferredVersion: String? = null,
+    ) {
+        currentProject.configurations
+            .matching { it.name == configurationName }
+            .configureEach { configuration ->
+                val dependency = currentProject.dependencies.create(dependencyNotation)
+                if (preferredVersion != null) {
+                    (dependency as ExternalModuleDependency).version {
+                        it.prefer(preferredVersion)
+                    }
+                }
+                configuration.dependencies.add(dependency)
+            }
+    }
+
+    // Single-target projects, which are Kotlin/JVM projects and Android projects using the built-in
+    // Kotlin support of the Android Gradle Plugin, declare dependencies in the configurations
+    // without the source set prefix.
+    private val commonDependencyConfigurationNames = setOf(
+        "commonMainApi",
+        "commonMainImplementation",
+        "commonMainCompileOnly",
+        "api",
+        "implementation",
+        "compileOnly",
+    )
 
     fun configureEachCommonDependencies(
         configurations: ConfigurationContainer,
         action: (Dependency) -> Unit,
     ) {
         configurations.configureEach { configuration ->
-            if (configuration.name == "commonMainApi" || configuration.name == "commonMainImplementation" || configuration.name == "commonMainCompileOnly") {
+            if (configuration.name in commonDependencyConfigurationNames) {
                 configuration.dependencies.configureEach(action)
             }
         }

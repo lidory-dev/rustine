@@ -10,7 +10,7 @@ import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.PluginIds
 import gobley.gradle.Variant
 import org.gradle.api.DomainObjectCollection
-import org.gradle.api.NamedDomainObjectCollection
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -46,13 +46,12 @@ class GobleyKotlinJvmExtensionDelegate(
 }
 
 @OptIn(InternalGobleyGradleApi::class)
-private fun GobleyKotlinSourceSetCollection(sourceSets: NamedDomainObjectCollection<KotlinSourceSet>): GobleyKotlinSourceSetCollection {
-    return object :
-        NamedDomainObjectCollection<KotlinSourceSet> by sourceSets,
-        GobleyKotlinSourceSetCollection {
+private fun GobleyKotlinSourceSetCollection(sourceSets: NamedDomainObjectContainer<KotlinSourceSet>): GobleyKotlinSourceSetCollection {
+    return object : GobleyKotlinSourceSetCollection {
         override val commonMain get() = jvmMain
-        override fun androidMain(variant: Variant?) = error("not supported")
-        override fun androidUnitTest(variant: Variant?) = error("not supported")
+        override val androidMain: KotlinSourceSet? get() = null
+        override fun androidMainConfigurations(variant: Variant?): GobleyConfigurationNames? = null
+        override fun androidUnitTestConfigurations(variant: Variant?): List<GobleyConfigurationNames> = emptyList()
         override val jvmMain: KotlinSourceSet get() = sourceSets.getByName("main")
         override val jsMain: KotlinSourceSet get() = error("not supported")
         override val wasmJsMain: KotlinSourceSet get() = error("not supported")

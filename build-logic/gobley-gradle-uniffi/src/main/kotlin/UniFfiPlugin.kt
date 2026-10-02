@@ -11,9 +11,13 @@ import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.PluginIds
 import gobley.gradle.Variant
 import gobley.gradle.android.GobleyAndroidExtensionDelegate
+import gobley.gradle.android.GobleyAndroidPluginKind
+import gobley.gradle.cargo.dsl.CargoAndroidBuild
+import gobley.gradle.cargo.dsl.CargoBuild
 import gobley.gradle.cargo.dsl.CargoExtension
 import gobley.gradle.cargo.dsl.CargoJvmBuild
 import gobley.gradle.cargo.dsl.CargoNativeBuild
+import gobley.gradle.cargo.dsl.HasAndroidVariant
 import gobley.gradle.kotlin.GobleyKotlinExtensionDelegate
 import gobley.gradle.rust.CrateType
 import gobley.gradle.rust.targets.RustTarget
@@ -26,6 +30,7 @@ import gobley.gradle.uniffi.tasks.BuildUniffiBindingsTask
 import gobley.gradle.uniffi.tasks.GenerateUniffiProguardRulesTask
 import gobley.gradle.uniffi.tasks.InstallUniffiBindgenTask
 import gobley.gradle.uniffi.tasks.MergeUniffiConfigTask
+import gobley.gradle.uniffi.tasks.SyncUniffiAndroidBindingsTask
 import gobley.gradle.utils.DependencyUtils
 import gobley.gradle.utils.GradleUtils
 import gobley.gradle.utils.PluginUtils
@@ -46,9 +51,7 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinWithJavaTarget
@@ -69,14 +72,82 @@ class UniFfiPlugin : Plugin<Project> {
     @OptIn(InternalGobleyGradleApi::class)
     private lateinit var androidDelegate: GobleyAndroidExtensionDelegate
 
+    @OptIn(InternalGobleyGradleApi::class)
+    private var syncAndroidBindingsTask: TaskProvider<SyncUniffiAndroidBindingsTask>? = null
+
     override fun apply(target: Project) {
         @OptIn(InternalGobleyGradleApi::class)
         if (!target.plugins.hasPlugin(PluginIds.GOBLEY_RUST)) {
             DependencyUtils.createUniFfiConfigurations(target)
         }
         uniFfiExtension = target.extensions.create<UniFfiExtension>(TASK_GROUP, target)
+        target.watchPluginChanges()
         target.afterEvaluate {
             applyAfterEvaluate(this)
+        }
+    }
+
+    // Android Gradle Plugin callbacks must be registered here, as the Android Gradle Plugin may be
+    // applied before this plugin, in which case its afterEvaluate callback runs before ours.
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun Project.watchPluginChanges() {
+        PluginUtils.withKotlinPlugin(this) { delegate ->
+            kotlinExtensionDelegate = delegate
+        }
+        PluginUtils.withAndroidPlugin(this) { delegate ->
+            androidDelegate = delegate
+            configureAndroidProguardRules(delegate)
+            if (delegate.kind != GobleyAndroidPluginKind.KotlinMultiplatformLibrary) {
+                configureAndroidBindingsSources(delegate)
+            } else {
+                configureKotlinMultiplatformAndroidBindingsSources(delegate)
+            }
+        }
+    }
+
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun Project.configureAndroidProguardRules(delegate: GobleyAndroidExtensionDelegate) {
+        val generateUniffiProguardRulesTask =
+            tasks.register<GenerateUniffiProguardRulesTask>("generateUniffiProguardRules") {
+                outputFile.set(androidGeneratedProguardFile)
+            }
+        delegate.addProguardFile(
+            generateUniffiProguardRulesTask.flatMap { it.outputFile },
+            uniFfiExtension.generateProguardRules,
+        )
+    }
+
+    // With the built-in Kotlin support of the Android Gradle Plugin, Kotlin source sets must not
+    // be used to add sources. Copy the bindings to a directory owned by a separate task and add it
+    // to each Android variant using the Variant API. The bindings task is referred by its name, as
+    // it is registered in afterEvaluate, which may run after the Android Gradle Plugin invokes
+    // the onVariants callback.
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun Project.configureAndroidBindingsSources(delegate: GobleyAndroidExtensionDelegate) {
+        val syncTask = tasks.register<SyncUniffiAndroidBindingsTask>("syncUniffiAndroidBindings") {
+            group = TASK_GROUP
+            bindingsDirectory.set(mainBindingsDirectory)
+            dependsOn("buildUniffiBindings")
+        }
+        syncAndroidBindingsTask = syncTask
+        delegate.onVariants { androidVariant ->
+            androidVariant.addGeneratedKotlinDirectory(syncTask) { it.outputDirectory }
+        }
+    }
+
+    // In Kotlin Multiplatform projects, the bindings are added to Kotlin source sets in
+    // configureKotlin. The `com.android.kotlin.multiplatform.library` plugin reads the Kotlin
+    // source directories of the Android compilation without their task dependencies, and also
+    // looks for other sources like baseline profiles and keep rules next to each Kotlin source
+    // directory, i.e., inside the output directory of the bindings task. Make the tasks of the
+    // Android variant run after the bindings task, which is referred by its name as in
+    // configureAndroidBindingsSources.
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun configureKotlinMultiplatformAndroidBindingsSources(
+        delegate: GobleyAndroidExtensionDelegate,
+    ) {
+        delegate.onVariants { androidVariant ->
+            androidVariant.registerPreBuildDependencies("buildUniffiBindings")
         }
     }
 
@@ -95,21 +166,7 @@ class UniFfiPlugin : Plugin<Project> {
     private fun Project.findRequiredExtensions() {
         bindingsGeneration = uniFfiExtension.bindingsGeneration.get()
 
-        PluginUtils.ensurePluginIsApplied(
-            this,
-            PluginUtils.PluginInfo(
-                "Kotlin Multiplatform",
-                PluginIds.KOTLIN_MULTIPLATFORM
-            ),
-            PluginUtils.PluginInfo(
-                "Kotlin Android",
-                PluginIds.KOTLIN_ANDROID,
-            ),
-            PluginUtils.PluginInfo(
-                "Kotlin JVM",
-                PluginIds.KOTLIN_JVM,
-            ),
-        )
+        PluginUtils.ensureKotlinPluginIsApplied(this, ::kotlinExtensionDelegate.isInitialized)
         PluginUtils.ensurePluginIsApplied(project, "Kotlin AtomicFU", PluginIds.KOTLIN_ATOMIC_FU)
         PluginUtils.ensurePluginIsApplied(
             project,
@@ -119,13 +176,6 @@ class UniFfiPlugin : Plugin<Project> {
 
         // Since the Cargo Kotlin Multiplatform plugin is present, `CargoExtension` must be present.
         cargoExtension = extensions.getByType()
-
-        PluginUtils.withKotlinPlugin(this) { delegate ->
-            kotlinExtensionDelegate = delegate
-        }
-        PluginUtils.withAndroidPlugin(this) { delegate ->
-            androidDelegate = delegate
-        }
 
         bindingsGeneration.namespace.convention(cargoExtension.cargoPackage.map { it.libraryCrateName })
         (bindingsGeneration as? BindingsGenerationFromUdl)?.udlFile?.convention(
@@ -155,7 +205,16 @@ class UniFfiPlugin : Plugin<Project> {
 
         val buildRustTarget = bindingsGeneration.build.orNull ?: run {
             @OptIn(InternalGobleyGradleApi::class)
-            val androidTargetsToBuild = cargoExtension.androidTargetsToBuild.get().toList()
+            val androidTargetsToBuild = cargoExtension.androidTargetsToBuild.get().toList().let { targets ->
+                // Prefer the ABIs embedded into the Android module. ABIs may be excluded using
+                // embedRustLibrary, e.g., in modules without ABI filters.
+                targets.filter { rustTarget ->
+                    val build = cargoExtension.builds.findByRustTarget(rustTarget)
+                    build is CargoAndroidBuild && build.variants.any { variant ->
+                        variant.embedRustLibrary.get()
+                    }
+                }.ifEmpty { targets }
+            }
 
             @OptIn(InternalGobleyGradleApi::class)
             val hasJvmTarget = kotlinExtensionDelegate.targets.any {
@@ -191,10 +250,10 @@ class UniFfiPlugin : Plugin<Project> {
             ?: throw GradleException("Cargo build for $buildRustTarget not available")
 
         val availableVariants = build.kotlinTargets.flatMap {
-            when (it) {
-                is KotlinJvmTarget, is KotlinWithJavaTarget<*, *> -> listOf((build as CargoJvmBuild<*>).jvmVariant.get())
-                is KotlinAndroidTarget -> Variant.values().toList()
-                is KotlinNativeTarget -> listOf((build as CargoNativeBuild<*>).nativeVariant.get())
+            when {
+                it is KotlinJvmTarget || it is KotlinWithJavaTarget<*, *> -> listOf((build as CargoJvmBuild<*>).jvmVariant.get())
+                it.platformType == KotlinPlatformType.androidJvm -> availableAndroidVariants(build)
+                it is KotlinNativeTarget -> listOf((build as CargoNativeBuild<*>).nativeVariant.get())
                 else -> emptyList<Variant>()
             }
         }.distinct()
@@ -253,11 +312,11 @@ class UniFfiPlugin : Plugin<Project> {
             @OptIn(InternalGobleyGradleApi::class)
             kotlinTargets.set(
                 kotlinExtensionDelegate.targets.mapNotNull {
-                    when (it) {
-                        is KotlinMetadataTarget -> null
-                        is KotlinJvmTarget, is KotlinWithJavaTarget<*, *> -> "jvm"
-                        is KotlinAndroidTarget -> "android"
-                        is KotlinNativeTarget -> "native"
+                    when {
+                        it is KotlinMetadataTarget -> null
+                        it is KotlinJvmTarget || it is KotlinWithJavaTarget<*, *> -> "jvm"
+                        it.platformType == KotlinPlatformType.androidJvm -> "android"
+                        it is KotlinNativeTarget -> "native"
                         else -> "stub"
                     }
                 }
@@ -324,35 +383,30 @@ class UniFfiPlugin : Plugin<Project> {
 
         if (uniFfiExtension.generateDuringSync.get()) {
             @OptIn(InternalGobleyGradleApi::class)
-            GradleUtils.runTaskDuringSync(this, buildBindings)
+            GradleUtils.runTaskDuringSync(this, *listOfNotNull(buildBindings, syncAndroidBindingsTask).toTypedArray())
         }
 
-        tasks.withType<KotlinCompilationTask<*>> {
+        tasks.withType<KotlinCompilationTask<*>>().configureEach {
             dependsOn(buildBindings)
         }
 
-        tasks.withType<Jar> {
+        tasks.withType<Jar>().configureEach {
             dependsOn(buildBindings)
         }
 
-        tasks.withType<CInteropProcess> {
+        tasks.withType<CInteropProcess>().configureEach {
             dependsOn(buildBindings)
         }
+    }
 
-        @OptIn(InternalGobleyGradleApi::class)
-        if (::androidDelegate.isInitialized) {
-            val generateUniffiProguardRulesTask =
-                tasks.register<GenerateUniffiProguardRulesTask>("generateUniffiProguardRules") {
-                    outputFile.set(androidGeneratedProguardFile)
-                }
+    @OptIn(InternalGobleyGradleApi::class)
+    private fun availableAndroidVariants(build: CargoBuild<*>): List<Variant> {
+        return when {
+            // Android modules without build types embed the variant specified by the user.
+            ::androidDelegate.isInitialized && !androidDelegate.hasBuildTypes ->
+                listOf(((build as? HasAndroidVariant) ?: cargoExtension).androidVariant.get())
 
-            if (uniFfiExtension.generateProguardRules.get()) {
-                androidDelegate.addProguardFiles(
-                    project,
-                    androidGeneratedProguardFile.get(),
-                    generateUniffiProguardRulesTask,
-                )
-            }
+            else -> Variant.entries
         }
     }
 
@@ -368,7 +422,7 @@ class UniFfiPlugin : Plugin<Project> {
     }
 
     private fun Project.configureKotlin() {
-        tasks.withType<KotlinCompilationTask<*>> {
+        tasks.withType<KotlinCompilationTask<*>>().configureEach {
             compilerOptions {
                 freeCompilerArgs.add("-Xexpect-actual-classes")
             }
@@ -387,23 +441,25 @@ class UniFfiPlugin : Plugin<Project> {
 
         @OptIn(InternalGobleyGradleApi::class)
         kotlinExtensionDelegate.targets.configureEach {
-            when (this) {
-                is KotlinMetadataTarget -> configureKotlinCommonTarget()
-                is KotlinJvmTarget, is KotlinWithJavaTarget<*, *> -> {
+            when {
+                this is KotlinMetadataTarget -> configureKotlinCommonTarget()
+                this is KotlinJvmTarget || this is KotlinWithJavaTarget<*, *> -> {
                     if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_JVM) {
                         configureKotlinCommonTarget()
                     }
                     configureKotlinJvmTarget()
                 }
 
-                is KotlinAndroidTarget -> {
+                // Both the single-target Android target and the target of the
+                // `com.android.kotlin.multiplatform.library` plugin.
+                platformType == KotlinPlatformType.androidJvm -> {
                     if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_ANDROID) {
                         configureKotlinCommonTarget()
                     }
                     configureKotlinAndroidTarget()
                 }
 
-                is KotlinNativeTarget -> configureKotlinNativeTarget(
+                this is KotlinNativeTarget -> configureKotlinNativeTarget(
                     this,
                     dummyDefFile,
                     generateDummyDefFileTask,
@@ -416,27 +472,36 @@ class UniFfiPlugin : Plugin<Project> {
 
     @OptIn(InternalGobleyGradleApi::class)
     private fun Project.configureKotlinCommonTarget() {
+        if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_ANDROID) {
+            // Single-target Android projects have no Kotlin source sets. The bindings are added
+            // in configureAndroidBindingsSources.
+            if (uniFfiExtension.addDependencies.get()) {
+                val configurationName =
+                    kotlinExtensionDelegate.sourceSets.androidMainConfigurations()!!.implementation
+                for ((dependencyNotation, preferredVersion) in commonDependencies) {
+                    DependencyUtils.addDependency(
+                        this,
+                        configurationName,
+                        dependencyNotation,
+                        preferredVersion,
+                    )
+                }
+            }
+            return
+        }
         with(kotlinExtensionDelegate.sourceSets.commonMain) {
             kotlin.srcDir(
                 when (kotlinExtensionDelegate.pluginId) {
-                    PluginIds.KOTLIN_ANDROID, PluginIds.KOTLIN_JVM -> mainBindingsDirectory
+                    PluginIds.KOTLIN_JVM -> mainBindingsDirectory
                     else -> commonBindingsDirectory
                 }
             )
-            // Android Studio doesn't recognize directories added using the above method. See #79.
-            if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_ANDROID) {
-                androidDelegate.addMainSourceDir(sourceDirectory = mainBindingsDirectory)
-            }
             if (uniFfiExtension.addDependencies.get()) {
                 dependencies {
-                    implementation("org.jetbrains.kotlinx:atomicfu") {
-                        version { prefer(DependencyVersions.KOTLINX_ATOMICFU) }
-                    }
-                    implementation("org.jetbrains.kotlinx:kotlinx-datetime") {
-                        version { prefer(DependencyVersions.KOTLINX_DATETIME) }
-                    }
-                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core") {
-                        version { prefer(DependencyVersions.KOTLINX_COROUTINES) }
+                    for ((dependencyNotation, preferredVersion) in commonDependencies) {
+                        implementation(dependencyNotation) {
+                            version { prefer(preferredVersion) }
+                        }
                     }
                 }
             }
@@ -461,44 +526,50 @@ class UniFfiPlugin : Plugin<Project> {
 
     @OptIn(InternalGobleyGradleApi::class)
     private fun Project.configureKotlinAndroidTarget() {
-        with(kotlinExtensionDelegate.sourceSets.androidMain) {
-            if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_MULTIPLATFORM) {
-                kotlin.srcDir(androidBindingsDirectory)
-            }
-            if (uniFfiExtension.addDependencies.get()) {
-                dependencies {
-                    implementation("net.java.dev.jna:jna@aar") {
-                        version { prefer(DependencyVersions.JNA) }
-                    }
-                    implementation("androidx.annotation:annotation") {
-                        version { prefer(DependencyVersions.KOTLINX_COROUTINES) }
-                    }
-                }
-            }
+        val sourceSets = kotlinExtensionDelegate.sourceSets
+        if (kotlinExtensionDelegate.pluginId == PluginIds.KOTLIN_MULTIPLATFORM) {
+            sourceSets.androidMain?.kotlin?.srcDir(androidBindingsDirectory)
         }
-        val jnaDependency = kotlinExtensionDelegate.sourceSets.androidMain.getConflictingDependency(
-            "net.java.dev.jna:jna:${DependencyVersions.JNA}"
+        val mainConfigurations = sourceSets.androidMainConfigurations() ?: return
+        if (uniFfiExtension.addDependencies.get()) {
+            DependencyUtils.addDependency(
+                this,
+                mainConfigurations.implementation,
+                "net.java.dev.jna:jna@aar",
+                DependencyVersions.JNA,
+            )
+            DependencyUtils.addDependency(
+                this,
+                mainConfigurations.implementation,
+                "androidx.annotation:annotation",
+                DependencyVersions.ANDROIDX_ANNOTATION,
+            )
+        }
+        val jnaDependency = getConflictingDependency(
+            mainConfigurations.implementation,
+            "net.java.dev.jna:jna:${DependencyVersions.JNA}",
         )
         val jnaVersion = jnaDependency?.version ?: DependencyVersions.JNA
         val composePreviewVariant = GradleUtils.getComposePreviewVariant(gradle)
         if (composePreviewVariant != null) {
-            with(kotlinExtensionDelegate.sourceSets.androidMain(composePreviewVariant)) {
-                if (uniFfiExtension.addDependencies.get()) {
-                    dependencies {
-                        implementation("net.java.dev.jna:jna") {
-                            version { prefer(jnaVersion) }
-                        }
-                    }
-                }
+            val previewConfigurations = sourceSets.androidMainConfigurations(composePreviewVariant)
+            if (previewConfigurations != null && uniFfiExtension.addDependencies.get()) {
+                DependencyUtils.addDependency(
+                    this,
+                    previewConfigurations.implementation,
+                    "net.java.dev.jna:jna",
+                    jnaVersion,
+                )
             }
         }
-        with(kotlinExtensionDelegate.sourceSets.androidUnitTest) {
-            if (uniFfiExtension.addDependencies.get()) {
-                dependencies {
-                    implementation("net.java.dev.jna:jna") {
-                        version { prefer(jnaVersion) }
-                    }
-                }
+        if (uniFfiExtension.addDependencies.get()) {
+            for (unitTestConfigurations in sourceSets.androidUnitTestConfigurations()) {
+                DependencyUtils.addDependency(
+                    this,
+                    unitTestConfigurations.implementation,
+                    "net.java.dev.jna:jna",
+                    jnaVersion,
+                )
             }
         }
     }
@@ -536,6 +607,14 @@ class UniFfiPlugin : Plugin<Project> {
     }
 }
 
+// The dependencies of the generated bindings in common code, with their preferred versions.
+@OptIn(InternalGobleyGradleApi::class)
+private val commonDependencies = listOf(
+    "org.jetbrains.kotlinx:atomicfu" to DependencyVersions.KOTLINX_ATOMICFU,
+    "org.jetbrains.kotlinx:kotlinx-datetime" to DependencyVersions.KOTLINX_DATETIME,
+    "org.jetbrains.kotlinx:kotlinx-coroutines-core" to DependencyVersions.KOTLINX_COROUTINES,
+)
+
 private val Project.bindingsDirectory: Provider<Directory>
     get() = layout.buildDirectory.dir("generated/uniffi")
 
@@ -557,8 +636,9 @@ private val Project.nativeBindingsDirectory: Provider<Directory>
 private val Project.stubBindingsDirectory: Provider<Directory>
     get() = bindingsDirectory.map { it.dir("stubMain/kotlin") }
 
+// Must not be in bindingsDirectory, which is the output directory of BuildUniffiBindingsTask.
 private val Project.androidGeneratedProguardFile: Provider<RegularFile>
-    get() = bindingsDirectory.map { it.file("androidMain/generated-proguard-rules.txt") }
+    get() = layout.buildDirectory.file("generated/uniffiProguardRules/generated-proguard-rules.txt")
 
 private val Project.nativeBindingsCInteropDirectory: Provider<Directory>
     get() = bindingsDirectory.map { it.dir("nativeInterop/cinterop") }
@@ -572,12 +652,13 @@ private fun Project.nativeBindingsCInteropDef(libraryCrateName: String): Provide
 private fun Project.nativeBindingsCInteropHeader(namespace: String): Provider<RegularFile> =
     nativeBindingsCInteropDirectory.map { it.file("headers/$namespace/$namespace.h") }
 
-private fun KotlinSourceSet.getConflictingDependency(
+private fun Project.getConflictingDependency(
+    configurationName: String,
     dependencyNotation: String,
 ): ExternalModuleDependency? {
     val dependencyToAdd =
-        project.dependencies.create(dependencyNotation) as ExternalModuleDependency
-    val configuration = project.configurations.getByName(implementationConfigurationName)
+        dependencies.create(dependencyNotation) as ExternalModuleDependency
+    val configuration = configurations.findByName(configurationName) ?: return null
     return configuration.dependencies.firstOrNull { dependency ->
         dependency is ExternalModuleDependency
                 && dependency.module.group == dependencyToAdd.module.group

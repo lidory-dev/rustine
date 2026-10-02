@@ -8,21 +8,53 @@ package gobley.gradle.kotlin
 
 import gobley.gradle.InternalGobleyGradleApi
 import gobley.gradle.Variant
-import org.gradle.api.NamedDomainObjectCollection
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 @InternalGobleyGradleApi
-interface GobleyKotlinSourceSetCollection : NamedDomainObjectCollection<KotlinSourceSet> {
+interface GobleyKotlinSourceSetCollection {
     val commonMain: KotlinSourceSet
 
-    fun androidMain(variant: Variant? = null): KotlinSourceSet
-    val androidMain get() = androidMain()
+    /**
+     * The main source set of the Android target in Kotlin Multiplatform projects. `null` in
+     * single-target Android projects, which use the built-in Kotlin support of the Android Gradle
+     * Plugin and don't have Kotlin source sets.
+     */
+    val androidMain: KotlinSourceSet?
 
-    fun androidUnitTest(variant: Variant? = null): KotlinSourceSet
-    val androidUnitTest get() = androidUnitTest()
+    /**
+     * The configurations to add dependencies of the Android main code to. When [variant] is not
+     * `null`, the configurations of the given variant are returned. `null` when the configurations
+     * are not available, e.g., when the Android module has no build types.
+     */
+    fun androidMainConfigurations(variant: Variant? = null): GobleyConfigurationNames?
+
+    /**
+     * The configurations to add dependencies of Android local unit tests to. When [variant] is
+     * `null`, the configurations shared by all local unit tests are returned. Otherwise, the
+     * configurations of the local unit tests using the Rust library of [variant] are returned, e.g.,
+     * those of every build type using [variant]. Empty when the configurations are not available,
+     * e.g., when host tests are not enabled in Kotlin Multiplatform projects.
+     */
+    fun androidUnitTestConfigurations(variant: Variant? = null): List<GobleyConfigurationNames>
 
     val jvmMain: KotlinSourceSet
     val jsMain: KotlinSourceSet
     val wasmJsMain: KotlinSourceSet
     val wasmWasiMain: KotlinSourceSet
 }
+
+/**
+ * The names of dependency configurations. The configurations may not exist yet.
+ */
+@InternalGobleyGradleApi
+data class GobleyConfigurationNames(
+    val implementation: String,
+    val runtimeOnly: String,
+)
+
+@InternalGobleyGradleApi
+internal val KotlinSourceSet.configurationNames: GobleyConfigurationNames
+    get() = GobleyConfigurationNames(
+        implementation = implementationConfigurationName,
+        runtimeOnly = runtimeOnlyConfigurationName,
+    )

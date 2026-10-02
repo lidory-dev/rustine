@@ -25,7 +25,8 @@ abstract class CargoAndroidBuild @Inject constructor(
     CargoAndroidBuildVariant::class,
 ), CargoMobileBuild<CargoAndroidBuildVariant>,
     CargoNativeBuild<CargoAndroidBuildVariant>,
-    HasDynamicLibraries {
+    HasDynamicLibraries,
+    HasAndroidVariant {
     init {
         embedRustLibrary.convention(true)
     }

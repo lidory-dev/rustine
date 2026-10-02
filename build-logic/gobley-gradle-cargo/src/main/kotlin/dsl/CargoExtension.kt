@@ -38,7 +38,8 @@ import org.jetbrains.kotlin.gradle.plugin.HasProject
 import java.io.File
 
 abstract class CargoExtension(final override val project: Project) : HasProject, HasFeatures,
-    HasVariants<CargoExtensionVariant>, HasJvmVariant, HasNativeVariant, HasWasmVariant {
+    HasVariants<CargoExtensionVariant>, HasJvmVariant, HasNativeVariant, HasWasmVariant,
+    HasAndroidVariant {
     /**
      * The package directory.
      */
@@ -117,7 +118,9 @@ abstract class CargoExtension(final override val project: Project) : HasProject,
         }
 
     /**
-     * The list of Android targets filtered by defaultConfig.ndk.abiFilters.
+     * The list of Android targets filtered by `android.defaultConfig.ndk.abiFilters`. Contains all
+     * Android targets when no ABI filter is configured or when the Android module has no ABI
+     * filter DSL, which is the case of `com.android.kotlin.multiplatform.library`.
      */
     @InternalGobleyGradleApi
     val androidTargetsToBuild: SetProperty<RustAndroidTarget> =
@@ -141,7 +144,7 @@ abstract class CargoExtension(final override val project: Project) : HasProject,
      * The artifacts can be retrieved via [CargoJvmBuildVariant.jarTaskProvider]. This is useful for
      * easier publication.
      *
-     * This property has no effect for Kotlin/JVM or Kotlin Android plugins.
+     * This property has no effect for Kotlin/JVM or single-target Android projects.
      */
     val publishJvmArtifacts: Property<Boolean> =
         project.objects.property<Boolean>().convention(true)

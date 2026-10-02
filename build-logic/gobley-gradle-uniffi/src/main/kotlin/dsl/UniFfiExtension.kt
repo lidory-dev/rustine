@@ -52,9 +52,11 @@ abstract class UniFfiExtension(internal val project: Project) {
 
     /**
      * When `true`, the UniFFI plugin will generate a ProGuard rule file for the Android target.
-     * The generated file will automatically appended to `proguardFile` or `consumerProguardFile`
-     * inside the `android.buildTypes {}` block, depending on whether the current module is
-     * an application project or a library project.
+     * The generated file is automatically added to the ProGuard files of every Android variant.
+     * In library modules, the file is also added to the consumer ProGuard files, so applications
+     * using the library keep the classes required by JNA. For Kotlin Multiplatform libraries using
+     * the `com.android.kotlin.multiplatform.library` plugin, this also turns on
+     * `kotlin.android.optimization.consumerKeepRules.publish`.
      */
     val generateProguardRules: Property<Boolean> =
         project.objects.property<Boolean>().convention(true)
