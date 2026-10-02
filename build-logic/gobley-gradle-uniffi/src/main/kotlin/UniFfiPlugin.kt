@@ -13,11 +13,9 @@ import gobley.gradle.Variant
 import gobley.gradle.android.GobleyAndroidExtensionDelegate
 import gobley.gradle.android.GobleyAndroidPluginKind
 import gobley.gradle.cargo.dsl.CargoAndroidBuild
-import gobley.gradle.cargo.dsl.CargoBuild
 import gobley.gradle.cargo.dsl.CargoExtension
 import gobley.gradle.cargo.dsl.CargoJvmBuild
 import gobley.gradle.cargo.dsl.CargoNativeBuild
-import gobley.gradle.cargo.dsl.HasAndroidVariant
 import gobley.gradle.kotlin.GobleyKotlinExtensionDelegate
 import gobley.gradle.rust.CrateType
 import gobley.gradle.rust.targets.RustTarget
@@ -252,7 +250,7 @@ class UniFfiPlugin : Plugin<Project> {
         val availableVariants = build.kotlinTargets.flatMap {
             when {
                 it is KotlinJvmTarget || it is KotlinWithJavaTarget<*, *> -> listOf((build as CargoJvmBuild<*>).jvmVariant.get())
-                it.platformType == KotlinPlatformType.androidJvm -> availableAndroidVariants(build)
+                it.platformType == KotlinPlatformType.androidJvm -> Variant.entries
                 it is KotlinNativeTarget -> listOf((build as CargoNativeBuild<*>).nativeVariant.get())
                 else -> emptyList<Variant>()
             }
@@ -396,21 +394,6 @@ class UniFfiPlugin : Plugin<Project> {
 
         tasks.withType<CInteropProcess>().configureEach {
             dependsOn(buildBindings)
-        }
-    }
-
-    @OptIn(InternalGobleyGradleApi::class)
-    private fun availableAndroidVariants(build: CargoBuild<*>): List<Variant> {
-        return when {
-            // Android modules without build types embed `androidVariant`. Prefer it so that
-            // generating bindings does not require building another variant.
-            ::androidDelegate.isInitialized && !androidDelegate.hasBuildTypes -> {
-                val androidVariant =
-                    ((build as? HasAndroidVariant) ?: cargoExtension).androidVariant.get()
-                (listOf(androidVariant) + Variant.entries).distinct()
-            }
-
-            else -> Variant.entries
         }
     }
 

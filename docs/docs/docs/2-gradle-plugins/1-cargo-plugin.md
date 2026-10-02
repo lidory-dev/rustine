@@ -584,14 +584,14 @@ you should be careful of the value of `nativeVariant`, as it doesn't use Xcode.
 `com.android.kotlin.multiplatform.library` plugin. As this plugin doesn't support build types, the
 Android library has a single variant, and Gobley can't choose between the debug build and the
 release build by the Android variant. `androidVariant` determines the Cargo build embedded into the
-Android library. By default, Gobley looks at the tasks requested in the command line: when the name
-of a requested task contains `release` (ignoring case) or starts with `publish`, as in
+Android library. By default, Gobley looks at the tasks requested in the command line of the root
+build, including when the library is in an included build: when the name of a requested task
+contains `release` (ignoring case) or starts with `publish`, as in
 `./gradlew :androidApp:assembleRelease`, `./gradlew :androidApp:bundleRelease`, or
 `./gradlew publishToMavenLocal`, `androidVariant` defaults to `Variant.Release`. Otherwise, it
 defaults to `Variant.Debug`. This means tasks requested in other ways, such as `./gradlew build`,
 `./gradlew assemble`, or abbreviated task names like `./gradlew aR`, use the debug Rust library even
-for the release version of an application. Set `androidVariant` explicitly in such cases. The UniFFI
-plugin also uses the Android build of this variant to generate bindings by default.
+for the release version of an application. Set `androidVariant` explicitly in such cases.
 `androidVariant` is ignored in `com.android.application` and `com.android.library` modules.
 
 You can use Gradle properties to control these values.

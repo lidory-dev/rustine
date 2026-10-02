@@ -160,8 +160,10 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
     - `org.jetbrains.kotlin.plugin.atomicfu` is to use atomic types used by the bindings.
 
    > :warning: As `com.android.kotlin.multiplatform.library` doesn't have build types, the Cargo
-   > plugin embeds the debug build of the Rust library into `shared` by default, even when you
-   > build a release version of the Android app. Before releasing your app,
+   > plugin chooses the build of the Rust library embedded into `shared` by the tasks you run. When
+   > you run a release or publishing task like `assembleRelease` or `bundleRelease`, the release
+   > build is used. Otherwise, e.g., when you run `./gradlew build`, the debug build is used even for
+   > the release version of the Android app. Before releasing your app,
    > read [Be careful of the build variant used during publishing](../docs/2-gradle-plugins/1-cargo-plugin.md#be-careful-of-the-build-variant-used-during-publishing).
 
 We're now ready to code both in Rust and Kotlin!

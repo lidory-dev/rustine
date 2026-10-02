@@ -73,11 +73,24 @@ object GradleUtils {
      * `assembleRelease`, `:app:bundleRelease`, and `publishToMavenLocal`.
      */
     fun requestsReleaseBuild(gradle: Gradle): Boolean {
-        return gradle.startParameter.taskNames.any { taskPath ->
-            val taskName = taskPath.substringAfterLast(':')
+        // Included builds don't receive the requested tasks, so read them from the root build.
+        val rootBuild = generateSequence(gradle) { it.parent }.last()
+        return rootBuild.startParameter.taskNames.any { argument ->
+            // The list also contains task options and their values, like `--tests *Release*`.
+            // Skip arguments that can't be task paths.
+            val isTaskPath = !argument.startsWith("-") && argument.none {
+                it in INVALID_TASK_PATH_CHARACTERS || it.isWhitespace()
+            }
+            if (!isTaskPath) {
+                return@any false
+            }
+            val taskName = argument.substringAfterLast(':')
             taskName.contains("release", ignoreCase = true) || taskName.startsWith("publish")
         }
     }
+
+    // Characters not allowed in project and task names, plus `.` used in test filters.
+    private const val INVALID_TASK_PATH_CHARACTERS = "/\\<>\"?*|."
 
     fun runTaskDuringSync(project: Project, vararg paths: Any) {
         if (!invokedByIdeSync()) return

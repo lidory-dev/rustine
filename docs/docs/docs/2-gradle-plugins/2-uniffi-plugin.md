@@ -30,8 +30,7 @@ uniffi {
         // will be automatically selected.
         build = RustAndroidTarget.Arm64
         // The variant of the build that makes the library to use. If unspecified, the UniFFI plugin automatically picks
-        // one. For Android builds in `com.android.kotlin.multiplatform.library` modules, the default is
-        // `cargo.androidVariant`, which avoids building another variant only to generate bindings.
+        // one.
         variant = Variant.Debug
     }
 }
@@ -73,11 +72,12 @@ See [Requirements](./0-plugins.md#requirements) for details.
 
 In Kotlin Multiplatform modules using `com.android.kotlin.multiplatform.library`, the bindings and
 the dependencies required by the bindings are added to Kotlin source sets like `commonMain` and
-`androidMain`, as in the other Kotlin Multiplatform targets. As the Android library has a single
-variant, the bindings are generated from the Android build of the variant selected
-by [`androidVariant`](./1-cargo-plugin.md#be-careful-of-the-build-variant-used-during-publishing)
-by default. If you set `variant` to another value, the UniFFI plugin builds that variant of the
-Android build as well to generate bindings.
+`androidMain`, as in the other Kotlin Multiplatform targets. As in the other Android modules, the
+bindings are generated from the debug Android build by default, even when the release build is
+embedded into the library because of
+[`androidVariant`](./1-cargo-plugin.md#be-careful-of-the-build-variant-used-during-publishing).
+This keeps bindings generation working when the release profile strips symbols, which UniFFI reads
+the metadata from.
 
 In `com.android.application` and `com.android.library` modules, which use the built-in Kotlin
 support of the Android Gradle plugin, Kotlin source sets are not available. The UniFFI plugin adds

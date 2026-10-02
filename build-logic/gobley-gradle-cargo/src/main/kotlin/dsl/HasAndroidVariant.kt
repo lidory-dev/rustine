@@ -13,10 +13,10 @@ interface HasAndroidVariant {
     /**
      * The variant to embed into Android modules without build types, which are Kotlin
      * Multiplatform libraries using the `com.android.kotlin.multiplatform.library` plugin.
-     * Defaults to [Variant.Release] when a task requested in the command line looks like a release
-     * build or a publishing task (its name contains `release` or starts with `publish`, e.g.,
-     * `assembleRelease`, `bundleRelease`, or `publishToMavenLocal`), and to [Variant.Debug]
-     * otherwise. Setting this will override the `androidVariant` properties in outer blocks. For
+     * Defaults to [Variant.Release] when a task requested in the command line of the root build
+     * looks like a release build or a publishing task (its name contains `release` or starts with
+     * `publish`, e.g., `assembleRelease`, `bundleRelease`, or `publishToMavenLocal`), and to
+     * [Variant.Debug] otherwise. Setting this will override the `androidVariant` properties in outer blocks. For
      * example, in the following DSL:
      * ```kotlin
      * cargo {
@@ -31,9 +31,6 @@ interface HasAndroidVariant {
      * This property is ignored in `com.android.application` and `com.android.library` modules,
      * where the build type of each Android variant decides the variant: [Variant.Debug] when the
      * name of the build type contains `debug`, and [Variant.Release] otherwise.
-     *
-     * In modules without build types, the UniFFI plugin also uses this variant of the Android build
-     * to generate bindings unless another variant is specified.
      *
      * Since the default value depends on the requested task names, tasks requested in other ways
      * (e.g., `./gradlew build`, `./gradlew assemble`, or abbreviated task names) use
