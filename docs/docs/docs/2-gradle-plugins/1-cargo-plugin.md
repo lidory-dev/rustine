@@ -43,8 +43,8 @@ cargo {
 ## The Cargo plugin only builds for required platforms
 
 Cargo build tasks are configured as the corresponding Kotlin target is added in the `kotlin {}`
-block. For example, if you don't invoke `androidTarget()` in `kotlin {}`, the Cargo plugin won't
-configure the Android build task as well.
+block. For example, if your project doesn't target Android, the Cargo plugin won't configure the
+Android build task as well.
 
 ```kotlin
 cargo {
@@ -65,15 +65,31 @@ The Cargo plugin scans all the Rust dependencies using [
 source files including those in dependencies defined in the Cargo manifest, the Cargo plugin will
 rebuild the Cargo project.
 
-## Changing the NDK version used to build Android binaries
+## Building for Android
 
-For Android builds, the Cargo plugin automatically determines the SDK and the NDK to use based on
-the property values of the `android {}` block. To use different a NDK version, set `ndkVersion` to
-that version.
+The Cargo plugin supports `com.android.application` and `com.android.library` modules using the
+built-in Kotlin support of the Android Gradle plugin (AGP), and Kotlin Multiplatform modules using
+`com.android.kotlin.multiplatform.library`. See [Requirements](./0-plugins.md#requirements) for
+details.
+
+The Rust libraries are added to each Android variant using the
+AGP [Variant API](https://developer.android.com/build/extend-agp), so you don't have to configure
+`jniLibs` directories yourself. The Cargo plugin registers a `copyCargoJniLibs<variant name>` task
+for each Android variant, which collects the Rust libraries built for the variant. In application
+and library modules, the Cargo profile of each variant is determined by its build type. See
+[Be careful of the build variant used during publishing](#be-careful-of-the-build-variant-used-during-publishing)
+for details.
+
+### Changing the NDK version and the ABIs in application and library modules
+
+In `com.android.application` and `com.android.library` modules, the Cargo plugin automatically
+determines the SDK and the NDK to use based on the property values of the `android {}` block. AGP
+9.1 uses NDK 28.2.13676358 by default. If that version is not installed, the latest NDK installed in
+the SDK is used. To use a different NDK version, set `ndkVersion` to that version.
 
 ```kotlin
 android {
-    ndkVersion = "26.2.11394342"
+    ndkVersion = "29.0.14206865"
 }
 ```
 
@@ -88,6 +104,33 @@ android {
     }
 }
 ```
+
+### Changing the NDK version and the ABIs in Kotlin Multiplatform library modules
+
+`com.android.kotlin.multiplatform.library` doesn't have properties like `ndkVersion` or
+`ndk.abiFilters` in the `kotlin { android {} }` block. The Cargo plugin uses the latest NDK
+installed in the SDK (`<SDK root>/ndk/<NDK version>`). The `ndkVersion` and `ndkPath` properties of
+the `com.android.settings` plugin are not used by the Cargo plugin.
+
+By default, the Cargo plugin builds for all Android ABIs. To exclude ABIs, use
+the [`embedRustLibrary`](#controlling-the-targets-to-build) property.
+
+```kotlin
+import gobley.gradle.cargo.dsl.*
+import gobley.gradle.rust.targets.RustAndroidTarget
+
+cargo {
+    builds.android {
+        // Build for arm64-v8a and armeabi-v7a only
+        embedRustLibrary = rustTarget == RustAndroidTarget.Arm64 ||
+            rustTarget == RustAndroidTarget.ArmV7
+    }
+}
+```
+
+> :bulb: `builds.android {}` is an extension function defined in the `gobley.gradle.cargo.dsl`
+> package. Make sure it is imported, especially in Kotlin Multiplatform modules, where `android`
+> refers to other declarations as well.
 
 ## Changing the environment variables used during the build
 
@@ -291,9 +334,22 @@ cargo {
 
 kotlin {
     jvm()
-    androidTarget()
+    android {
+        withHostTest {}
+    }
 }
 ```
+
+Where the Rust library is added depends on the kind of the Android module.
+
+- In `com.android.application` and `com.android.library` modules, the Rust library is added to the
+  local unit tests of each build type using the `test<build type>RuntimeOnly` configurations (e.g.,
+  `testDebugRuntimeOnly`). The debug Rust library is used when the name of the build type contains
+  `debug`, and the release Rust library is used otherwise. Note that AGP 9 enables local unit tests
+  only for the `debug` build type by default.
+- In `com.android.kotlin.multiplatform.library` modules, local unit tests are called host tests, and
+  their source set is `androidHostTest` instead of `androidUnitTest`. Host tests must be enabled
+  using `kotlin { android { withHostTest {} } }`. The debug Rust library is added to host tests.
 
 Local unit tests are successfully built even if there are no builds with `androidUnitTest` enabled,
 but you will encounter a runtime error when you invoke a Rust function from Kotlin.
@@ -307,9 +363,10 @@ When you want to build the Rust dynamic library JAR locally, you can reference t
 the `files` or the `fileTree` functions.
 
 ```kotlin
+// Kotlin Multiplatform (com.android.kotlin.multiplatform.library)
 kotlin {
     sourceSets {
-        getByName("androidUnitTest") {
+        getByName("androidHostTest") {
             dependencies {
                 // runtimeOnly(files("<project name>-<JVM target name>-<version>-<classifier>.jar"))
                 runtimeOnly(files("foo-jvm-0.1.0-darwin-aarch64.jar"))
@@ -319,6 +376,12 @@ kotlin {
             }
         }
     }
+}
+
+// Android application or library (com.android.application or com.android.library)
+dependencies {
+    testRuntimeOnly(files("foo-jvm-0.1.0-darwin-aarch64.jar"))
+    testRuntimeOnly("net.java.dev.jna:jna:5.18.1") // required to run if you're using UniFFI
 }
 ```
 
@@ -342,7 +405,9 @@ repositories {
 
 kotlin {
     sourceSets {
-        getByName("androidUnitTest") {
+        // Use the `testRuntimeOnly` configuration in the top-level `dependencies {}` block in
+        // Android application or library modules.
+        getByName("androidHostTest") {
             dependencies {
                 // implementation("<group name>:<project name>-<JVM target name>:<version>")
                 runtimeOnly(dependencies.variantOf("com.example.foo:foo-jvm:0.1.0") {
@@ -466,13 +531,16 @@ cargo {
 
 ## Be careful of the build variant used during publishing
 
-> :bulb: The Android Gradle plugin supports multiple build variants by default, and Gobley will
-> automatically invoke the debug build for the debug variant and the release build for the release
-> variant. Custom build variants for Android are not supported yet.
+> :bulb: In `com.android.application` and `com.android.library` modules, the Android Gradle plugin
+> supports multiple build variants, and Gobley automatically chooses the Cargo build by the build
+> type of each Android variant. When the name of the build type contains `debug` (ignoring case),
+> the debug build is used. Otherwise, the release build is used. For example, the `debug` build type
+> uses the debug build, and the `release` and the custom `staging` build types use the release
+> build. Product flavors don't affect this.
 
 For scenarios where the variant to use can't be chosen automatically, Gobley provides `jvmVariant`,
-`jvmPublishingVariant`, and `nativeVariant`. These properties can be configured inside the
-`cargo {}` or the `builds {}` blocks.
+`jvmPublishingVariant`, `nativeVariant`, and `androidVariant`. These properties can be configured
+inside the `cargo {}` or the `builds {}` blocks.
 
 ```kotlin
 import gobley.gradle.Variant
@@ -482,6 +550,7 @@ cargo {
     jvmVariant = Variant.Release
     jvmPublishingVariant = Variant.Release
     nativeVariant = Variant.Debug
+    androidVariant = Variant.Release
     builds {
         jvm {
             jvmVariant = Variant.Release
@@ -489,6 +558,9 @@ cargo {
         }
         native {
             nativeVariant = Variant.Debug
+        }
+        android {
+            androidVariant = Variant.Release
         }
     }
 }
@@ -508,6 +580,20 @@ Linux, where such environment variables are not available, you should manually d
 for `nativeVariant`. Even when you build for Apple platforms, if you're just publishing a library,
 you should be careful of the value of `nativeVariant`, as it doesn't use Xcode.
 
+`androidVariant` is used in Kotlin Multiplatform modules using the
+`com.android.kotlin.multiplatform.library` plugin. As this plugin doesn't support build types, the
+Android library has a single variant, and Gobley can't choose between the debug build and the
+release build by the Android variant. `androidVariant` determines the Cargo build embedded into the
+Android library. By default, Gobley looks at the tasks requested in the command line: when the name
+of a requested task contains `release` (ignoring case) or starts with `publish`, as in
+`./gradlew :androidApp:assembleRelease`, `./gradlew :androidApp:bundleRelease`, or
+`./gradlew publishToMavenLocal`, `androidVariant` defaults to `Variant.Release`. Otherwise, it
+defaults to `Variant.Debug`. This means tasks requested in other ways, such as `./gradlew build`,
+`./gradlew assemble`, or abbreviated task names like `./gradlew aR`, use the debug Rust library even
+for the release version of an application. Set `androidVariant` explicitly in such cases. The UniFFI
+plugin also uses the Android build of this variant to generate bindings by default.
+`androidVariant` is ignored in `com.android.application` and `com.android.library` modules.
+
 You can use Gradle properties to control these values.
 
 ```kotlin
@@ -515,10 +601,21 @@ import gobley.gradle.Variant
 
 cargo {
     // When you're using Gobley in an application project
-    jvmVariant = Variant(findProperty("my.project.jvm.variant") ?: "debug")
+    jvmVariant = Variant(findProperty("my.project.jvm.variant")?.toString() ?: "debug")
     // When you build for native targets without Xcode
-    nativeVariant = Variant(findProperty("my.project.native.variant") ?: "debug")
+    nativeVariant = Variant(findProperty("my.project.native.variant")?.toString() ?: "debug")
+    // When you're using Gobley in a Kotlin Multiplatform library targeting Android. Set it only
+    // when the property is given, to keep the default based on the requested tasks otherwise.
+    findProperty("my.project.android.variant")?.let { androidVariant = Variant(it.toString()) }
 }
+```
+
+For example, to build every variant of an application module depending on a Kotlin Multiplatform
+library with the release Rust library, pass the property to Gradle. When `androidVariant` is set
+explicitly like this, the requested task names are not considered.
+
+```shell
+./gradlew :androidApp:assemble -Pmy.project.android.variant=release
 ```
 
 ## Disabling automatic installation of pre-built standard libraries

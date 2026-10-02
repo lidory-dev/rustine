@@ -21,6 +21,16 @@ Currently, Android, Kotlin/JVM, and Kotlin/Native are supported. WASM is not sup
 - KotlinX Serialization Support
 - Automatic building and linking of Rust libraries to Kotlin projects
 
+## Requirements
+
+- JDK 17 or higher.
+- Gradle 8.11 or higher.
+- For Android, the Android Gradle Plugin (AGP) 9.1 or higher, which requires Gradle 9.3.1 or
+  higher. Android modules must be either `com.android.application`/`com.android.library` modules
+  using the built-in Kotlin support of AGP, or Kotlin Multiplatform modules using
+  `com.android.kotlin.multiplatform.library`. Kotlin 2.4.0 or higher is recommended. Projects still
+  using AGP 8 should use Gobley 0.3.7 or older.
+
 ## Getting started
 
 Please read the [tutorial](https://gobley.dev/docs/tutorial) and

@@ -37,9 +37,10 @@ To build this project locally, you'll need:
 - Rust
 - Zig 0.13 (for Linux cross-compilation)
 - MinGW (GCC 13)
-- OpenJDK 17
-- Android SDK 35 with CMake (CMake is used by `:tests:gradle:android-linking`)
-- Android NDK
+- OpenJDK 17 or higher (Gradle is provided by the Gradle wrapper, which uses Gradle 9.3.1)
+- Android SDK Platform 35 and Android SDK Build-Tools 36.0.0
+- Android SDK CMake 3.22.1 (used by `:tests:gradle:android-linking`)
+- Android NDK 28.2.13676358 (the default NDK version of the Android Gradle Plugin 9.1)
 - Perl (Used to build OpenSSL by `:examples:tokio-blake3-app`)
 - Chrome (Used by WASM/JS tests in `:tests:uniffi:coverall`)
 - Visual C++ x64 & ARM64 (Windows)
@@ -51,17 +52,17 @@ for more details.
 For faster development, you can disable some unit tests and examples. Use the
 following Gradle properties to choose tests and examples to turn on and off.
 
-| Gradle property name                      | Projects                                                                 |
-|-------------------------------------------|--------------------------------------------------------------------------|
-| `gobley.projects.gradleTests`             | `:tests:gradle`                                                          |
-| `gobley.projects.uniffiTests`             | `:tests:uniffi` (except for the below two) & `:examples:custom-types`    |
-| `gobley.projects.uniffiTests.extTypes`    | `:tests:uniffi:ext-types`                                                |
-| `gobley.projects.uniffiTests.futures`     | `:tests:uniffi:futures`                                                  |
-| `gobley.projects.examples.app`            | `:examples:app`, `:examples:arithmetic-procmacro` & `:examples:todolist` |
-| `gobley.projects.examples.audioCppApp`    | `:examples:audio-cpp-app`                                                |
-| `gobley.projects.examples.customTypes`    | `:examples:custom-types`                                                 |
-| `gobley.projects.examples.tokioBlake3App` | `:examples:tokio-blake3-app`                                             |
-| `gobley.projects.examples.tokioBoringApp` | `:examples:tokio-boring-app`                                             |
+| Gradle property name                      | Projects                                                                                             |
+|-------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `gobley.projects.gradleTests`             | `:tests:gradle`                                                                                      |
+| `gobley.projects.uniffiTests`             | `:tests:uniffi` (except for the below two)                                                           |
+| `gobley.projects.uniffiTests.extTypes`    | `:tests:uniffi:ext-types` & `:examples:custom-types`                                                 |
+| `gobley.projects.uniffiTests.futures`     | `:tests:uniffi:futures`                                                                              |
+| `gobley.projects.examples.app`            | `:examples:app`, `:examples:app:androidApp`, `:examples:arithmetic-procmacro` & `:examples:todolist` |
+| `gobley.projects.examples.audioCppApp`    | `:examples:audio-cpp-app` & `:examples:audio-cpp-app:androidApp`                                     |
+| `gobley.projects.examples.customTypes`    | `:examples:custom-types`                                                                             |
+| `gobley.projects.examples.tokioBlake3App` | `:examples:tokio-blake3-app` & `:examples:tokio-blake3-app:androidApp`                               |
+| `gobley.projects.examples.tokioBoringApp` | `:examples:tokio-boring-app` & `:examples:tokio-boring-app:androidApp`                               |
 
 These following properties are already in `gradle.properties`. Simply replace
 `=true` to `=false` to turn them off.

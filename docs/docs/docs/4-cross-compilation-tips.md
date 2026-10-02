@@ -567,11 +567,13 @@ cargo {
 
 Starting from Android 15, AOSP allows devices to use a page size of 16 KB. You should configure
 the linker to use a 16 KB page size to properly handle this. If you're using NDK r28 or higher,
-NDK will handle this automatically.
+NDK will handle this automatically. The Android Gradle plugin 9.1 uses NDK r28c (28.2.13676358) by
+default.
 
 ### How to check the NDK version
 
-You can get the NDK version you're using via `android.ndkVersion`.
+In `com.android.application` and `com.android.library` modules, you can get the NDK version you're
+using via `android.ndkVersion`.
 
 ```kotlin
 println("ndkVersion: ${android.ndkVersion}")
@@ -579,15 +581,23 @@ println("ndkVersion: ${android.ndkVersion}")
 
 ```
 > Configure project :your-project
-ndkVersion: 27.0.12077973
+ndkVersion: 28.2.13676358
 ```
 
 If the above code reports NDK r27 or lower, you can set the NDK version using the same property.
 
 ```kotlin
 android {
-    ndkVersion = "28.0.13004108"
+    ndkVersion = "28.2.13676358"
 }
+```
+
+In Kotlin Multiplatform modules using `com.android.kotlin.multiplatform.library`, the Cargo plugin
+uses the latest NDK installed in the SDK (`<SDK root>/ndk/<NDK version>`). Make sure NDK r28 or
+higher is installed using the SDK Manager of Android Studio or `sdkmanager`.
+
+```shell
+sdkmanager --install "ndk;28.2.13676358"
 ```
 
 ### Manually configuring the page size
@@ -863,6 +873,19 @@ android {
 }
 ```
 
+In Kotlin Multiplatform modules using `com.android.kotlin.multiplatform.library`, the same property
+is in the `kotlin { android { packaging { jniLibs {} } } }` block.
+
+```kotlin
+kotlin {
+    android {
+        packaging {
+            jniLibs.keepDebugSymbols += "**/*.so"
+        }
+    }
+}
+```
+
 Both Cargo and the AGP uses the `llvm-strip` command in the NDK to strip debug information and
 symbol names. Specifically,
 Cargo [uses](https://github.com/rust-lang/rust/blob/17067e9ac6d7ecb70e50f92c1944e545188d2359/compiler/rustc_codegen_ssa/src/back/linker.rs#L736-L748)
@@ -953,6 +976,32 @@ android {
     packaging {
         jniLibs.keepDebugSymbols += "**/*.so"
     }
+    // Keep the debug information
+    buildTypes {
+        release {
+            ndk.debugSymbolLevel = "FULL"
+        }
+    }
+}
+```
+
+`com.android.kotlin.multiplatform.library` doesn't support build types. When your library is a
+Kotlin Multiplatform library, configure `packaging` in the `kotlin { android {} }` block, and
+`ndk.debugSymbolLevel` in the build types of the application module consuming the library.
+
+```kotlin
+// The Kotlin Multiplatform library module
+kotlin {
+    android {
+        // Don't strip .so files
+        packaging {
+            jniLibs.keepDebugSymbols += "**/*.so"
+        }
+    }
+}
+
+// The application module
+android {
     // Keep the debug information
     buildTypes {
         release {

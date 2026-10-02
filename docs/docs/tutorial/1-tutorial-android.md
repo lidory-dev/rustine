@@ -46,6 +46,14 @@ Let's first create a new Android project.
 
 6. Click the **Finish** button, and the project will open.
 
+New projects created by recent versions of Android Studio use the Android Gradle plugin (AGP) 9,
+which compiles Kotlin by itself using
+the [built-in Kotlin support](https://developer.android.com/build/migrate-to-built-in-kotlin). That's
+why `app/build.gradle.kts` doesn't apply the `org.jetbrains.kotlin.android` plugin. Gobley works
+directly with built-in Kotlin, so you don't have to add it. If your project still uses AGP 8 and
+`org.jetbrains.kotlin.android`, see
+[Migrating to AGP 9](../docs/2-gradle-plugins/0-plugins.md#migrating-to-agp-9).
+
 ## Adding Rust to your Android project
 
 Let's add a Cargo package to the Android project.
@@ -120,6 +128,9 @@ Let's add a Cargo package to the Android project.
    }
    ```
 
+   > :exclamation: AGP 9.1 support was added after Gobley 0.3.7. Please use a version of Gobley
+   > that supports AGP 9.1. See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
+   >
    > :exclamation: Consider managing plugin dependencies using
    > [version catalogs](https://docs.gradle.org/current/userguide/version_catalogs.html).
    >

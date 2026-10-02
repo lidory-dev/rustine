@@ -52,6 +52,16 @@ for more details about how Kotlin Multiplatform works.
 
 ![The Android Studio screen after opening the downloaded project](./0-tutorial/img-1.png)
 
+The generated project uses the Android Gradle plugin (AGP) 9. The code shared between Android and
+iOS is located in the `shared` module, which is a Kotlin Multiplatform library using the
+`com.android.kotlin.multiplatform.library` plugin. The Android app is located in a separate
+`androidApp` module depending on `shared`. We'll add Rust to the `shared` module.
+
+> :bulb: The screenshots in this tutorial were taken with an older version of the wizard, which
+> generated a single `composeApp` module containing both the shared code and the Android app. If
+> your project still has that layout, please migrate it to AGP 9 first. See
+> [Migrating to AGP 9](../docs/2-gradle-plugins/0-plugins.md#migrating-to-agp-9) for details.
+
 ## Adding Rust to your Kotlin Multiplatform project
 
 Let's add a Cargo package to the Kotlin Multiplatform project.
@@ -60,41 +70,42 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
 2. Open the **Terminal** menu in Android Studio or IntelliJ IDEA. Run:
 
    ```shell
-   cargo init --lib --name compose-app --vcs none composeApp
+   cargo init --lib --name shared --vcs none shared
    ```
 
    Let's see what this command does:
 
-    - `cargo init` will create a new Cargo package in `composeApp`.
+    - `cargo init` will create a new Cargo package in `shared`.
     - `--lib` means that Cargo will create a **library** crate.
-    - `--name compose-app` means that the name of the resulting Cargo package will be `compose-app`.
-      Cargo doesn't like camelCase.
+    - `--name shared` means that the name of the resulting Cargo package will be `shared`. If your
+      module has a camelCase name like `sharedUI`, use a kebab-case name like `shared-ui`. Cargo
+      doesn't like camelCase.
     - `--vcs none` means you don't want to generate `.git` or `.gitignore`.
-    - `composeApp` is the directory where we'll code both in Rust and Kotlin.
+    - `shared` is the directory where we'll code both in Rust and Kotlin.
 
    After running this command, the following files should be generated:
 
-    - `composeApp/Cargo.toml`: This file contains the definition of the Cargo package.
-    - `composeApp/src/lib.rs`: The Rust source code file.
+    - `shared/Cargo.toml`: This file contains the definition of the Cargo package.
+    - `shared/src/lib.rs`: The Rust source code file.
 
 3. Add `**/target/` to `.gitignore`.
 
    > :bulb: This is the folder where Cargo stores the build intermediate files and the final Rust
    > library.
 
-4. (Optional) Move `composeApp/src/lib.rs` to `composeApp/src/commonMain/rust/lib.rs`.
+4. (Optional) Move `shared/src/lib.rs` to `shared/src/commonMain/rust/lib.rs`.
 
    ![The Android Studio screen after moving lib.rs](./0-tutorial/img-2.png)
 
    > :bulb: When you use CMake in an Android project, C++ source files are usually located in
    > `src/main/cpp`. This procedure imitates that behavior. It feels more organized, isn't it?
 
-5. Modify `composeApp/Cargo.toml` like the following.
+5. Modify `shared/Cargo.toml` like the following.
 
    ```toml
    # This part is already added by cargo init.
    [package]
-   name = "compose-app"
+   name = "shared"
    version = "0.1.0"
    edition = "2024"
 
@@ -118,17 +129,24 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
       library file when building for iOS, and the dynamic library file for Android.
     - `path = "src/commonMain/rust/lib.rs"` designates the path to the Rust source code.
 
-6. Modify `composeApp/build.gradle.kts` like the following.
+6. Modify `shared/build.gradle.kts` like the following.
 
    ```kotlin
    plugins {
-       // Other plugins here
+       // Other plugins here, including com.android.kotlin.multiplatform.library
        id("dev.gobley.cargo") version "0.3.7"
        id("dev.gobley.uniffi") version "0.3.7"
        kotlin("plugin.atomicfu") version libs.versions.kotlin
    }
    ```
 
+   > :exclamation: Apply the Gobley plugins to the `shared` module, not to the `androidApp`
+   > module. The Rust library embedded into `shared` is included in the Android app through the
+   > dependency on `shared`.
+   >
+   > :exclamation: AGP 9.1 support was added after Gobley 0.3.7. Please use a version of Gobley
+   > that supports AGP 9.1. See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
+   >
    > :exclamation: Consider managing plugin dependencies using
    > [version catalogs](https://docs.gradle.org/current/userguide/version_catalogs.html).
    >
@@ -141,10 +159,15 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
       the bindings inside the `uniffi {}` block.
     - `org.jetbrains.kotlin.plugin.atomicfu` is to use atomic types used by the bindings.
 
+   > :warning: As `com.android.kotlin.multiplatform.library` doesn't have build types, the Cargo
+   > plugin embeds the debug build of the Rust library into `shared` by default, even when you
+   > build a release version of the Android app. Before releasing your app,
+   > read [Be careful of the build variant used during publishing](../docs/2-gradle-plugins/1-cargo-plugin.md#be-careful-of-the-build-variant-used-during-publishing).
+
 We're now ready to code both in Rust and Kotlin!
 
 > :question: If you hit the **Sync Now** button at this point, you'll get a
-> `Crate compose_app not found in libcompose_app.so` error. That's because you haven't used
+> `Crate shared not found in libshared.so` error. That's because you haven't used
 > `uniffi::setup_scaffolding!();` inside the Rust code. If you encountered such an error, go
 > straight to the next step. 
 
@@ -152,12 +175,12 @@ We're now ready to code both in Rust and Kotlin!
 
 ## Defining and exposing Rust types and functions
 
-Now is the time to code in Rust. Open `composeApp` in Visual Studio Code.
+Now is the time to code in Rust. Open `shared` in Visual Studio Code.
 
 ```shell
-code ./composeApp
+code ./shared
 # or on macOS
-open -a "Visual Studio Code" ./composeApp
+open -a "Visual Studio Code" ./shared
 ```
 
 Once `rust-analyzer` is ready, you can see highlightings and inlay hints in the code editor. Modify
@@ -202,14 +225,15 @@ on the Kotlin side. Go back to Android Studio and press the **Sync Now** button.
 ![The Android Studio screen before pressing the Sync Now button](./0-tutorial/img-5.png)
 
 Cargo will start
-building the Rust library inside Android Studio. After the build completes, open
-`composeApp/src/commonMain/dev/gobley/myfirstproject/App.kt`. Add the following lines to the part
-you prefer:
+building the Rust library inside Android Studio. After the build completes, open `App.kt` in the
+`commonMain` source set of the `shared` module (e.g.,
+`shared/src/commonMain/kotlin/dev/gobley/myfirstproject/App.kt`). Add the following lines to the
+part you prefer:
 
 ```kotlin
 Column {
-    Text("Addition using Rust: 2 + 3 = ${uniffi.compose_app.add(2, 3)}")
-    val greeting = remember { uniffi.compose_app.Greeter("Hello") }
+    Text("Addition using Rust: 2 + 3 = ${uniffi.shared.add(2, 3)}")
+    val greeting = remember { uniffi.shared.Greeter("Hello") }
     Text(greeting.greet("Rust"))
     DisposableEffect(greeting) {
         onDispose {
@@ -224,9 +248,9 @@ Column {
 `Greeter` and `add` exported on the Rust side are accessible on the Kotlin side! Doc-comments are
 also available, so you don't have to write the same description twice.
 
-Let's run the Android app. Hit the Run button on the upper right corner of the screen. You can see
-the Rust library is included in the final app automatically, and the app communicates with Rust
-without any issues.
+Let's run the Android app. Select the `androidApp` run configuration and hit the Run button on the
+upper right corner of the screen. You can see the Rust library is included in the final app
+automatically, and the app communicates with Rust without any issues.
 
 Let's run the iOS app as well. Open `iosApp/iosApp.xcodeproj` in Xcode. Run:
 

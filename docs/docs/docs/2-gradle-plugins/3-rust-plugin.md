@@ -81,3 +81,35 @@ plugins {
     id("dev.gobley.rust") version "0.3.7"
 }
 ```
+
+The Rust library built for the build host is added to the Android local unit tests of the Cargo
+project and the projects depending on it as follows.
+
+- In `com.android.application` and `com.android.library` modules, the library is added to the
+  local unit tests of each build type, such as `testDebugUnitTest`. By default, AGP 9 enables local
+  unit tests only for the `debug` build type.
+- In Kotlin Multiplatform modules using `com.android.kotlin.multiplatform.library`, the library is
+  added to host tests, whose source set is `androidHostTest`. Host tests are not enabled by default,
+  so enable them using `withHostTest {}`.
+
+```kotlin
+plugins {
+    kotlin("multiplatform")
+    id("com.android.kotlin.multiplatform.library")
+    id("dev.gobley.rust") version "0.3.7"
+}
+
+kotlin {
+    android {
+        // ...
+        withHostTest {}
+    }
+    sourceSets {
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
+}
+```
