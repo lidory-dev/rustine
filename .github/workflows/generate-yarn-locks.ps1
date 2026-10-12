@@ -7,7 +7,7 @@ for ($idx = 0; $idx -lt 8; ++$idx) {
     $examples =    if (($idx -band 4) -ne 0) { "true" } else { "false" };
 
     ./gradlew :kotlinUpgradeYarnLock :kotlinWasmUpgradeYarnLock `
-        "-Pgobley.projects.gradleTests=$gradleTests" `
-        "-Pgobley.projects.uniffiTests=$uniffiTests" `
-        "-Pgobley.projects.examples=$examples";
+        "-Prustine.projects.gradleTests=$gradleTests" `
+        "-Prustine.projects.uniffiTests=$uniffiTests" `
+        "-Prustine.projects.examples=$examples";
 }

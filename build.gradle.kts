@@ -16,9 +16,9 @@ fun Project.propertyIsTrue(propertyName: String, default: Boolean = true): Boole
 }
 
 yarn.apply {
-    val gradleTestsEnabled = propertyIsTrue("gobley.projects.gradleTests")
-    val uniffiTestsEnabled = propertyIsTrue("gobley.projects.uniffiTests")
-    val examplesEnabled = propertyIsTrue("gobley.projects.examples")
+    val gradleTestsEnabled = propertyIsTrue("rustine.projects.gradleTests")
+    val uniffiTestsEnabled = propertyIsTrue("rustine.projects.uniffiTests")
+    val examplesEnabled = propertyIsTrue("rustine.projects.examples")
     val postfix = when {
         gradleTestsEnabled && uniffiTestsEnabled && examplesEnabled -> ""
         !gradleTestsEnabled && !uniffiTestsEnabled && !examplesEnabled -> "-none"

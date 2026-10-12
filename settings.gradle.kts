@@ -22,7 +22,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "gobley"
+rootProject.name = "rustine"
 
 fun ExtraPropertiesExtension.propertyIsTrue(propertyName: String, default: Boolean = true): Boolean {
     if (!has(propertyName)) return default
@@ -30,7 +30,7 @@ fun ExtraPropertiesExtension.propertyIsTrue(propertyName: String, default: Boole
     return propertyValue == "true" || propertyValue == "1"
 }
 
-if (ext.propertyIsTrue("gobley.projects.gradleTests")) {
+if (ext.propertyIsTrue("rustine.projects.gradleTests")) {
     include(":tests:gradle:android-application")
     include(":tests:gradle:android-application-plain-dep")
     include(":tests:gradle:android-linking")
@@ -39,7 +39,7 @@ if (ext.propertyIsTrue("gobley.projects.gradleTests")) {
     include(":tests:gradle:jvm-only")
 }
 
-if (ext.propertyIsTrue("gobley.projects.uniffiTests")) {
+if (ext.propertyIsTrue("rustine.projects.uniffiTests")) {
     include(":tests:uniffi:callbacks")
     include(":tests:uniffi:chronological")
     include(":tests:uniffi:coverall")
@@ -62,7 +62,7 @@ if (ext.propertyIsTrue("gobley.projects.uniffiTests")) {
     include(":tests:uniffi:type-limits")
 }
 // Run :tests:uniffi:ext-types separately
-if (ext.propertyIsTrue("gobley.projects.uniffiTests.extTypes")) {
+if (ext.propertyIsTrue("rustine.projects.uniffiTests.extTypes")) {
     // Required by ext-types and ext-types-proc-macro
     include(":examples:custom-types")
     include(":tests:uniffi:ext-types:custom-types")
@@ -73,28 +73,28 @@ if (ext.propertyIsTrue("gobley.projects.uniffiTests.extTypes")) {
     include(":tests:uniffi:ext-types:uniffi-one")
 }
 // Run :tests:uniffi:futures separately
-if (ext.propertyIsTrue("gobley.projects.uniffiTests.futures")) {
+if (ext.propertyIsTrue("rustine.projects.uniffiTests.futures")) {
     include(":tests:uniffi:futures")
 }
 
-if (ext.propertyIsTrue("gobley.projects.examples.app")) {
+if (ext.propertyIsTrue("rustine.projects.examples.app")) {
     include(":examples:app")
     include(":examples:app:androidApp")
     include(":examples:arithmetic-procmacro")
     include(":examples:todolist")
 }
-if (ext.propertyIsTrue("gobley.projects.examples.audioCppApp")) {
+if (ext.propertyIsTrue("rustine.projects.examples.audioCppApp")) {
     include(":examples:audio-cpp-app")
     include(":examples:audio-cpp-app:androidApp")
 }
-if (ext.propertyIsTrue("gobley.projects.examples.customTypes")) {
+if (ext.propertyIsTrue("rustine.projects.examples.customTypes")) {
     include(":examples:custom-types")
 }
-if (ext.propertyIsTrue("gobley.projects.examples.tokioBlake3App")) {
+if (ext.propertyIsTrue("rustine.projects.examples.tokioBlake3App")) {
     include(":examples:tokio-blake3-app")
     include(":examples:tokio-blake3-app:androidApp")
 }
-if (ext.propertyIsTrue("gobley.projects.examples.tokioBoringApp")) {
+if (ext.propertyIsTrue("rustine.projects.examples.tokioBoringApp")) {
     include(":examples:tokio-boring-app")
     include(":examples:tokio-boring-app:androidApp")
 }

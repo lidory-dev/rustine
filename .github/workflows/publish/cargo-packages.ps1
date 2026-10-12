@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop";
 $PSNativeCommandUseErrorActionPreference = $true;
 
 ${env:RUSTFLAGS} = "-D warnings";
-cargo login "${env:GOBLEY_CRATES_IO_API_TOKEN}";
+cargo login "${env:RUSTINE_CRATES_IO_API_TOKEN}";
 
 $packageNames = @(
     "rustine-uniffi-bindgen",

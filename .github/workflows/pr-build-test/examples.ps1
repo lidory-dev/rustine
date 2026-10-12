@@ -16,25 +16,25 @@ foreach ($testName in $TestNames) {
 }
 $arguments = $knownTests | % {
     $enable = ($TestNames -contains $_).ToString().ToLower();
-    "-Pgobley.projects.examples.${_}=$enable"
+    "-Prustine.projects.examples.${_}=$enable"
 };
 
 try {
     ./gradlew build `
         $arguments `
-        "-Pgobley.projects.gradleTests=false" `
-        "-Pgobley.projects.uniffiTests=false" `
-        "-Pgobley.projects.uniffiTests.extTypes=false" `
-        "-Pgobley.projects.uniffiTests.futures=false";
+        "-Prustine.projects.gradleTests=false" `
+        "-Prustine.projects.uniffiTests=false" `
+        "-Prustine.projects.uniffiTests.extTypes=false" `
+        "-Prustine.projects.uniffiTests.futures=false";
 } finally {
     ./.github/workflows/pr-build-test/copy-test-result.ps1;
     ./gradlew --stop;
     ./gradlew clean `
         $arguments `
-        "-Pgobley.projects.gradleTests=false" `
-        "-Pgobley.projects.uniffiTests=false" `
-        "-Pgobley.projects.uniffiTests.extTypes=false" `
-        "-Pgobley.projects.uniffiTests.futures=false";
+        "-Prustine.projects.gradleTests=false" `
+        "-Prustine.projects.uniffiTests=false" `
+        "-Prustine.projects.uniffiTests.extTypes=false" `
+        "-Prustine.projects.uniffiTests.futures=false";
     ./.github/workflows/pr-build-test/change-file-owner.ps1;
 }
 

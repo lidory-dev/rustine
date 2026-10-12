@@ -34,7 +34,7 @@ assignees: []
 > Provide the information about your build and runtime environment. For
 > information irrelevant to the bug, please put N/A.
 
-- **Gobley version**: [e.g., 0.1.0]
+- **Rustine version**: [e.g., 0.1.0]
 - **Runtime OS**: [e.g., Windows 11, macOS 15, Ubuntu 24.10, Android 15, iOS 18]
 - **Build host OS**: [e.g., Windows 11, macOS 15, Ubuntu 24.10]
 - **Gradle version**: [e.g., 8.12]

@@ -5,25 +5,25 @@ $PSNativeCommandUseErrorActionPreference = $true;
 
 try {
     ./gradlew build `
-        "-Pgobley.projects.uniffiTests=false" `
-        "-Pgobley.projects.uniffiTests.extTypes=false" `
-        "-Pgobley.projects.uniffiTests.futures=false" `
-        "-Pgobley.projects.examples.app=false" `
-        "-Pgobley.projects.examples.audioCppApp=false" `
-        "-Pgobley.projects.examples.customTypes=false" `
-        "-Pgobley.projects.examples.tokioBlake3App=false" `
-        "-Pgobley.projects.examples.tokioBoringApp=false";
+        "-Prustine.projects.uniffiTests=false" `
+        "-Prustine.projects.uniffiTests.extTypes=false" `
+        "-Prustine.projects.uniffiTests.futures=false" `
+        "-Prustine.projects.examples.app=false" `
+        "-Prustine.projects.examples.audioCppApp=false" `
+        "-Prustine.projects.examples.customTypes=false" `
+        "-Prustine.projects.examples.tokioBlake3App=false" `
+        "-Prustine.projects.examples.tokioBoringApp=false";
 } finally {
     ./.github/workflows/pr-build-test/copy-test-result.ps1;
     ./gradlew --stop;
     ./gradlew clean `
-        "-Pgobley.projects.uniffiTests=false" `
-        "-Pgobley.projects.uniffiTests.extTypes=false" `
-        "-Pgobley.projects.uniffiTests.futures=false" `
-        "-Pgobley.projects.examples.app=false" `
-        "-Pgobley.projects.examples.audioCppApp=false" `
-        "-Pgobley.projects.examples.customTypes=false" `
-        "-Pgobley.projects.examples.tokioBlake3App=false" `
-        "-Pgobley.projects.examples.tokioBoringApp=false";
+        "-Prustine.projects.uniffiTests=false" `
+        "-Prustine.projects.uniffiTests.extTypes=false" `
+        "-Prustine.projects.uniffiTests.futures=false" `
+        "-Prustine.projects.examples.app=false" `
+        "-Prustine.projects.examples.audioCppApp=false" `
+        "-Prustine.projects.examples.customTypes=false" `
+        "-Prustine.projects.examples.tokioBlake3App=false" `
+        "-Prustine.projects.examples.tokioBoringApp=false";
     ./.github/workflows/pr-build-test/change-file-owner.ps1;
 }

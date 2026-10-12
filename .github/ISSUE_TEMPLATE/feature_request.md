@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Help us improve and enhance Gobley
+about: Help us improve and enhance Rustine
 title: ''
 labels: ['enhancement']
 type: 'Feature'

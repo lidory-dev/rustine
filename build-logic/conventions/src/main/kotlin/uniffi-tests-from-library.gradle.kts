@@ -15,11 +15,11 @@ uniffi {
     generateFromLibrary {
         namespace = name.replace('-', '_')
         generateImmutableRecords =
-            propertyIsTrue("gobley.projects.uniffiTests.generateImmutableRecords", false)
+            propertyIsTrue("rustine.projects.uniffiTests.generateImmutableRecords", false)
         omitChecksums =
-            propertyIsTrue("gobley.projects.uniffiTests.omitChecksums", false)
+            propertyIsTrue("rustine.projects.uniffiTests.omitChecksums", false)
         @OptIn(InternalRustineGradleApi::class)
         enableJnaInterfaceMapping =
-            propertyIsTrue("gobley.projects.uniffiTests.enableJnaInterfaceMapping", false)
+            propertyIsTrue("rustine.projects.uniffiTests.enableJnaInterfaceMapping", false)
     }
 }

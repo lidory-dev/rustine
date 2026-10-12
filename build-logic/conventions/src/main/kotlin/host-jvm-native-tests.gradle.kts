@@ -20,7 +20,7 @@ fun Project.propertyIsTrue(propertyName: String, default: Boolean = true): Boole
 }
 
 kotlin {
-    if (propertyIsTrue("gobley.projects.jvmTests")) {
+    if (propertyIsTrue("rustine.projects.jvmTests")) {
         jvmToolchain(17)
         jvm()
         // Gradle 9 no longer provides the JUnit Platform launcher implicitly.
@@ -28,7 +28,7 @@ kotlin {
             runtimeOnly(libs.junit.platform.launcher)
         }
     }
-    if (propertyIsTrue("gobley.projects.nativeTests")) {
+    if (propertyIsTrue("rustine.projects.nativeTests")) {
         hostNativeTarget {
             if (RustineHost.Platform.Windows.isCurrent) {
                 compilations.getByName("test") {

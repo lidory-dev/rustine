@@ -1,5 +1,5 @@
-> Thank you for taking the time to improve and enhance Gobley! If this is your
-> first time contributing to Gobley, Please read `CONTRIBUTING.md` before
+> Thank you for taking the time to improve and enhance Rustine! If this is your
+> first time contributing to Rustine, Please read `CONTRIBUTING.md` before
 > creating a PR.
 >
 > Please DO NOT use AI to generate the content of this pull request. If you're
