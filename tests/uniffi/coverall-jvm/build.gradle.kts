@@ -1,17 +1,17 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.jvm
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.jvm
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm")
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
 }
 
 cargo {
     builds.jvm {
-        embedRustLibrary = rustTarget == GobleyHost.current.rustTarget
+        embedRustLibrary = rustTarget == RustineHost.current.rustTarget
     }
 }
 

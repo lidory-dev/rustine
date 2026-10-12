@@ -1,4 +1,4 @@
-import gobley.gradle.InternalGobleyGradleApi
+import rustine.gradle.InternalRustineGradleApi
 import org.gradle.api.Project
 
 plugins {
@@ -18,7 +18,7 @@ uniffi {
             propertyIsTrue("gobley.projects.uniffiTests.generateImmutableRecords", false)
         omitChecksums =
             propertyIsTrue("gobley.projects.uniffiTests.omitChecksums", false)
-        @OptIn(InternalGobleyGradleApi::class)
+        @OptIn(InternalRustineGradleApi::class)
         enableJnaInterfaceMapping =
             propertyIsTrue("gobley.projects.uniffiTests.enableJnaInterfaceMapping", false)
     }

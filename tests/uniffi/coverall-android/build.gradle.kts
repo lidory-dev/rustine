@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
     alias(libs.plugins.android.library)
 }

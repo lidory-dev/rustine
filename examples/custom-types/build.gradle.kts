@@ -1,14 +1,14 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.android
-import gobley.gradle.rust.dsl.useRustUpLinker
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.android
+import rustine.gradle.rust.dsl.useRustUpLinker
+import rustine.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.rust")
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.rust")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
     alias(libs.plugins.android.kotlin.multiplatform.library)
 }
@@ -68,7 +68,7 @@ kotlin {
     androidNativeX86()
     linuxX64()
     linuxArm64()
-    if (GobleyHost.Platform.MacOS.isCurrent) {
+    if (RustineHost.Platform.MacOS.isCurrent) {
         iosArm64()
         iosSimulatorArm64()
         iosX64()

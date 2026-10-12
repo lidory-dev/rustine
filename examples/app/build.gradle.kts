@@ -1,12 +1,12 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.rust.dsl.useRustUpLinker
+import rustine.gradle.RustineHost
+import rustine.gradle.rust.dsl.useRustUpLinker
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.Architecture
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.rust")
+    id("dev.lidory.rustine.rust")
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.compiler)
 }
@@ -133,10 +133,10 @@ kotlin {
     ).forEach {
         it.binaries.configureEach {
             // Find the directory containing libunwind.a
-            val ndkHostTag = when (GobleyHost.Platform.current) {
-                GobleyHost.Platform.Windows -> "windows-x86_64"
-                GobleyHost.Platform.MacOS -> "darwin-x86_64"
-                GobleyHost.Platform.Linux -> "linux-x86_64"
+            val ndkHostTag = when (RustineHost.Platform.current) {
+                RustineHost.Platform.Windows -> "windows-x86_64"
+                RustineHost.Platform.MacOS -> "darwin-x86_64"
+                RustineHost.Platform.Linux -> "linux-x86_64"
             }
             val architecture = it.konanTarget.architecture
             // Resolve the NDK directory lazily, only when a link task is scheduled. This is the
@@ -195,7 +195,7 @@ kotlin {
     //     }
     // }
 
-    if (GobleyHost.Platform.MacOS.isCurrent) {
+    if (RustineHost.Platform.MacOS.isCurrent) {
         arrayOf(
             macosArm64(),
             macosX64(),

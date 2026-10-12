@@ -1,10 +1,10 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.rust.dsl.hostNativeTarget
-import gobley.gradle.rust.dsl.useRustUpLinker
+import rustine.gradle.RustineHost
+import rustine.gradle.rust.dsl.hostNativeTarget
+import rustine.gradle.rust.dsl.useRustUpLinker
 import org.gradle.accessors.dm.*
 
 plugins {
-    id("dev.gobley.rust")
+    id("dev.lidory.rustine.rust")
     kotlin("multiplatform")
     kotlin("plugin.atomicfu")
 }
@@ -30,7 +30,7 @@ kotlin {
     }
     if (propertyIsTrue("gobley.projects.nativeTests")) {
         hostNativeTarget {
-            if (GobleyHost.Platform.Windows.isCurrent) {
+            if (RustineHost.Platform.Windows.isCurrent) {
                 compilations.getByName("test") {
                     useRustUpLinker()
                 }

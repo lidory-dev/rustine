@@ -1,10 +1,10 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.android
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.android
+import rustine.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("dev.gobley.cargo")
+    id("dev.lidory.rustine.cargo")
     alias(libs.plugins.android.library)
 }
 
@@ -29,10 +29,10 @@ val androidSdkCMakeDirectory = androidComponents.sdkComponents.sdkDirectory.map 
         ?.resolve("bin") ?: error("CMake is not installed in Android SDK")
 }
 val androidSdkCMake = androidSdkCMakeDirectory.map {
-    it.resolve(GobleyHost.Platform.current.convertExeName("cmake"))
+    it.resolve(RustineHost.Platform.current.convertExeName("cmake"))
 }
 val androidSdkNinja = androidSdkCMakeDirectory.map {
-    it.resolve(GobleyHost.Platform.current.convertExeName("ninja"))
+    it.resolve(RustineHost.Platform.current.convertExeName("ninja"))
 }
 val androidNdkDirectory = androidComponents.sdkComponents.ndkDirectory.map { it.asFile }
 val anotherCustomCppLibraryBuildTasks = androidTargets.associateWith {

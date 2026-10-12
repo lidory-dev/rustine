@@ -1,0 +1,358 @@
+public final class rustine/gradle/AppleSdk$Arch : java/lang/Enum {
+	public static final field Arm64 Lrustine/gradle/AppleSdk$Arch;
+	public static final field Arm64_32 Lrustine/gradle/AppleSdk$Arch;
+	public static final field Arm64e Lrustine/gradle/AppleSdk$Arch;
+	public static final field Armv7k Lrustine/gradle/AppleSdk$Arch;
+	public static final field X64 Lrustine/gradle/AppleSdk$Arch;
+	public static final field X86 Lrustine/gradle/AppleSdk$Arch;
+	public final fun getActualName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/AppleSdk$Arch;
+	public static fun values ()[Lrustine/gradle/AppleSdk$Arch;
+}
+
+public final class rustine/gradle/AppleSdk$Companion {
+	public final fun Arch (Ljava/lang/String;)Lrustine/gradle/AppleSdk$Arch;
+}
+
+public final class rustine/gradle/AppleSdk$Destination : java/lang/Enum {
+	public static final field Ios Lrustine/gradle/AppleSdk$Destination;
+	public static final field IosSimulator Lrustine/gradle/AppleSdk$Destination;
+	public static final field MacOS Lrustine/gradle/AppleSdk$Destination;
+	public static final field TvOS Lrustine/gradle/AppleSdk$Destination;
+	public static final field TvOSSimulator Lrustine/gradle/AppleSdk$Destination;
+	public static final field VisionOS Lrustine/gradle/AppleSdk$Destination;
+	public static final field VisionOSSimulator Lrustine/gradle/AppleSdk$Destination;
+	public static final field WatchOS Lrustine/gradle/AppleSdk$Destination;
+	public static final field WatchOSSimulator Lrustine/gradle/AppleSdk$Destination;
+	public final fun getActualName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/AppleSdk$Destination;
+	public static fun values ()[Lrustine/gradle/AppleSdk$Destination;
+}
+
+public final class rustine/gradle/EmptyVariantValues : rustine/gradle/VariantValues {
+	public fun <init> ()V
+	public fun getDebug ()Ljava/lang/Object;
+	public fun getRelease ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface annotation class rustine/gradle/InternalRustineGradleApi : java/lang/annotation/Annotation {
+}
+
+public final class rustine/gradle/RustineHost : java/io/Serializable {
+	public static final field Companion Lrustine/gradle/RustineHost$Companion;
+	public fun <init> (Lrustine/gradle/RustineHost$Platform;Lrustine/gradle/RustineHost$Arch;)V
+	public final fun component1 ()Lrustine/gradle/RustineHost$Platform;
+	public final fun component2 ()Lrustine/gradle/RustineHost$Arch;
+	public final fun copy (Lrustine/gradle/RustineHost$Platform;Lrustine/gradle/RustineHost$Arch;)Lrustine/gradle/RustineHost;
+	public static synthetic fun copy$default (Lrustine/gradle/RustineHost;Lrustine/gradle/RustineHost$Platform;Lrustine/gradle/RustineHost$Arch;ILjava/lang/Object;)Lrustine/gradle/RustineHost;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArch ()Lrustine/gradle/RustineHost$Arch;
+	public final fun getKonanName ()Ljava/lang/String;
+	public final fun getPackageManagerInstallDirectories ()Ljava/util/List;
+	public final fun getPlatform ()Lrustine/gradle/RustineHost$Platform;
+	public final fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/RustineHost$Arch : java/lang/Enum {
+	public static final field Arm64 Lrustine/gradle/RustineHost$Arch;
+	public static final field Companion Lrustine/gradle/RustineHost$Arch$Companion;
+	public static final field X64 Lrustine/gradle/RustineHost$Arch;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getKonanName ()Ljava/lang/String;
+	public final fun isCurrent ()Z
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/RustineHost$Arch;
+	public static fun values ()[Lrustine/gradle/RustineHost$Arch;
+}
+
+public final class rustine/gradle/RustineHost$Arch$Companion {
+	public final fun getCurrent ()Lrustine/gradle/RustineHost$Arch;
+}
+
+public final class rustine/gradle/RustineHost$Companion {
+	public final fun getCurrent ()Lrustine/gradle/RustineHost;
+}
+
+public final class rustine/gradle/RustineHost$Platform : java/lang/Enum {
+	public static final field Companion Lrustine/gradle/RustineHost$Platform$Companion;
+	public static final field Linux Lrustine/gradle/RustineHost$Platform;
+	public static final field MacOS Lrustine/gradle/RustineHost$Platform;
+	public static final field Windows Lrustine/gradle/RustineHost$Platform;
+	public final fun chooseExeExtension (Ljava/io/File;)Ljava/io/File;
+	public final fun convertExeName (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun convertExeName$default (Lrustine/gradle/RustineHost$Platform;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun getDefaultToolchainDirectory ()Ljava/io/File;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getHomeDirectory ()Ljava/io/File;
+	public final fun getKonanName ()Ljava/lang/String;
+	public final fun getPathSeparator ()Ljava/lang/String;
+	public final fun getSupportedTargets ()[Lrustine/gradle/rust/targets/RustTarget;
+	public final fun isCurrent ()Z
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/RustineHost$Platform;
+	public static fun values ()[Lrustine/gradle/RustineHost$Platform;
+}
+
+public final class rustine/gradle/RustineHost$Platform$Companion {
+	public final fun getCurrent ()Lrustine/gradle/RustineHost$Platform;
+}
+
+public final class rustine/gradle/Variant : java/lang/Enum {
+	public static final field Debug Lrustine/gradle/Variant;
+	public static final field Release Lrustine/gradle/Variant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/Variant;
+	public static fun values ()[Lrustine/gradle/Variant;
+}
+
+public final class rustine/gradle/VariantKt {
+	public static final fun Variant (Ljava/lang/String;)Lrustine/gradle/Variant;
+	public static final fun VariantValues (Ljava/lang/Object;)Lrustine/gradle/VariantValues;
+	public static final fun VariantValues (Ljava/lang/Object;Ljava/lang/Object;)Lrustine/gradle/VariantValues;
+	public static final fun debug (Lorg/gradle/api/provider/Provider;)Lorg/gradle/api/provider/Provider;
+	public static final fun get (Lorg/gradle/api/provider/Provider;Lorg/gradle/api/provider/Provider;)Lorg/gradle/api/provider/Provider;
+	public static final fun get (Lorg/gradle/api/provider/Provider;Lrustine/gradle/Variant;)Lorg/gradle/api/provider/Provider;
+	public static final fun get (Lrustine/gradle/VariantValues;Lrustine/gradle/Variant;)Ljava/lang/Object;
+	public static final fun getByVariant (Lorg/gradle/api/NamedDomainObjectContainer;Ljava/lang/String;Lrustine/gradle/Variant;Ljava/lang/String;)Ljava/lang/Object;
+	public static final fun getByVariant (Lorg/gradle/api/NamedDomainObjectContainer;Lrustine/gradle/Variant;Ljava/lang/String;)Ljava/lang/Object;
+	public static synthetic fun getByVariant$default (Lorg/gradle/api/NamedDomainObjectContainer;Ljava/lang/String;Lrustine/gradle/Variant;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun getByVariant$default (Lorg/gradle/api/NamedDomainObjectContainer;Lrustine/gradle/Variant;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun getVariant (Lorg/gradle/api/Task;)Lrustine/gradle/Variant;
+	public static final fun invoke (Lorg/gradle/api/provider/Property;Lkotlin/jvm/functions/Function1;)V
+	public static final fun release (Lorg/gradle/api/provider/Provider;)Lorg/gradle/api/provider/Provider;
+	public static final fun variantOf (Lrustine/gradle/VariantValues;Ljava/lang/Object;)Lrustine/gradle/Variant;
+	public static final fun with (Lorg/gradle/api/provider/Provider;Ljava/lang/Object;Ljava/lang/Object;)Lorg/gradle/api/provider/Provider;
+	public static final fun with (Lrustine/gradle/VariantValues;Ljava/lang/Object;Ljava/lang/Object;)Lrustine/gradle/VariantValues;
+	public static synthetic fun with$default (Lorg/gradle/api/provider/Provider;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lorg/gradle/api/provider/Provider;
+	public static synthetic fun with$default (Lrustine/gradle/VariantValues;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lrustine/gradle/VariantValues;
+}
+
+public abstract interface class rustine/gradle/VariantValues {
+	public abstract fun getDebug ()Ljava/lang/Object;
+	public abstract fun getRelease ()Ljava/lang/Object;
+}
+
+public abstract interface class rustine/gradle/VariantValuesConfiguration {
+	public abstract fun debug (Ljava/lang/Object;)V
+	public abstract fun default (Ljava/lang/Object;)V
+	public abstract fun release (Ljava/lang/Object;)V
+}
+
+public final class rustine/gradle/kotlin/RustineKotlinAndroidExtensionDelegate : rustine/gradle/kotlin/RustineKotlinExtensionDelegate {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public fun getAndroidTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getImplementationVersion ()Ljava/lang/String;
+	public fun getJvmTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getPluginId ()Ljava/lang/String;
+	public fun getSourceSets ()Lrustine/gradle/kotlin/RustineKotlinSourceSetCollection;
+	public fun getTargets ()Lorg/gradle/api/DomainObjectCollection;
+}
+
+public final class rustine/gradle/kotlin/RustineKotlinJvmExtensionDelegate : rustine/gradle/kotlin/RustineKotlinExtensionDelegate {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public fun getAndroidTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getImplementationVersion ()Ljava/lang/String;
+	public fun getJvmTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getPluginId ()Ljava/lang/String;
+	public fun getSourceSets ()Lrustine/gradle/kotlin/RustineKotlinSourceSetCollection;
+	public fun getTargets ()Lorg/gradle/api/DomainObjectCollection;
+}
+
+public final class rustine/gradle/kotlin/RustineKotlinMultiplatformExtensionDelegate : rustine/gradle/kotlin/RustineKotlinExtensionDelegate {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public fun getAndroidTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getImplementationVersion ()Ljava/lang/String;
+	public fun getJvmTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public fun getPluginId ()Ljava/lang/String;
+	public fun getSourceSets ()Lrustine/gradle/kotlin/RustineKotlinSourceSetCollection;
+	public fun getTargets ()Lorg/gradle/api/DomainObjectCollection;
+}
+
+public final class rustine/gradle/rust/CrateType : java/lang/Enum {
+	public static final field Companion Lrustine/gradle/rust/CrateType$Companion;
+	public static final field DynamicLibrary Lrustine/gradle/rust/CrateType;
+	public static final field Executable Lrustine/gradle/rust/CrateType;
+	public static final field Library Lrustine/gradle/rust/CrateType;
+	public static final field ProceduralMacro Lrustine/gradle/rust/CrateType;
+	public static final field StaticLibrary Lrustine/gradle/rust/CrateType;
+	public static final field SystemDynamicLibrary Lrustine/gradle/rust/CrateType;
+	public static final field SystemStaticLibrary Lrustine/gradle/rust/CrateType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun outputFileNameForLinux (Ljava/lang/String;)Ljava/lang/String;
+	public final fun outputFileNameForMacOS (Ljava/lang/String;)Ljava/lang/String;
+	public final fun outputFileNameForMinGW (Ljava/lang/String;)Ljava/lang/String;
+	public final fun outputFileNameForMsvc (Ljava/lang/String;)Ljava/lang/String;
+	public final fun outputFileNameForWasm (Ljava/lang/String;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/CrateType;
+	public static fun values ()[Lrustine/gradle/rust/CrateType;
+}
+
+public final class rustine/gradle/rust/CrateType$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class rustine/gradle/rust/CrateTypeSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Lrustine/gradle/rust/CrateTypeSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lrustine/gradle/rust/CrateType;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lrustine/gradle/rust/CrateType;)V
+}
+
+public final class rustine/gradle/rust/targets/RustAndroidTarget : java/lang/Enum, java/io/Serializable, rustine/gradle/rust/targets/RustMobileTarget, rustine/gradle/rust/targets/RustNativeTarget {
+	public static final field Arm64 Lrustine/gradle/rust/targets/RustAndroidTarget;
+	public static final field ArmV7 Lrustine/gradle/rust/targets/RustAndroidTarget;
+	public static final field Companion Lrustine/gradle/rust/targets/RustAndroidTarget$Companion;
+	public static final field X64 Lrustine/gradle/rust/targets/RustAndroidTarget;
+	public static final field X86 Lrustine/gradle/rust/targets/RustAndroidTarget;
+	public final fun getAndroidAbiName ()Ljava/lang/String;
+	public fun getCinteropName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getFriendlyName ()Ljava/lang/String;
+	public final fun getNdkLibraryTriple ()Ljava/lang/String;
+	public final fun getNdkLlvmTriple ()Ljava/lang/String;
+	public fun getRustTriple ()Ljava/lang/String;
+	public fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public final fun ndkEnvVariables (Ljava/io/File;ILjava/lang/String;Ljava/io/File;)Ljava/util/Map;
+	public static synthetic fun ndkEnvVariables$default (Lrustine/gradle/rust/targets/RustAndroidTarget;Ljava/io/File;ILjava/lang/String;Ljava/io/File;ILjava/lang/Object;)Ljava/util/Map;
+	public final fun ndkLibraryDirectories (Ljava/io/File;ILjava/lang/String;Ljava/io/File;)Ljava/util/List;
+	public static synthetic fun ndkLibraryDirectories$default (Lrustine/gradle/rust/targets/RustAndroidTarget;Ljava/io/File;ILjava/lang/String;Ljava/io/File;ILjava/lang/Object;)Ljava/util/List;
+	public fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public fun tier (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustAndroidTarget;
+	public static fun values ()[Lrustine/gradle/rust/targets/RustAndroidTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustAndroidTarget$Companion {
+}
+
+public final class rustine/gradle/rust/targets/RustAndroidTargetKt {
+	public static final fun RustAndroidTarget (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustAndroidTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustAppleMobileTarget : java/lang/Enum, java/io/Serializable, rustine/gradle/rust/targets/RustMobileTarget, rustine/gradle/rust/targets/RustNativeTarget {
+	public static final field IosArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field IosSimulatorArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field IosX64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field TvOsArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field TvOsSimulatorArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field TvOsX64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field WatchOsArm32 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field WatchOsArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field WatchOsDeviceArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field WatchOsSimulatorArm64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static final field WatchOsX64 Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public fun getCinteropName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getFriendlyName ()Ljava/lang/String;
+	public fun getRustTriple ()Ljava/lang/String;
+	public fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public fun tier (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+	public static fun values ()[Lrustine/gradle/rust/targets/RustAppleMobileTarget;
+}
+
+public abstract interface class rustine/gradle/rust/targets/RustDesktopTarget : rustine/gradle/rust/targets/RustTarget {
+}
+
+public abstract interface class rustine/gradle/rust/targets/RustJvmTarget : rustine/gradle/rust/targets/RustDesktopTarget {
+	public abstract fun getJnaResourcePrefix ()Ljava/lang/String;
+}
+
+public abstract interface class rustine/gradle/rust/targets/RustMobileTarget : rustine/gradle/rust/targets/RustTarget {
+}
+
+public abstract interface class rustine/gradle/rust/targets/RustNativeTarget : rustine/gradle/rust/targets/RustTarget {
+	public abstract fun getCinteropName ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/rust/targets/RustPosixTarget : java/lang/Enum, java/io/Serializable, rustine/gradle/rust/targets/RustJvmTarget, rustine/gradle/rust/targets/RustNativeTarget {
+	public static final field Companion Lrustine/gradle/rust/targets/RustPosixTarget$Companion;
+	public static final field LinuxArm64 Lrustine/gradle/rust/targets/RustPosixTarget;
+	public static final field LinuxX64 Lrustine/gradle/rust/targets/RustPosixTarget;
+	public static final field MacOSArm64 Lrustine/gradle/rust/targets/RustPosixTarget;
+	public static final field MacOSX64 Lrustine/gradle/rust/targets/RustPosixTarget;
+	public static final field MinGWX64 Lrustine/gradle/rust/targets/RustPosixTarget;
+	public fun getCinteropName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getFriendlyName ()Ljava/lang/String;
+	public fun getJnaResourcePrefix ()Ljava/lang/String;
+	public fun getRustTriple ()Ljava/lang/String;
+	public fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public final fun isLinux ()Z
+	public final fun isMacOS ()Z
+	public final fun isWindows ()Z
+	public fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public fun tier (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustPosixTarget;
+	public static fun values ()[Lrustine/gradle/rust/targets/RustPosixTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustPosixTarget$Companion {
+	public final fun getLinuxTargets ()[Lrustine/gradle/rust/targets/RustPosixTarget;
+	public final fun getMacOSTargets ()[Lrustine/gradle/rust/targets/RustPosixTarget;
+	public final fun getWindowsTargets ()[Lrustine/gradle/rust/targets/RustPosixTarget;
+}
+
+public abstract interface class rustine/gradle/rust/targets/RustTarget {
+	public static final field Companion Lrustine/gradle/rust/targets/RustTarget$Companion;
+	public abstract fun getFriendlyName ()Ljava/lang/String;
+	public abstract fun getRustTriple ()Ljava/lang/String;
+	public abstract fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public abstract fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public abstract fun tier (Ljava/lang/String;)I
+}
+
+public final class rustine/gradle/rust/targets/RustTarget$Companion {
+	public final fun getEntries ()[Lrustine/gradle/rust/targets/RustTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustTargetKt {
+	public static final fun RustTarget (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustTarget;
+	public static final fun RustTarget (Lorg/jetbrains/kotlin/konan/target/KonanTarget;)Lrustine/gradle/rust/targets/RustTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustWasmTarget : java/lang/Enum, java/io/Serializable, rustine/gradle/rust/targets/RustTarget {
+	public static final field Unknown Lrustine/gradle/rust/targets/RustWasmTarget;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getFriendlyName ()Ljava/lang/String;
+	public fun getRustTriple ()Ljava/lang/String;
+	public fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public fun tier (Ljava/lang/String;)I
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustWasmTarget;
+	public static fun values ()[Lrustine/gradle/rust/targets/RustWasmTarget;
+}
+
+public final class rustine/gradle/rust/targets/RustWindowsTarget : java/lang/Enum, java/io/Serializable, rustine/gradle/rust/targets/RustJvmTarget {
+	public static final field Arm64 Lrustine/gradle/rust/targets/RustWindowsTarget;
+	public static final field X64 Lrustine/gradle/rust/targets/RustWindowsTarget;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getFriendlyName ()Ljava/lang/String;
+	public fun getJnaResourcePrefix ()Ljava/lang/String;
+	public fun getRustTriple ()Ljava/lang/String;
+	public fun getSupportedKotlinPlatformTypes ()[Lorg/jetbrains/kotlin/gradle/plugin/KotlinPlatformType;
+	public fun outputFileName (Ljava/lang/String;Lrustine/gradle/rust/CrateType;)Ljava/lang/String;
+	public fun tier (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/rust/targets/RustWindowsTarget;
+	public static fun values ()[Lrustine/gradle/rust/targets/RustWindowsTarget;
+}
+
+public abstract class rustine/gradle/tasks/AbstractFileGenerationTask : org/gradle/api/DefaultTask {
+	public fun <init> ()V
+	public final fun generateFile ()V
+	protected abstract fun getDesiredOutput ()Ljava/lang/String;
+	public abstract fun getOutputFile ()Lorg/gradle/api/file/RegularFileProperty;
+}
+

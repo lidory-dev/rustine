@@ -1,17 +1,17 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.jvm
-import gobley.gradle.cargo.dsl.native
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.jvm
+import rustine.gradle.cargo.dsl.native
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     id("host-jvm-native-tests")
-    id("dev.gobley.cargo")
+    id("dev.lidory.rustine.cargo")
 }
 
 cargo {
     builds.jvm {
-        embedRustLibrary = (rustTarget == GobleyHost.current.rustTarget)
+        embedRustLibrary = (rustTarget == RustineHost.current.rustTarget)
         resourcePrefix = "jvm"
     }
     wasmTransformerFromPath(

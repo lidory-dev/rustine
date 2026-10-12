@@ -1,13 +1,13 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.android
-import gobley.gradle.cargo.dsl.appleMobile
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.android
+import rustine.gradle.cargo.dsl.appleMobile
+import rustine.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
@@ -27,7 +27,7 @@ uniffi {
     generateFromLibrary()
 }
 
-if (GobleyHost.Platform.Windows.isCurrent) {
+if (RustineHost.Platform.Windows.isCurrent) {
     cargo {
         builds.android {
             variants {
@@ -43,7 +43,7 @@ if (GobleyHost.Platform.Windows.isCurrent) {
         }
     }
 }
-if (GobleyHost.Platform.MacOS.isCurrent) {
+if (RustineHost.Platform.MacOS.isCurrent) {
     cargo {
         builds.appleMobile {
             if (rustTarget.cinteropName == "ios") {
@@ -75,7 +75,7 @@ kotlin {
         }
     }
 
-    if (GobleyHost.Platform.MacOS.isCurrent) {
+    if (RustineHost.Platform.MacOS.isCurrent) {
         arrayOf(
             iosArm64(),
             iosSimulatorArm64(),

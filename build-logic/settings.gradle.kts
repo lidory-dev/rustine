@@ -1,5 +1,5 @@
 pluginManagement {
-    includeBuild("gobley-gradle-build")
+    includeBuild("rustine-gradle-build")
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -25,8 +25,8 @@ dependencyResolutionManagement {
     }
 }
 
-include(":gobley-gradle")
-include(":gobley-gradle-rust")
-include(":gobley-gradle-cargo")
-include(":gobley-gradle-uniffi")
+include(":rustine-gradle")
+include(":rustine-gradle-rust")
+include(":rustine-gradle-cargo")
+include(":rustine-gradle-uniffi")
 include(":conventions")

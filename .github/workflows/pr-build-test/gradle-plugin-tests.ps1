@@ -5,10 +5,10 @@ $PSNativeCommandUseErrorActionPreference = $true;
 
 try {
     $projectNames = @(
-        "gobley-gradle",
-        "gobley-gradle-cargo",
-        "gobley-gradle-rust",
-        "gobley-gradle-uniffi"
+        "rustine-gradle",
+        "rustine-gradle-cargo",
+        "rustine-gradle-rust",
+        "rustine-gradle-uniffi"
     );
     foreach ($projectName in $projectNames) {
         & "./gradlew" ":build-logic:${projectName}:test";

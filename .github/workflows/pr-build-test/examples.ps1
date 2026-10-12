@@ -40,7 +40,7 @@ try {
 
 # Build Xcode projects
 if ($IsMacOS) {
-    ${env:GOBLEY_XCODE_CONFIGURE_OWN_GRADLE_PROJECT} = "true";
+    ${env:RUSTINE_XCODE_CONFIGURE_OWN_GRADLE_PROJECT} = "true";
     foreach ($testName in $TestNames) {
         $xcodeSchemes = switch ($testName) {
             "app" {

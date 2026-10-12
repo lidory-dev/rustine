@@ -1,13 +1,13 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.android
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.android
+import rustine.gradle.rust.targets.RustAndroidTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.rust")
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.rust")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
@@ -44,7 +44,7 @@ kotlin {
             jvmTarget = JvmTarget.JVM_17
         }
     }
-    if (GobleyHost.Platform.MacOS.isCurrent) {
+    if (RustineHost.Platform.MacOS.isCurrent) {
         arrayOf(
             iosArm64(),
             iosSimulatorArm64(),

@@ -1,0 +1,534 @@
+public final class rustine/gradle/cargo/CargoPackage {
+	public fun <init> (Lorg/gradle/api/Project;Lorg/gradle/api/file/Directory;Ljava/io/File;)V
+	public final fun getDependencyTargetRoots ()Ljava/util/List;
+	public final fun getLibraryCrateName ()Ljava/lang/String;
+	public final fun getLibraryCrateTypes ()Ljava/util/Set;
+	public final fun getLockFile ()Lorg/gradle/api/file/RegularFile;
+	public final fun getManifestFile ()Lorg/gradle/api/file/RegularFile;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getRoot ()Lorg/gradle/api/file/Directory;
+	public final fun getWorkspaceRoot ()Lorg/gradle/api/file/Directory;
+	public final fun outputDirectory (Lrustine/gradle/cargo/profiles/CargoProfile;Lrustine/gradle/rust/targets/RustTarget;)Lorg/gradle/api/file/Directory;
+	public static synthetic fun outputDirectory$default (Lrustine/gradle/cargo/CargoPackage;Lrustine/gradle/cargo/profiles/CargoProfile;Lrustine/gradle/rust/targets/RustTarget;ILjava/lang/Object;)Lorg/gradle/api/file/Directory;
+}
+
+public final class rustine/gradle/cargo/CargoPlugin : org/gradle/api/Plugin {
+	public static final field Companion Lrustine/gradle/cargo/CargoPlugin$Companion;
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public final class rustine/gradle/cargo/CargoPlugin$Companion {
+}
+
+public final class rustine/gradle/cargo/CargoTargetKind : java/lang/Enum {
+	public static final field Benchmark Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field Binary Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field BuildScript Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field Companion Lrustine/gradle/cargo/CargoTargetKind$Companion;
+	public static final field DynamicLibrary Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field Example Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field Library Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field ProceduralMacro Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field StaticLibrary Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field SystemDynamicLibrary Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field SystemStaticLibrary Lrustine/gradle/cargo/CargoTargetKind;
+	public static final field Test Lrustine/gradle/cargo/CargoTargetKind;
+	public final fun getCrateType ()Lrustine/gradle/rust/CrateType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isNormalLibrary ()Z
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lrustine/gradle/cargo/CargoTargetKind;
+	public static fun values ()[Lrustine/gradle/cargo/CargoTargetKind;
+}
+
+public final class rustine/gradle/cargo/CargoTargetKind$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoAndroidBuild : rustine/gradle/cargo/dsl/DefaultCargoBuild, rustine/gradle/cargo/dsl/CargoMobileBuild, rustine/gradle/cargo/dsl/CargoNativeBuild, rustine/gradle/cargo/dsl/HasAndroidVariant, rustine/gradle/cargo/dsl/HasDynamicLibraries {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustAndroidTarget;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustMobileTarget;
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustNativeTarget;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoAndroidBuildVariant : rustine/gradle/cargo/dsl/DefaultCargoBuildVariant, rustine/gradle/cargo/dsl/CargoMobileBuildVariant, rustine/gradle/cargo/dsl/CargoNativeBuildVariant, rustine/gradle/cargo/dsl/HasDynamicLibraries {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoAndroidBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoMobileBuild;
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoNativeBuild;
+	public final fun getFindDynamicLibrariesTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoAppleMobileBuild : rustine/gradle/cargo/dsl/DefaultCargoBuild, rustine/gradle/cargo/dsl/CargoMobileBuild, rustine/gradle/cargo/dsl/CargoNativeBuild {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustAppleMobileTarget;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustMobileTarget;
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustNativeTarget;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoAppleMobileBuildVariant : rustine/gradle/cargo/dsl/DefaultCargoBuildVariant, rustine/gradle/cargo/dsl/CargoMobileBuildVariant, rustine/gradle/cargo/dsl/CargoNativeBuildVariant {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoAppleMobileBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoMobileBuild;
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoNativeBuild;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoBinaryCrateSource : java/io/Serializable {
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git : rustine/gradle/cargo/dsl/CargoBinaryCrateSource, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;)V
+	public synthetic fun <init> (Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;
+	public final fun copy (Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git;Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommit ()Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;
+	public final fun getRepository ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit : java/io/Serializable {
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Branch : rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Branch;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Branch;Ljava/lang/String;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Branch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBranch ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Revision : rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Revision;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Revision;Ljava/lang/String;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Revision;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRevision ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Tag : rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Tag;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Tag;Ljava/lang/String;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit$Tag;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTag ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Path : rustine/gradle/cargo/dsl/CargoBinaryCrateSource, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Path;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Path;Ljava/lang/String;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Path;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBinaryCrateSource$Registry : rustine/gradle/cargo/dsl/CargoBinaryCrateSource, java/io/Serializable {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Registry;
+	public static synthetic fun copy$default (Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Registry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Registry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPackageName ()Ljava/lang/String;
+	public final fun getRegistry ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoBuild : org/gradle/api/Named, org/jetbrains/kotlin/gradle/plugin/HasProject, rustine/gradle/cargo/dsl/HasFeatures, rustine/gradle/cargo/dsl/HasVariants {
+	public abstract fun getCheckCommand ()Lorg/gradle/api/provider/Property;
+	public abstract fun getInstallTargetBeforeBuild ()Lorg/gradle/api/provider/Property;
+	public abstract fun getKotlinTargets ()Lorg/gradle/api/NamedDomainObjectCollection;
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoBuildCollection : org/gradle/api/NamedDomainObjectCollection {
+	public abstract fun findByRustTarget (Lrustine/gradle/rust/targets/RustTarget;)Lrustine/gradle/cargo/dsl/CargoBuild;
+	public abstract fun matching (Lgroovy/lang/Closure;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public abstract fun matching (Lorg/gradle/api/specs/Spec;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public abstract fun named (Ljava/lang/String;Ljava/lang/Class;)Lrustine/gradle/cargo/dsl/CargoBuildProvider;
+	public abstract fun named (Ljava/lang/String;Ljava/lang/Class;Lorg/gradle/api/Action;)Lrustine/gradle/cargo/dsl/CargoBuildProvider;
+	public abstract fun withType (Ljava/lang/Class;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+}
+
+public final class rustine/gradle/cargo/dsl/CargoBuildCollectionKt {
+	public static final fun android (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun appleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureAndroid (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureAppleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureDesktop (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvmLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvmMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvmMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvmPosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureJvmWindows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureMobileAndroid (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureMobileAppleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNative (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNativeAppleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNativeLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNativeMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNativeMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureNativePosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configurePosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureWasm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun configureWindows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktop (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigureJvm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigureLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigureMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigureMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigurePosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopConfigureWindows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopJvm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopPosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun desktopWindows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvmLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvmMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvmMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvmPosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun jvmWindows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun linux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun macos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun mingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun mobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun mobileAndroid (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun mobileAppleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun native (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun nativeAppleMobile (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun nativeLinux (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun nativeMacos (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun nativeMingw (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun nativePosix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun posix (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun wasm (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public static final fun windows (Lrustine/gradle/cargo/dsl/CargoBuildCollection;)Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoBuildProvider : org/gradle/api/NamedDomainObjectProvider {
+	public abstract fun configure (Lorg/gradle/api/Action;)V
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoBuildVariant : rustine/gradle/cargo/dsl/CargoVariant, rustine/gradle/cargo/dsl/HasRustTarget {
+	public abstract fun getBuild ()Lrustine/gradle/cargo/dsl/CargoBuild;
+	public abstract fun getBuildTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public abstract fun getCheckTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoDesktopBuild : rustine/gradle/cargo/dsl/CargoBuild {
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustDesktopTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoDesktopBuildVariant : rustine/gradle/cargo/dsl/CargoBuildVariant {
+	public abstract fun getBuild ()Lrustine/gradle/cargo/dsl/CargoDesktopBuild;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoExtension : org/jetbrains/kotlin/gradle/plugin/HasProject, rustine/gradle/cargo/dsl/HasAndroidVariant, rustine/gradle/cargo/dsl/HasFeatures, rustine/gradle/cargo/dsl/HasJvmVariant, rustine/gradle/cargo/dsl/HasNativeVariant, rustine/gradle/cargo/dsl/HasVariants, rustine/gradle/cargo/dsl/HasWasmVariant {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public final fun getBuilds ()Lrustine/gradle/cargo/dsl/CargoBuildCollection;
+	public final fun getCargoPackage ()Lorg/gradle/api/provider/Provider;
+	public final fun getCheckCommand ()Lorg/gradle/api/provider/Property;
+	public final fun getDebug ()Lrustine/gradle/cargo/dsl/CargoExtensionVariant;
+	public synthetic fun getDebug ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public final fun getInstallTargetBeforeBuild ()Lorg/gradle/api/provider/Property;
+	public final fun getPackageDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public final fun getProject ()Lorg/gradle/api/Project;
+	public final fun getPublishJvmArtifacts ()Lorg/gradle/api/provider/Property;
+	public final fun getRelease ()Lrustine/gradle/cargo/dsl/CargoExtensionVariant;
+	public synthetic fun getRelease ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public fun getVariants ()Ljava/lang/Iterable;
+	public final fun wasmTransformerFromGit (Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;)V
+	public static synthetic fun wasmTransformerFromGit$default (Lrustine/gradle/cargo/dsl/CargoExtension;Ljava/lang/String;Lrustine/gradle/cargo/dsl/CargoBinaryCrateSource$Git$Commit;ILjava/lang/Object;)V
+	public final fun wasmTransformerFromGitBranch (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun wasmTransformerFromGitRevision (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun wasmTransformerFromGitTag (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun wasmTransformerFromPath (Lorg/gradle/api/file/Directory;)V
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoExtensionVariant : rustine/gradle/cargo/dsl/CargoVariant {
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoJvmBuild : rustine/gradle/cargo/dsl/CargoDesktopBuild, rustine/gradle/cargo/dsl/HasDynamicLibraries, rustine/gradle/cargo/dsl/HasJvmProperties {
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustJvmTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoJvmBuildVariant : rustine/gradle/cargo/dsl/CargoDesktopBuildVariant, rustine/gradle/cargo/dsl/HasDynamicLibraries, rustine/gradle/cargo/dsl/HasJvmProperties {
+	public abstract fun getBuild ()Lrustine/gradle/cargo/dsl/CargoJvmBuild;
+	public abstract fun getFindDynamicLibrariesTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public abstract fun getJarTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public abstract fun getLibraryFiles ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoMobileBuild : rustine/gradle/cargo/dsl/CargoBuild {
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustMobileTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoMobileBuildVariant : rustine/gradle/cargo/dsl/CargoBuildVariant {
+	public abstract fun getBuild ()Lrustine/gradle/cargo/dsl/CargoMobileBuild;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoNativeBuild : rustine/gradle/cargo/dsl/CargoBuild, rustine/gradle/cargo/dsl/HasNativeVariant {
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustNativeTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoNativeBuildVariant : rustine/gradle/cargo/dsl/CargoBuildVariant {
+	public abstract fun getBuild ()Lrustine/gradle/cargo/dsl/CargoNativeBuild;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoPosixBuild : rustine/gradle/cargo/dsl/DefaultCargoBuild, rustine/gradle/cargo/dsl/CargoJvmBuild, rustine/gradle/cargo/dsl/CargoNativeBuild {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustPosixTarget;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustDesktopTarget;
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustJvmTarget;
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustNativeTarget;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoPosixBuildVariant : rustine/gradle/cargo/dsl/DefaultCargoBuildVariant, rustine/gradle/cargo/dsl/CargoJvmBuildVariant, rustine/gradle/cargo/dsl/CargoNativeBuildVariant {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoPosixBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoDesktopBuild;
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoJvmBuild;
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoNativeBuild;
+	public fun getFindDynamicLibrariesTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public fun getJarTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public fun getLibraryFiles ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/CargoVariant : org/jetbrains/kotlin/gradle/plugin/HasProject, rustine/gradle/cargo/dsl/HasFeatures, rustine/gradle/cargo/dsl/HasProfile {
+	public abstract fun getVariant ()Lrustine/gradle/Variant;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoWasmBuild : rustine/gradle/cargo/dsl/DefaultCargoBuild, rustine/gradle/cargo/dsl/HasEmbeddableRustLibrary, rustine/gradle/cargo/dsl/HasWasmVariant {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustWasmTarget;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoWasmBuildVariant : rustine/gradle/cargo/dsl/DefaultCargoBuildVariant, rustine/gradle/cargo/dsl/HasEmbeddableRustLibrary {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoWasmBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public final fun getTransformWasmProvider ()Lorg/gradle/api/tasks/TaskProvider;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoWindowsBuild : rustine/gradle/cargo/dsl/DefaultCargoBuild, rustine/gradle/cargo/dsl/CargoJvmBuild {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustWindowsTarget;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustDesktopTarget;
+	public synthetic fun getRustTarget ()Lrustine/gradle/rust/targets/RustJvmTarget;
+}
+
+public abstract class rustine/gradle/cargo/dsl/CargoWindowsBuildVariant : rustine/gradle/cargo/dsl/DefaultCargoBuildVariant, rustine/gradle/cargo/dsl/CargoJvmBuildVariant {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoWindowsBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoDesktopBuild;
+	public synthetic fun getBuild ()Lrustine/gradle/cargo/dsl/CargoJvmBuild;
+	public fun getFindDynamicLibrariesTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public fun getJarTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public fun getLibraryFiles ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract class rustine/gradle/cargo/dsl/DefaultCargoBuild : rustine/gradle/cargo/dsl/CargoBuild {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/rust/targets/RustTarget;Lrustine/gradle/cargo/dsl/CargoExtension;Lkotlin/reflect/KClass;)V
+	public synthetic fun getDebug ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public final fun getDebug ()Lrustine/gradle/cargo/dsl/DefaultCargoBuildVariant;
+	public synthetic fun getKotlinTargets ()Lorg/gradle/api/NamedDomainObjectCollection;
+	public fun getKotlinTargets ()Lorg/gradle/api/NamedDomainObjectContainer;
+	public fun getName ()Ljava/lang/String;
+	public final fun getProject ()Lorg/gradle/api/Project;
+	public synthetic fun getRelease ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public final fun getRelease ()Lrustine/gradle/cargo/dsl/DefaultCargoBuildVariant;
+	public final fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+	public final fun getVariants ()Ljava/lang/Iterable;
+}
+
+public abstract class rustine/gradle/cargo/dsl/DefaultCargoBuildVariant : rustine/gradle/cargo/dsl/CargoBuildVariant {
+	public fun <init> (Lorg/gradle/api/Project;Lrustine/gradle/cargo/dsl/CargoBuild;Lrustine/gradle/Variant;Lrustine/gradle/cargo/dsl/CargoExtension;)V
+	public fun getBuild ()Lrustine/gradle/cargo/dsl/CargoBuild;
+	public fun getBuildTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public fun getCheckTaskProvider ()Lorg/gradle/api/tasks/TaskProvider;
+	public final fun getProject ()Lorg/gradle/api/Project;
+	public fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+	public final fun getVariant ()Lrustine/gradle/Variant;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasAndroidVariant {
+	public abstract fun getAndroidVariant ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasDynamicLibraries : rustine/gradle/cargo/dsl/HasEmbeddableRustLibrary {
+	public abstract fun getDynamicLibraries ()Lorg/gradle/api/provider/SetProperty;
+	public abstract fun getDynamicLibrarySearchPaths ()Lorg/gradle/api/provider/SetProperty;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasEmbeddableRustLibrary {
+	public abstract fun getEmbedRustLibrary ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasFeatures {
+	public abstract fun getFeatures ()Lorg/gradle/api/provider/SetProperty;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasJvmProperties : rustine/gradle/cargo/dsl/HasDynamicLibraries, rustine/gradle/cargo/dsl/HasJvmVariant {
+	public abstract fun getAndroidUnitTest ()Lorg/gradle/api/provider/Property;
+	public abstract fun getResourcePrefix ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasJvmVariant {
+	public abstract fun getJvmPublishingVariant ()Lorg/gradle/api/provider/Property;
+	public abstract fun getJvmVariant ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasNativeVariant {
+	public abstract fun getNativeVariant ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasProfile {
+	public abstract fun getProfile ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasRustTarget {
+	public abstract fun getRustTarget ()Lrustine/gradle/rust/targets/RustTarget;
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasVariants {
+	public fun debug (Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoVariant;
+	public abstract fun getDebug ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public abstract fun getRelease ()Lrustine/gradle/cargo/dsl/CargoVariant;
+	public abstract fun getVariants ()Ljava/lang/Iterable;
+	public fun release (Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoVariant;
+	public fun variant (Lrustine/gradle/Variant;)Lrustine/gradle/cargo/dsl/CargoVariant;
+	public fun variant (Lrustine/gradle/Variant;Lkotlin/jvm/functions/Function1;)Lrustine/gradle/cargo/dsl/CargoVariant;
+	public fun variants (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class rustine/gradle/cargo/dsl/HasWasmVariant {
+	public abstract fun getWasmVariant ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class rustine/gradle/cargo/profiles/CargoProfile {
+	public static final field Companion Lrustine/gradle/cargo/profiles/CargoProfile$Companion;
+	public abstract fun getProfileName ()Ljava/lang/String;
+	public abstract fun getTargetChildDirectoryName ()Ljava/lang/String;
+}
+
+public final class rustine/gradle/cargo/profiles/CargoProfile$Companion {
+	public final fun getBench ()Lrustine/gradle/cargo/profiles/CargoProfile;
+	public final fun getDev ()Lrustine/gradle/cargo/profiles/CargoProfile;
+	public final fun getRelease ()Lrustine/gradle/cargo/profiles/CargoProfile;
+	public final fun getTest ()Lrustine/gradle/cargo/profiles/CargoProfile;
+}
+
+public final class rustine/gradle/cargo/profiles/CargoProfileKt {
+	public static final fun CargoProfile (Ljava/lang/String;)Lrustine/gradle/cargo/profiles/CargoProfile;
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoBuildTask : rustine/gradle/cargo/tasks/CargoPackageTask {
+	public fun <init> ()V
+	public final fun build ()V
+	public abstract fun getExtraArguments ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getFeatures ()Lorg/gradle/api/provider/SetProperty;
+	public final fun getLibraryFileByCrateType ()Lorg/gradle/api/provider/Provider;
+	public abstract fun getNativeStaticLibsDefFile ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getProfile ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoCheckTask : rustine/gradle/cargo/tasks/CargoPackageTask {
+	public fun <init> ()V
+	public final fun check ()V
+	public abstract fun getCheckCommand ()Lorg/gradle/api/provider/Property;
+	public abstract fun getExtraArguments ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getFeatures ()Lorg/gradle/api/provider/SetProperty;
+	public abstract fun getProfile ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoCleanTask : rustine/gradle/cargo/tasks/CargoPackageTask, rustine/gradle/tasks/GloballyLockedTask {
+	public fun <init> ()V
+	public final fun cleanPackage ()V
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoInstallTask : rustine/gradle/cargo/tasks/CargoTask {
+	public fun <init> ()V
+	protected final fun binaryCrateOutput (Ljava/lang/String;)Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getBinaryCrateSource ()Lorg/gradle/api/provider/Property;
+	public abstract fun getInstallDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public final fun getQuiet ()Lorg/gradle/api/provider/Property;
+	public final fun installBinaries ()V
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoPackageTask : rustine/gradle/cargo/tasks/CargoTask {
+	public fun <init> ()V
+	public fun configureFromProperties (Lrustine/gradle/utils/CommandSpec;)V
+	public abstract fun getCargoPackage ()Lorg/gradle/api/provider/Property;
+	public final fun getDependencySourceFiles ()Lorg/gradle/api/provider/Provider;
+	public final fun getLockFile ()Lorg/gradle/api/provider/Provider;
+	public final fun getManifestFile ()Lorg/gradle/api/provider/Provider;
+	public final fun getRoot ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract class rustine/gradle/cargo/tasks/CargoTask : rustine/gradle/tasks/CommandTask {
+	public fun <init> ()V
+	public abstract fun getCargo ()Lorg/gradle/api/provider/Property;
+	public abstract fun getNightly ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class rustine/gradle/cargo/tasks/FindDynamicLibrariesTask : org/gradle/api/DefaultTask {
+	public fun <init> ()V
+	public final fun copyDynamicLibraries ()V
+	public abstract fun getLibraryNames ()Lorg/gradle/api/provider/SetProperty;
+	public final fun getLibraryPaths ()Lorg/gradle/api/provider/Provider;
+	public abstract fun getLibraryPathsCacheFile ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getProjectLayout ()Lorg/gradle/api/file/ProjectLayout;
+	public abstract fun getRustTarget ()Lorg/gradle/api/provider/Property;
+	public abstract fun getSearchPaths ()Lorg/gradle/api/provider/ListProperty;
+}
+
+public abstract class rustine/gradle/cargo/tasks/InstallWasmTransformerTask : rustine/gradle/cargo/tasks/CargoInstallTask {
+	public fun <init> ()V
+	public final fun getWasmTransformer ()Lorg/gradle/api/file/RegularFileProperty;
+}
+
+public abstract class rustine/gradle/cargo/tasks/RustUpTargetAddTask : rustine/gradle/cargo/tasks/RustUpTask, rustine/gradle/tasks/GloballyLockedTask {
+	public fun <init> ()V
+	public abstract fun getRustTarget ()Lorg/gradle/api/provider/Property;
+	public abstract fun getRustVersion ()Lorg/gradle/api/provider/Property;
+	public final fun installToolchain ()V
+}
+
+public abstract class rustine/gradle/cargo/tasks/RustUpTask : rustine/gradle/tasks/CommandTask {
+	public fun <init> ()V
+	public abstract fun getRustUp ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class rustine/gradle/cargo/tasks/TransformWasmTask : rustine/gradle/tasks/CommandTask {
+	public fun <init> ()V
+	public abstract fun getCrateName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getFunctionImportsFile ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getInput ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getOutputDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public abstract fun getWasmTransformer ()Lorg/gradle/api/file/RegularFileProperty;
+	public final fun transformWasm ()V
+}
+

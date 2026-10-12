@@ -1,4 +1,4 @@
-import gobley.gradle.cargo.dsl.jvm
+import rustine.gradle.cargo.dsl.jvm
 
 plugins {
     id("uniffi-tests-from-library")

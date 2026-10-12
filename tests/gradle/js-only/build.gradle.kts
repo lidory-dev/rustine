@@ -1,8 +1,8 @@
-import gobley.gradle.cargo.dsl.wasm
+import rustine.gradle.cargo.dsl.wasm
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.cargo")
+    id("dev.lidory.rustine.cargo")
 }
 
 cargo {

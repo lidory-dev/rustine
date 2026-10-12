@@ -1,4 +1,4 @@
-import gobley.gradle.cargo.profiles.CargoProfile
+import rustine.gradle.cargo.profiles.CargoProfile
 
 plugins {
     id("cargo-tests")

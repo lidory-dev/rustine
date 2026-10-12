@@ -1,4 +1,4 @@
-import gobley.gradle.rust.dsl.hostNativeTarget
+import rustine.gradle.rust.dsl.hostNativeTarget
 
 plugins {
     id("uniffi-tests")

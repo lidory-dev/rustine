@@ -8,8 +8,8 @@ import java.util.zip.ZipFile
 // Gobley plugins.
 plugins {
     alias(libs.plugins.android.application)
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
     alias(libs.plugins.kotlin.atomicfu)
 }
 

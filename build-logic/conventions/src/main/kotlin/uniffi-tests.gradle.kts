@@ -1,16 +1,16 @@
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.jvm
-import gobley.gradle.uniffi.tasks.InstallUniffiBindgenTask
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.jvm
+import rustine.gradle.uniffi.tasks.InstallUniffiBindgenTask
 
 plugins {
     id("host-jvm-native-tests")
-    id("dev.gobley.cargo")
-    id("dev.gobley.uniffi")
+    id("dev.lidory.rustine.cargo")
+    id("dev.lidory.rustine.uniffi")
 }
 
 cargo {
     builds.jvm {
-        embedRustLibrary.set(rustTarget == GobleyHost.current.rustTarget)
+        embedRustLibrary.set(rustTarget == RustineHost.current.rustTarget)
     }
     wasmTransformerFromPath(
         rootProject.layout.projectDirectory.dir("crates/rustine-wasm-transformer")
