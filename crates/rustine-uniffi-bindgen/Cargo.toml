@@ -1,6 +1,6 @@
 [package]
 name = "rustine-uniffi-bindgen"
-version = "0.3.7"
+version = "1.0.0"
 edition = "2021"
 authors = ["Rustine Contributors"]
 description = "A UniFFI Kotlin Multiplatform bindings generator for Rust"

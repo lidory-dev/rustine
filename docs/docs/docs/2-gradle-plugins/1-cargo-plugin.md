@@ -13,7 +13,7 @@ root, you can simply apply the `dev.lidory.rustine.cargo` the plugin.
 ```kotlin
 plugins {
     kotlin("multiplatform")
-    id("dev.lidory.rustine.cargo") version "0.3.7"
+    id("dev.lidory.rustine.cargo") version "1.0.0"
 }
 ```
 

@@ -2360,7 +2360,7 @@ dependencies = [
 
 [[package]]
 name = "rustine-uniffi-bindgen"
-version = "0.3.7"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "askama",
@@ -2378,7 +2378,7 @@ dependencies = [
 
 [[package]]
 name = "rustine-wasm-transformer"
-version = "0.3.7"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "askama",

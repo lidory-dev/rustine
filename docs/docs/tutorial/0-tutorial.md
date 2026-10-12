@@ -134,8 +134,8 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
    ```kotlin
    plugins {
        // Other plugins here, including com.android.kotlin.multiplatform.library
-       id("dev.lidory.rustine.cargo") version "0.3.7"
-       id("dev.lidory.rustine.uniffi") version "0.3.7"
+       id("dev.lidory.rustine.cargo") version "1.0.0"
+       id("dev.lidory.rustine.uniffi") version "1.0.0"
        kotlin("plugin.atomicfu") version libs.versions.kotlin
    }
    ```

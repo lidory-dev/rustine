@@ -17,8 +17,8 @@ import rustine.gradle.rust.targets.RustAndroidTarget
 
 plugins {
     kotlin("multiplatform")
-    id("dev.lidory.rustine.cargo") version "0.3.7"
-    id("dev.lidory.rustine.uniffi") version "0.3.7"
+    id("dev.lidory.rustine.cargo") version "1.0.0"
+    id("dev.lidory.rustine.uniffi") version "1.0.0"
 }
 
 uniffi {

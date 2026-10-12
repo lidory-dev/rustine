@@ -1,7 +1,7 @@
 # Changelog
 
-Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7. The entries for 0.3.7 and
-older versions describe Gobley releases.
+Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7, and its first release is
+1.0.0. The entries for 0.3.7 and older versions describe Gobley releases.
 
 ## [Unreleased](https://github.com/lidory-dev/rustine/compare/v0.3.7...HEAD)
 

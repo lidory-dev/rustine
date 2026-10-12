@@ -17,7 +17,7 @@ automatically passed to the Cargo or the UniFFI plugins.
 
 ```kotlin
 plugins {
-    id("dev.lidory.rustine.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "1.0.0"
 }
 
 rust {
@@ -78,7 +78,7 @@ error during Android local unit tests. Simply apply the Rust plugin to resolve t
 
 ```kotlin
 plugins {
-    id("dev.lidory.rustine.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "1.0.0"
 }
 ```
 
@@ -96,7 +96,7 @@ project and the projects depending on it as follows.
 plugins {
     kotlin("multiplatform")
     id("com.android.kotlin.multiplatform.library")
-    id("dev.lidory.rustine.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "1.0.0"
 }
 
 kotlin {
