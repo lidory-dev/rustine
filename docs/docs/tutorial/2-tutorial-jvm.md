@@ -4,10 +4,10 @@ slug: /tutorial-jvm
 
 # Getting started (JVM)
 
-Welcome to Gobley! Gobley is a set of libraries and tools that help you mix Rust and Kotlin, so you
+Welcome to Rustine! Rustine is a set of libraries and tools that help you mix Rust and Kotlin, so you
 can focus on implementing your business logic. In this tutorial, you will learn how to embed Rust
-code into your Kotlin/JVM project using Gobley. If you have trouble setting up your project, please
-create a question in [GitHub Discussions](https://github.com/gobley/gobley/discussions).
+code into your Kotlin/JVM project using Rustine. If you have trouble setting up your project, please
+create a question in [GitHub Discussions](https://github.com/lidory-dev/rustine/discussions).
 
 ## Prerequisites
 
@@ -34,10 +34,10 @@ Let's first create a new Kotlin/JVM project.
 1. Open IntelliJ IDEA.
 2. Select **File > New > New Project**.
 3. Select **Kotlin**.
-4. Rename the project to `MyFirstGobleyProject`.
+4. Rename the project to `MyFirstRustineProject`.
 5. Select **Gradle** as the build system.
 6. Select **Kotlin** as the Gradle DSL.
-7. Change the GroupId to `dev.gobley.myfirstproject`.
+7. Change the GroupId to `dev.lidory.rustine.myfirstproject`.
 
 ![The new project screen](./2-tutorial-jvm/img-1.png)
 
@@ -53,15 +53,15 @@ Let's add a Cargo package to the Kotlin/JVM project.
 2. Open the **Terminal** menu in IntelliJ IDEA. Run:
 
    ```shell
-   cargo init --lib --name my-first-gobley-project --vcs none .
+   cargo init --lib --name my-first-rustine-project --vcs none .
    ```
 
    Let's see what this command does:
 
     - `cargo init` will create a new Cargo package in `.` (the current directory).
     - `--lib` means that Cargo will create a **library** crate.
-    - `--name my-first-gobley-project` means that the name of the resulting Cargo package will be
-      `my-first-gobley-project`. Cargo doesn't like camelCase.
+    - `--name my-first-rustine-project` means that the name of the resulting Cargo package will be
+      `my-first-rustine-project`. Cargo doesn't like camelCase.
     - `--vcs none` means you don't want to generate `.git` or `.gitignore`.
     - `.` is the directory where we'll code both in Rust and Kotlin.
 
@@ -87,7 +87,7 @@ Let's add a Cargo package to the Kotlin/JVM project.
    ```toml
    # This part is already added by cargo init.
    [package]
-   name = "my-first-gobley-project"
+   name = "my-first-rustine-project"
    version = "0.1.0"
    edition = "2024"
 
@@ -107,26 +107,26 @@ Let's add a Cargo package to the Kotlin/JVM project.
     - `uniffi = "0.29.4"` downloads UniFFI, the library used to generate the Kotlin code (the "
       bindings") that calls the Rust library.
     - `crate-type = ["cdylib"]` will make Cargo generate a `.dll` (Windows), `.dylib` (macOS), or
-      `.so` (Linux) file that can be used by Gobley.
+      `.so` (Linux) file that can be used by Rustine.
     - `path = "src/main/rust/lib.rs"` designates the path to the Rust source code.
 
 6. Modify `build.gradle.kts` like the following.
 
    ```kotlin
-   import gobley.gradle.GobleyHost
-   import gobley.gradle.cargo.dsl.jvm
+   import rustine.gradle.RustineHost
+   import rustine.gradle.cargo.dsl.jvm
 
    plugins {
        kotlin("jvm") version "<kotlin version>"
-       id("dev.gobley.cargo") version "0.3.7"
-       id("dev.gobley.uniffi") version "0.3.7"
+       id("dev.lidory.rustine.cargo") version "0.3.7"
+       id("dev.lidory.rustine.uniffi") version "0.3.7"
        kotlin("plugin.atomicfu") version "<kotlin version>"
    }
 
    cargo {
        builds.jvm {
            // Build Rust library only for the host platform
-           embedRustLibrary = (GobleyHost.current.rustTarget == rustTarget)
+           embedRustLibrary = (RustineHost.current.rustTarget == rustTarget)
        }
    }
    ```
@@ -134,21 +134,21 @@ Let's add a Cargo package to the Kotlin/JVM project.
    > :exclamation: Consider managing plugin dependencies using
    > [version catalogs](https://docs.gradle.org/current/userguide/version_catalogs.html).
    >
-   > :bulb: All Gradle plugins in Gobley are published in `mavenCentral()`.
+   > :bulb: All Gradle plugins in Rustine are published in `mavenCentral()`.
 
    Let's see what each plugin does:
 
-    - `dev.gobley.cargo` builds and links the Rust library to the Kotlin application. The `cargo {}`
+    - `dev.lidory.rustine.cargo` builds and links the Rust library to the Kotlin application. The `cargo {}`
       block controls Rust build options. In the above code, we instructed Cargo to build the library
       only for the host platform.
-    - `dev.gobley.uniffi` generates the bindings using UniFFI. You can change the package name of
+    - `dev.lidory.rustine.uniffi` generates the bindings using UniFFI. You can change the package name of
       the bindings inside the `uniffi {}` block.
     - `org.jetbrains.kotlin.plugin.atomicfu` is to use atomic types used by the bindings.
 
 We're now ready to code both in Rust and Kotlin!
 
 > :question: If you hit the **Sync Now** button at this point, you'll get a
-> `Crate my_first_gobley_project not found in [lib]my_first_gobley_project.{dll, dylib, so}` error.
+> `Crate my_first_rustine_project not found in [lib]my_first_rustine_project.{dll, dylib, so}` error.
 > That's because you haven't used `uniffi::setup_scaffolding!();` inside the Rust code. If you
 > encountered such an error, go straight to the next step.
 
@@ -209,10 +209,10 @@ Cargo will start building the Rust library inside IntelliJ IDEA. After the build
 `src/main/kotlin/Main.kt` as follows.
 
 ```kotlin
-package dev.gobley.myfirstproject
+package dev.lidory.rustine.myfirstproject
 
-import uniffi.my_first_gobley_project.Greeter
-import uniffi.my_first_gobley_project.add
+import uniffi.my_first_rustine_project.Greeter
+import uniffi.my_first_rustine_project.add
 
 fun main() {
     println("Addition using Rust: 2 + 3 = ${add(2, 3)}")
@@ -233,4 +233,4 @@ program communicates with Rust without any issues.
 ## Next step
 
 And that's how you embed Rust into your Kotlin project. If you need more detailed information about
-Gobley, please read the [documentation](../docs/0-overview.md).
+Rustine, please read the [documentation](../docs/0-overview.md).

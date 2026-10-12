@@ -8,12 +8,12 @@ slug: /gradle-plugins/cargo
 
 The Cargo plugin is responsible for building and linking the Rust library to your Kotlin project.
 You can use it even when you are not using UniFFI. If the `Cargo.toml` is located in the project
-root, you can simply apply the `dev.gobley.cargo` the plugin.
+root, you can simply apply the `dev.lidory.rustine.cargo` the plugin.
 
 ```kotlin
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.cargo") version "0.3.7"
+    id("dev.lidory.rustine.cargo") version "0.3.7"
 }
 ```
 
@@ -116,8 +116,8 @@ By default, the Cargo plugin builds for all Android ABIs. To exclude ABIs, use
 the [`embedRustLibrary`](#controlling-the-targets-to-build) property.
 
 ```kotlin
-import gobley.gradle.cargo.dsl.*
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.cargo.dsl.*
+import rustine.gradle.rust.targets.RustAndroidTarget
 
 cargo {
     builds.android {
@@ -128,7 +128,7 @@ cargo {
 }
 ```
 
-> :bulb: `builds.android {}` is an extension function defined in the `gobley.gradle.cargo.dsl`
+> :bulb: `builds.android {}` is an extension function defined in the `rustine.gradle.cargo.dsl`
 > package. Make sure it is imported, especially in Kotlin Multiplatform modules, where `android`
 > refers to other declarations as well.
 
@@ -139,7 +139,7 @@ for you, but if you need finer control, you can directly configure the propertie
 The build task is accessible in the `builds {}` block.
 
 ```kotlin
-import gobley.gradle.cargo.dsl.*
+import rustine.gradle.cargo.dsl.*
 
 cargo {
     builds {
@@ -182,15 +182,15 @@ installed on the current system or not. The list of such targets by the build ho
 
 To build for specific targets only, you can configure that using the `embedRustLibrary` property.
 For example, to build a shared library for the current build host only, set this property to
-`rustTarget == GobleyHost.current.rustTarget`.
+`rustTarget == RustineHost.current.rustTarget`.
 
 ```kotlin
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.*
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.*
 
 cargo {
     builds.jvm {
-        embedRustLibrary = (rustTarget == GobleyHost.current.rustTarget)
+        embedRustLibrary = (rustTarget == RustineHost.current.rustTarget)
     }
 }
 ```
@@ -198,16 +198,16 @@ cargo {
 On Windows, both MinGW and Visual C++ can generate DLLs. By default, the Cargo plugin doesn't invoke
 the MinGW build for JVM on Windows since Visual C++ is available. To override this behavior, use the
 `embedRustLibrary` property like the following. Note that MinGW Windows on ARM is not supported by
-Gobley.
+Rustine.
 
 ```kotlin
-import gobley.gradle.GobleyHost
-import gobley.gradle.cargo.dsl.*
-import gobley.gradle.rust.targets.RustWindowsTarget
+import rustine.gradle.RustineHost
+import rustine.gradle.cargo.dsl.*
+import rustine.gradle.rust.targets.RustWindowsTarget
 
 cargo {
     builds.jvm {
-        if (GobleyHost.Platform.Windows.isCurrent) {
+        if (RustineHost.Platform.Windows.isCurrent) {
             when (rustTarget) {
                 RustWindowsTarget.X64 -> embedRustLibrary = false
                 RustPosixTarget.MinGWX64 -> embedRustLibrary = true
@@ -248,7 +248,7 @@ cdylib_name = "bar"
 The JVM `loadIndirect()` function in the bindings allow users to override the `cdylib_name` value
 using the `uniffi.component.<namespace name>.libraryOverride` system property as well. See the
 [
-`:tests:uniffi:ext-types:ext-types`](https://github.com/gobley/gobley/tree/main/tests/uniffi/ext-types/ext-types)
+`:tests:uniffi:ext-types:ext-types`](https://github.com/lidory-dev/rustine/tree/main/tests/uniffi/ext-types/ext-types)
 test to see how this works.
 
 ### Publishing JAR artifacts containing the Rust dynamic libraries
@@ -322,8 +322,8 @@ project. If you want to include shared library built for a different platform, y
 using the `androidUnitTest` property.
 
 ```kotlin
-import gobley.gradle.cargo.dsl.*
-import gobley.gradle.rust.targets.RustWindowsTarget
+import rustine.gradle.cargo.dsl.*
+import rustine.gradle.rust.targets.RustWindowsTarget
 
 cargo {
     builds.jvm {
@@ -469,15 +469,15 @@ cargo {
 
 While it is unusual to use separate configurations for debugging and releasing on Java, you should
 care about the build variant when you're publishing an application or a library written in Rust.
-Gobley handles this discrepancy using **profiles** and **variants**. If you want to use customized
+Rustine handles this discrepancy using **profiles** and **variants**. If you want to use customized
 [Cargo profiles](https://doc.rust-lang.org/cargo/reference/profiles.html) or different Cargo
 features for different Cargo profiles, you can configure them using these APIs.
 
-Gobley provides two variants: `Variant.Debug` and `Variant.Release`. You can then specify the Cargo
+Rustine provides two variants: `Variant.Debug` and `Variant.Release`. You can then specify the Cargo
 profile to use for each variant in the `cargo {}` block.
 
 ```kotlin
-import gobley.gradle.cargo.profiles.CargoProfile
+import rustine.gradle.cargo.profiles.CargoProfile
 
 cargo {
     debug.profile = CargoProfile("my-debug")
@@ -532,19 +532,19 @@ cargo {
 ## Be careful of the build variant used during publishing
 
 > :bulb: In `com.android.application` and `com.android.library` modules, the Android Gradle plugin
-> supports multiple build variants, and Gobley automatically chooses the Cargo build by the build
+> supports multiple build variants, and Rustine automatically chooses the Cargo build by the build
 > type of each Android variant. When the name of the build type contains `debug` (ignoring case),
 > the debug build is used. Otherwise, the release build is used. For example, the `debug` build type
 > uses the debug build, and the `release` and the custom `staging` build types use the release
 > build. Product flavors don't affect this.
 
-For scenarios where the variant to use can't be chosen automatically, Gobley provides `jvmVariant`,
+For scenarios where the variant to use can't be chosen automatically, Rustine provides `jvmVariant`,
 `jvmPublishingVariant`, `nativeVariant`, and `androidVariant`. These properties can be configured
 inside the `cargo {}` or the `builds {}` blocks.
 
 ```kotlin
-import gobley.gradle.Variant
-import gobley.gradle.cargo.dsl.*
+import rustine.gradle.Variant
+import rustine.gradle.cargo.dsl.*
 
 cargo {
     jvmVariant = Variant.Release
@@ -567,14 +567,14 @@ cargo {
 ```
 
 `jvmVariant` designates the variant to use when you hit the run button inside the IDE. It defaults
-to `Variant.Debug`. If you're using Gobley in an application project or a library project directly
+to `Variant.Debug`. If you're using Rustine in an application project or a library project directly
 referenced by an application project, `jvmVariant` is used, which means you might be building and
 releasing the debug version of your application. On the other hand, `jvmPublishingVariant` is used
 when you publish a library. It defaults to `Variant.Release`. The publishing task depends on the JAR
 task selected by `jvmPublishingVariant`.
 
 Unlike the JVM variant properties, native targets only have `nativeVariant`. It defaults to
-`Variant.Debug`. When you invoke Gradle from Xcode, Gobley will read environment variables set by
+`Variant.Debug`. When you invoke Gradle from Xcode, Rustine will read environment variables set by
 Xcode and automatically determine the value for `nativeVariant`. When you build for Windows or
 Linux, where such environment variables are not available, you should manually determine the value
 for `nativeVariant`. Even when you build for Apple platforms, if you're just publishing a library,
@@ -582,9 +582,9 @@ you should be careful of the value of `nativeVariant`, as it doesn't use Xcode.
 
 `androidVariant` is used in Kotlin Multiplatform modules using the
 `com.android.kotlin.multiplatform.library` plugin. As this plugin doesn't support build types, the
-Android library has a single variant, and Gobley can't choose between the debug build and the
+Android library has a single variant, and Rustine can't choose between the debug build and the
 release build by the Android variant. `androidVariant` determines the Cargo build embedded into the
-Android library. By default, Gobley looks at the tasks requested in the command line of the root
+Android library. By default, Rustine looks at the tasks requested in the command line of the root
 build, including when the library is in an included build: when the name of a requested task
 contains `release` (ignoring case) or starts with `publish`, as in
 `./gradlew :androidApp:assembleRelease`, `./gradlew :androidApp:bundleRelease`, or
@@ -597,14 +597,14 @@ for the release version of an application. Set `androidVariant` explicitly in su
 You can use Gradle properties to control these values.
 
 ```kotlin
-import gobley.gradle.Variant
+import rustine.gradle.Variant
 
 cargo {
-    // When you're using Gobley in an application project
+    // When you're using Rustine in an application project
     jvmVariant = Variant(findProperty("my.project.jvm.variant")?.toString() ?: "debug")
     // When you build for native targets without Xcode
     nativeVariant = Variant(findProperty("my.project.native.variant")?.toString() ?: "debug")
-    // When you're using Gobley in a Kotlin Multiplatform library targeting Android. Set it only
+    // When you're using Rustine in a Kotlin Multiplatform library targeting Android. Set it only
     // when the property is given, to keep the default based on the requested tasks otherwise.
     findProperty("my.project.android.variant")?.let { androidVariant = Variant(it.toString()) }
 }

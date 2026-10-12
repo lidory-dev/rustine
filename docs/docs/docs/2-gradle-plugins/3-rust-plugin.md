@@ -17,7 +17,7 @@ automatically passed to the Cargo or the UniFFI plugins.
 
 ```kotlin
 plugins {
-    id("dev.gobley.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "0.3.7"
 }
 
 rust {
@@ -33,7 +33,7 @@ host; it invokes `mingwX64` on Windows, `macosX64` or `macosArm64` on macOS, and
 `linuxArm64` on Linux, though Linux Arm64 build host is not supported by Kotlin/Native yet.
 
 ```kotlin
-import gobley.gradle.rust.dsl.*
+import rustine.gradle.rust.dsl.*
 
 kotlin {
     hostNativeTarget()
@@ -47,7 +47,7 @@ toolchain, you may encounter a linker error when building that Kotlin Native pro
 when your Rust project emits a linker flag that is not supported by the Kotlin Native LLVM linker.
 
 ```kotlin
-import gobley.gradle.rust.dsl.*
+import rustine.gradle.rust.dsl.*
 
 kotlin {
     iosArm64().compilations.getByName("main") {
@@ -59,7 +59,7 @@ kotlin {
 `rustVersion` retrieves the current Rust version via `rustc --version`.
 
 ```kotlin
-import gobley.gradle.rust.dsl.*
+import rustine.gradle.rust.dsl.*
 
 println(rustVersion.get()) // e.g. 1.81.0
 ```
@@ -68,7 +68,7 @@ println(rustVersion.get()) // e.g. 1.81.0
 
 To align with modern
 Gradle's [isolated project](https://docs.gradle.org/8.13/userguide/isolated_projects.html)
-feature, Gobley
+feature, Rustine
 uses [Gradle configurations](https://docs.gradle.org/8.13/userguide/declaring_configurations.html)
 to propagate dynamic libraries built with Cargo for JVM targets and UniFFI configurations
 for [external types](https://mozilla.github.io/uniffi-rs/0.29/types/remote_ext_types.html). When a project
@@ -78,7 +78,7 @@ error during Android local unit tests. Simply apply the Rust plugin to resolve t
 
 ```kotlin
 plugins {
-    id("dev.gobley.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "0.3.7"
 }
 ```
 
@@ -96,7 +96,7 @@ project and the projects depending on it as follows.
 plugins {
     kotlin("multiplatform")
     id("com.android.kotlin.multiplatform.library")
-    id("dev.gobley.rust") version "0.3.7"
+    id("dev.lidory.rustine.rust") version "0.3.7"
 }
 
 kotlin {

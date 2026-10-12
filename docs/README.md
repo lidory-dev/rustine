@@ -1,4 +1,4 @@
-# Gobley Documentation
+# Rustine Documentation
 
 ### Installation
 

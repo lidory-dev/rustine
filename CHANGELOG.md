@@ -1,9 +1,19 @@
 # Changelog
 
-## [Unreleased](https://github.com/gobley/gobley/compare/v0.3.7...HEAD)
+Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7. The entries for 0.3.7 and
+older versions describe Gobley releases.
+
+## [Unreleased](https://github.com/lidory-dev/rustine/compare/v0.3.7...HEAD)
 
 ### Breaking Changes
 
+- Renamed the project from Gobley to Rustine:
+  - The plugin IDs `dev.gobley.cargo`, `dev.gobley.uniffi`, and `dev.gobley.rust` are renamed to `dev.lidory.rustine.cargo`, `dev.lidory.rustine.uniffi`, and `dev.lidory.rustine.rust`.
+  - The Maven group `dev.gobley.gradle` is renamed to `dev.lidory.rustine.gradle`, and the `gobley-gradle*` artifacts are renamed to `rustine-gradle*`.
+  - The Kotlin packages `gobley.gradle.*` are renamed to `rustine.gradle.*`, and classes like `GobleyHost` and `InternalGobleyGradleApi` are renamed to `RustineHost` and `InternalRustineGradleApi`.
+  - The crates `gobley-uniffi-bindgen` and `gobley-wasm-transformer` are renamed to `rustine-uniffi-bindgen` and `rustine-wasm-transformer`.
+  - The Gradle attributes `dev.gobley.*` are renamed to `dev.lidory.rustine.*`.
+  - The Kotlin packages of the Kotlin/JS glue code generated for WASM targets are renamed from `gobley.wasm.*` to `rustine.wasm.*`, and the `__gobley_add_to_stack_pointer` WASM export is renamed to `__rustine_add_to_stack_pointer`.
 - Gradle 8.11 or higher is required, as the Gradle plugins are now built with Gradle 9.3.1.
 - Android Gradle Plugin (AGP) 9.1 or higher is required. AGP 8 is no longer supported. AGP 9.1 requires Gradle 9.3.1 or higher and JDK 17 or higher, and Kotlin 2.4.0 or higher is recommended.
 - Android modules must be either `com.android.application`/`com.android.library` modules using the built-in Kotlin support of AGP, or Kotlin Multiplatform modules using `com.android.kotlin.multiplatform.library`. The `org.jetbrains.kotlin.android` plugin, Kotlin Multiplatform modules applying `com.android.application` or `com.android.library` with `androidTarget()`, and the `android.builtInKotlin=false`/`android.newDsl=false` opt-outs are not supported.
@@ -22,10 +32,10 @@
 ### Fixes
 
 - Made the Cargo plugin embed the Rust libraries into Android variants of custom build types and product flavors. Build types whose names contain `debug` use the debug Cargo build, and the other build types use the release Cargo build, both in the `.apk`/`.aar` files and in local unit tests.
-- Made the Gobley plugins work whether they are applied before or after the Android Gradle plugins.
+- Made the Rustine plugins work whether they are applied before or after the Android Gradle plugins.
 - Made the UniFFI plugin prefer the default `androidx.annotation` version (1.8.2) instead of the `kotlinx-coroutines` version.
 - Made project dependencies declared with `api`, `implementation`, or `compileOnly` in single-platform Android or Kotlin/JVM modules propagate the Rust runtime libraries and the UniFFI configurations of the dependencies.
-- Fixed ambiguous variant errors when a module using Gobley depends on a project not using Gobley, such as a plain `com.android.library` project, by resolving such dependencies leniently.
+- Fixed ambiguous variant errors when a module using Rustine depends on a project not using Rustine, such as a plain `com.android.library` project, by resolving such dependencies leniently.
 
 ### Dependencies
 

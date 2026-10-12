@@ -4,7 +4,7 @@ slug: /
 
 # Overview
 
-Gobley is a set of libraries and tools that help you mix Rust and Kotlin, so you can focus on
+Rustine is a set of libraries and tools that help you mix Rust and Kotlin, so you can focus on
 implementing your business logic. To get started, please refer to
 the [tutorial](../tutorial/0-tutorial.md). After you finished setting up the project, please read
 the documentation in the following order:

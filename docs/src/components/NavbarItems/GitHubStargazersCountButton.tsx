@@ -15,7 +15,7 @@ export default function GithubStargazersCountButton({
       aria-label="GitHub repository"
     >
       <span className="header-github-link-stats header-github-link-repo-name">
-        gobley/gobley
+        lidory-dev/rustine
       </span>
       <span className="header-github-link-stats header-github-link-stargazers">
         {" ☆ "}

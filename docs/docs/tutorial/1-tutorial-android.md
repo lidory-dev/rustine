@@ -4,10 +4,10 @@ slug: /tutorial-android
 
 # Getting started (Android)
 
-Welcome to Gobley! Gobley is a set of libraries and tools that help you mix Rust and Kotlin, so you
+Welcome to Rustine! Rustine is a set of libraries and tools that help you mix Rust and Kotlin, so you
 can focus on implementing your business logic. In this tutorial, you will learn how to embed Rust
-code into your Android project using Gobley. If you have trouble setting up your project, please
-create a question in [GitHub Discussions](https://github.com/gobley/gobley/discussions).
+code into your Android project using Rustine. If you have trouble setting up your project, please
+create a question in [GitHub Discussions](https://github.com/lidory-dev/rustine/discussions).
 
 ## Prerequisites
 
@@ -35,11 +35,11 @@ Let's first create a new Android project.
 2. Select **File > New > New Project**.
 3. Select **Empty Activity** with Compose.
 
-> :bulb: Gobley can be used without Compose, but the rest of this tutorial will use Compose.
+> :bulb: Rustine can be used without Compose, but the rest of this tutorial will use Compose.
 
 ![The new project wizard](./1-tutorial-android/img-1.png)
 
-4. Rename the project to `MyFirstGobleyProject` and the package to `dev.gobley.myfirstproject`.
+4. Rename the project to `MyFirstRustineProject` and the package to `dev.lidory.rustine.myfirstproject`.
 5. Make sure you selected **Kotlin DSL** for **Build configuration language**.
 
 ![The Android studio screen after the project opened](./1-tutorial-android/img-2.png)
@@ -49,7 +49,7 @@ Let's first create a new Android project.
 New projects created by recent versions of Android Studio use the Android Gradle plugin (AGP) 9,
 which compiles Kotlin by itself using
 the [built-in Kotlin support](https://developer.android.com/build/migrate-to-built-in-kotlin). That's
-why `app/build.gradle.kts` doesn't apply the `org.jetbrains.kotlin.android` plugin. Gobley works
+why `app/build.gradle.kts` doesn't apply the `org.jetbrains.kotlin.android` plugin. Rustine works
 directly with built-in Kotlin, so you don't have to add it. If your project still uses AGP 8 and
 `org.jetbrains.kotlin.android`, see
 [Migrating to AGP 9](../docs/2-gradle-plugins/0-plugins.md#migrating-to-agp-9).
@@ -114,7 +114,7 @@ Let's add a Cargo package to the Android project.
     - `uniffi = "0.29.4"` downloads UniFFI, the library used to generate the Kotlin code (the "
       bindings") that calls the Rust library.
     - `crate-type = ["cdylib"]` will make Cargo generate a `.so` (dynamic library) file that can be
-      used by Gobley.
+      used by Rustine.
     - `path = "src/main/rust/lib.rs"` designates the path to the Rust source code.
 
 6. Modify `app/build.gradle.kts` like the following.
@@ -122,24 +122,24 @@ Let's add a Cargo package to the Android project.
    ```kotlin
    plugins {
        // Other plugins here
-       id("dev.gobley.cargo") version "0.3.7"
-       id("dev.gobley.uniffi") version "0.3.7"
+       id("dev.lidory.rustine.cargo") version "0.3.7"
+       id("dev.lidory.rustine.uniffi") version "0.3.7"
        kotlin("plugin.atomicfu") version libs.versions.kotlin
    }
    ```
 
-   > :exclamation: AGP 9.1 support was added after Gobley 0.3.7. Please use a version of Gobley
-   > that supports AGP 9.1. See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
+   > :exclamation: Rustine requires AGP 9.1 or higher.
+   > See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
    >
    > :exclamation: Consider managing plugin dependencies using
    > [version catalogs](https://docs.gradle.org/current/userguide/version_catalogs.html).
    >
-   > :bulb: All Gradle plugins in Gobley are published in `mavenCentral()`.
+   > :bulb: All Gradle plugins in Rustine are published in `mavenCentral()`.
 
    Let's see what each plugin does:
 
-    - `dev.gobley.cargo` builds and links the Rust library to the Kotlin application.
-    - `dev.gobley.uniffi` generates the bindings using UniFFI. You can change the package name of
+    - `dev.lidory.rustine.cargo` builds and links the Rust library to the Kotlin application.
+    - `dev.lidory.rustine.uniffi` generates the bindings using UniFFI. You can change the package name of
       the bindings inside the `uniffi {}` block.
     - `org.jetbrains.kotlin.plugin.atomicfu` is to use atomic types used by the bindings.
 
@@ -204,7 +204,7 @@ on the Kotlin side. Go back to Android Studio and press the **Sync Now** button.
 ![The Android Studio screen before pressing the Sync Now button](./1-tutorial-android/img-6.png)
 
 Cargo will start building the Rust library inside Android Studio. After the build completes, open
-`app/src/main/java/dev/gobley/myfirstproject/MainActivity.kt`. Add the following lines to the part
+`app/src/main/java/dev/lidory/rustine/myfirstproject/MainActivity.kt`. Add the following lines to the part
 you prefer:
 
 ```kotlin
@@ -241,4 +241,4 @@ without any issues.
 ## Next step
 
 And that's how you embed Rust into your Kotlin project. If you need more detailed information about
-Gobley, please read the [documentation](../docs/0-overview.md).
+Rustine, please read the [documentation](../docs/0-overview.md).

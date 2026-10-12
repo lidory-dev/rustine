@@ -12,13 +12,13 @@ The UniFFI plugin is responsible for generating Kotlin bindings from your Rust p
 example of using the UniFFI plugin to build bindings from the resulting library binary.
 
 ```kotlin
-import gobley.gradle.Variant
-import gobley.gradle.rust.targets.RustAndroidTarget
+import rustine.gradle.Variant
+import rustine.gradle.rust.targets.RustAndroidTarget
 
 plugins {
     kotlin("multiplatform")
-    id("dev.gobley.cargo") version "0.3.7"
-    id("dev.gobley.uniffi") version "0.3.7"
+    id("dev.lidory.rustine.cargo") version "0.3.7"
+    id("dev.lidory.rustine.uniffi") version "0.3.7"
 }
 
 uniffi {

@@ -358,7 +358,7 @@ via the `-target` flag.
 You can configure these variables within Gradle using the following Gradle DSL:
 
 ```kotlin
-import gobley.gradle.cargo.dsl.appleMobile
+import rustine.gradle.cargo.dsl.appleMobile
 
 cargo {
     builds.appleMobile {
@@ -956,7 +956,7 @@ While it is technically possible to put native shared objects inside the Java re
 and load them during the runtime, it is recommended to place them in the designated NDK library
 supported by `.aar`. Since native shared objects are not portable across different CPU
 architectures, you have to provide a different shared object file for each ABI, which is one of the
-built-in features of `.aar`. The Gobley Cargo plugin automatically handles this process.
+built-in features of `.aar`. The Rustine Cargo plugin automatically handles this process.
 
 The published `.aar` file can then be used as a dependency by other app projects. When the consumer
 app project is packaged into its own `.aab` file, the files from the `.aar` dependency are first

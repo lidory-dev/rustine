@@ -4,11 +4,11 @@ slug: /tutorial
 
 # Getting started (Android & iOS)
 
-Welcome to Gobley! Gobley is a set of libraries and tools that help you mix Rust and Kotlin, so you
+Welcome to Rustine! Rustine is a set of libraries and tools that help you mix Rust and Kotlin, so you
 can focus on implementing your business logic. In this tutorial, you will learn how to embed Rust
-code into your Kotlin Multiplatform project using Gobley. If you have trouble setting up your
+code into your Kotlin Multiplatform project using Rustine. If you have trouble setting up your
 project, please create a question
-in [GitHub Discussions](https://github.com/gobley/gobley/discussions).
+in [GitHub Discussions](https://github.com/lidory-dev/rustine/discussions).
 
 ## Prerequisites
 
@@ -43,9 +43,9 @@ for more details about how Kotlin Multiplatform works.
 
 1. Visit the [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com) website.
 2. On the **New Project** tab, set the **Project Name** and **Project ID** to names you want. Let's
-   use `MyFirstGobleyProject` and `dev.gobley.myfirstproject`.
+   use `MyFirstRustineProject` and `dev.lidory.rustine.myfirstproject`.
 3. Make sure you selected **Android** and **iOS**.
-4. Select **Share UI (with Compose Multiplatform UI framework)**. You can use Gobley without Compose
+4. Select **Share UI (with Compose Multiplatform UI framework)**. You can use Rustine without Compose
    Multiplatform, but let's focus on how to mix Rust and Kotlin this time.
 5. Click the **Download** button and extract the downloaded `.zip` file.
 6. Launch Android Studio or IntelliJ IDEA, and open the extracted folder.
@@ -125,7 +125,7 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
     - `uniffi = "0.29.4"` downloads UniFFI, the library used to generate the Kotlin code (the "
       bindings") that calls the Rust library.
     - `crate-type = ["cdylib", "staticlib"]` will make Cargo generate a `.a` (static library) file
-      and a `.so`/`.dylib` (dynamic library) file that can be used by Gobley. Gobley uses the static
+      and a `.so`/`.dylib` (dynamic library) file that can be used by Rustine. Rustine uses the static
       library file when building for iOS, and the dynamic library file for Android.
     - `path = "src/commonMain/rust/lib.rs"` designates the path to the Rust source code.
 
@@ -134,28 +134,28 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
    ```kotlin
    plugins {
        // Other plugins here, including com.android.kotlin.multiplatform.library
-       id("dev.gobley.cargo") version "0.3.7"
-       id("dev.gobley.uniffi") version "0.3.7"
+       id("dev.lidory.rustine.cargo") version "0.3.7"
+       id("dev.lidory.rustine.uniffi") version "0.3.7"
        kotlin("plugin.atomicfu") version libs.versions.kotlin
    }
    ```
 
-   > :exclamation: Apply the Gobley plugins to the `shared` module, not to the `androidApp`
+   > :exclamation: Apply the Rustine plugins to the `shared` module, not to the `androidApp`
    > module. The Rust library embedded into `shared` is included in the Android app through the
    > dependency on `shared`.
    >
-   > :exclamation: AGP 9.1 support was added after Gobley 0.3.7. Please use a version of Gobley
-   > that supports AGP 9.1. See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
+   > :exclamation: Rustine requires AGP 9.1 or higher.
+   > See [Requirements](../docs/2-gradle-plugins/0-plugins.md#requirements).
    >
    > :exclamation: Consider managing plugin dependencies using
    > [version catalogs](https://docs.gradle.org/current/userguide/version_catalogs.html).
    >
-   > :bulb: All Gradle plugins in Gobley are published in `mavenCentral()`.
+   > :bulb: All Gradle plugins in Rustine are published in `mavenCentral()`.
 
    Let's see what each plugin does:
 
-    - `dev.gobley.cargo` builds and links the Rust library to the Kotlin application.
-    - `dev.gobley.uniffi` generates the bindings using UniFFI. You can change the package name of
+    - `dev.lidory.rustine.cargo` builds and links the Rust library to the Kotlin application.
+    - `dev.lidory.rustine.uniffi` generates the bindings using UniFFI. You can change the package name of
       the bindings inside the `uniffi {}` block.
     - `org.jetbrains.kotlin.plugin.atomicfu` is to use atomic types used by the bindings.
 
@@ -229,7 +229,7 @@ on the Kotlin side. Go back to Android Studio and press the **Sync Now** button.
 Cargo will start
 building the Rust library inside Android Studio. After the build completes, open `App.kt` in the
 `commonMain` source set of the `shared` module (e.g.,
-`shared/src/commonMain/kotlin/dev/gobley/myfirstproject/App.kt`). Add the following lines to the
+`shared/src/commonMain/kotlin/dev/lidory/rustine/myfirstproject/App.kt`). Add the following lines to the
 part you prefer:
 
 ```kotlin
@@ -272,4 +272,4 @@ just hit the Run button as well on Xcode.
 ## Next step
 
 And that's how you embed Rust into your Kotlin project. If you need more detailed information about
-Gobley, please read the [documentation](../docs/0-overview.md).
+Rustine, please read the [documentation](../docs/0-overview.md).

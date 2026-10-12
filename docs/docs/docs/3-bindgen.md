@@ -9,25 +9,25 @@ your Kotlin code to your Rust code. In most cases, [the UniFFI Gradle plugin](#t
 handles the bindings generation, so you don't have to know all the details of the bindgen. Still,
 you can directly use this bindgen if you have more complicated build system.
 
-The minimum Rust version required to install `gobley-uniffi-bindgen` is `1.72`. Newer Rust versions
+The minimum Rust version required to install `rustine-uniffi-bindgen` is `1.72`. Newer Rust versions
 should also work fine. The source code of the bindgen for Kotlin Multiplatform is in [
-`bindgen`](https://github.com/gobley/gobley/tree/main/bindgen).
+`bindgen`](https://github.com/lidory-dev/rustine/tree/main/bindgen).
 See comments in [
-`bindgen/src/main.rs`](https://github.com/gobley/gobley/tree/main/bindgen/src/main.rs) or
+`bindgen/src/main.rs`](https://github.com/lidory-dev/rustine/tree/main/bindgen/src/main.rs) or
 [
-`BuildBindingsTask.kt`](https://github.com/gobley/gobley/tree/main/build-logic/gobley-gradle-uniffi/src/main/kotlin/tasks/BuildBindingsTask.kt)
+`BuildBindingsTask.kt`](https://github.com/lidory-dev/rustine/tree/main/build-logic/rustine-gradle-uniffi/src/main/kotlin/tasks/BuildBindingsTask.kt)
 to see how to use the bindgen from the command line.
 
 To install the bindgen, run:
 
 ```shell
-cargo install --bin gobley-uniffi-bindgen gobley-uniffi-bindgen@0.1.0
+cargo install --bin rustine-uniffi-bindgen rustine-uniffi-bindgen@0.1.0
 ```
 
 to invoke the bindgen, run:
 
 ```shell
-gobley-uniffi-bindgen --lib-file <path-to-library-file> --out-dir <output-directory> --crate <crate-name> <path-to-udl-file>
+rustine-uniffi-bindgen --lib-file <path-to-library-file> --out-dir <output-directory> --crate <crate-name> <path-to-udl-file>
 ```
 
 If you want to use the bindgen in your own Crago build script, please read the
@@ -70,9 +70,9 @@ Various settings used by the bindgen can be configured in `<manifest dir>/uniffi
 `uniffi {}` block in Gradle scripts. To learn more about configuring UniFFI settings using Gradle,
 see [Configuring Bindgen settings using Gradle DSL](./2-gradle-plugins/2-uniffi-plugin.md#configuring-bindgen-settings-using-gradle-dsl).
 For more details about each configuration, see [
-`bindgen/src/gen_kotlin_multiplatform/mod.rs`](https://github.com/gobley/gobley/tree/main/bindgen/src/gen_kotlin_multiplatform/mod.rs)
+`bindgen/src/gen_kotlin_multiplatform/mod.rs`](https://github.com/lidory-dev/rustine/tree/main/bindgen/src/gen_kotlin_multiplatform/mod.rs)
 or [
-`Config.kt`](https://github.com/gobley/gobley/tree/main/build-logic/gobley-gradle-uniffi/src/main/kotlin/Config.kt).
+`Config.kt`](https://github.com/lidory-dev/rustine/tree/main/build-logic/rustine-gradle-uniffi/src/main/kotlin/Config.kt).
 
 | Configuration Name                     | Type         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 |----------------------------------------|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -93,25 +93,27 @@ or [
 
 ## Versioning
 
-The Gobley bindgen is versioned separately from UniFFI. UniFFI follows the
+The Rustine bindgen is versioned separately from UniFFI. UniFFI follows the
 [SemVer rules from the Cargo Book](https://doc.rust-lang.org/cargo/reference/resolver.html#semver-compatibility)
 which states "Versions are considered compatible if their left-most non-zero major/minor/patch
 component is the same". A breaking change is any modification to the Kotlin Multiplatform bindings
 that demands the consumer of the bindings to make corresponding changes to their code to ensure that
-the bindings continue to function properly. `gobley-uniffi-bindgen` is young, and it's
+the bindings continue to function properly. `rustine-uniffi-bindgen` is young, and it's
 unclear how stable the generated bindings are going to be between versions. For this reason, major
 version is currently 0, and most changes are probably going to bump minor version.
 
-To ensure consistent feature set across external binding generators, `gobley-uniffi-bindgen`
+To ensure consistent feature set across external binding generators, `rustine-uniffi-bindgen`
 targets a specific `uniffi-rs` version. A consumer using these bindings or any other external
 bindings (for example, [Go bindings](https://github.com/NordSecurity/uniffi-bindgen-go/) or
 [C# bindings](https://github.com/NordSecurity/uniffi-bindgen-cs)) expects the same features to be
 available across multiple bindings generators. This means that the consumer should choose external
 binding generator versions such that each generator targets the same `uniffi-rs` version.
 
-Here is how `gobley-uniffi-bindgen` versions are tied to `uniffi-rs` are tied:
+Here is how `rustine-uniffi-bindgen` versions are tied to `uniffi-rs`. Versions up to v0.3.7 were
+released as `gobley-uniffi-bindgen` by [Gobley](https://github.com/gobley/gobley), which Rustine was
+forked from.
 
-| Gobley version | UniFFI version |
+| Version        | UniFFI version |
 |----------------|----------------|
 | v0.1.0         | v0.28.3        |
 | v0.2.0         | v0.28.3        |

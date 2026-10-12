@@ -13,7 +13,7 @@ const FeatureList: FeatureItem[] = [
     title: "UniFFI Bindings Generation for Kotlin Multiplatform",
     description: (
       <>
-        Gobley generates Kotlin code that connects your project to Rust code
+        Rustine generates Kotlin code that connects your project to Rust code
         using <a href="https://github.com/mozilla/uniffi-rs">UniFFI</a>. You
         don't need to create your own wrapper manually, as you did with JNI.
       </>
@@ -23,7 +23,7 @@ const FeatureList: FeatureItem[] = [
     title: "KotlinX Serialization Support",
     description: (
       <>
-        Gobley detects the presence of KotlinX Serialization in your Gradle
+        Rustine detects the presence of KotlinX Serialization in your Gradle
         project and annotates data classes generated from Rust structs with{" "}
         <code>@kotlinx.Serializable</code>.
       </>
@@ -33,7 +33,7 @@ const FeatureList: FeatureItem[] = [
     title: "Easy-to-Use Cargo Integration",
     description: (
       <>
-        Gobley automatically invokes Cargo as you build your Kotlin
+        Rustine automatically invokes Cargo as you build your Kotlin
         Multiplatform project. Required environment variables for each platform
         are automatically configured.
       </>

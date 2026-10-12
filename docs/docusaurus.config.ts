@@ -9,20 +9,20 @@ import packageJson from "./package.json";
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: "Gobley",
+  title: "Rustine",
   tagline: "Embed Rust into your Kotlin Multiplatform project",
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: "https://gobley.dev",
+  url: "https://lidory-dev.github.io",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/",
+  baseUrl: "/rustine/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "gobley", // Usually your GitHub org/user name.
-  projectName: "gobley", // Usually your repo name.
+  organizationName: "lidory-dev", // Usually your GitHub org/user name.
+  projectName: "rustine", // Usually your repo name.
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -42,7 +42,7 @@ const config: Config = {
         version: packageJson.version,
         llmConfigs: [
           {
-            title: "Gobley",
+            title: "Rustine",
             description: "Embed Rust into your Kotlin Multiplatform project",
             summary: fs.readFileSync(path.join(__dirname, "..", "README.md"), {
               encoding: "utf-8",
@@ -70,7 +70,15 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/gobley/gobley/tree/main/docs",
+          editUrl: "https://github.com/lidory-dev/rustine/tree/main/docs",
+          // Versions up to 0.3 document Gobley, which Rustine was forked from.
+          lastVersion: "current",
+          versions: {
+            current: { label: "Rustine" },
+            "0.3": { label: "Gobley 0.3", banner: "none" },
+            "0.2": { label: "Gobley 0.2", banner: "none" },
+            "0.1": { label: "Gobley 0.1", banner: "none" },
+          },
         },
         theme: {
           customCss: "./src/css/custom.css",
@@ -80,14 +88,14 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: "img/Gobley-Social-Card.png",
+    image: "img/Rustine-Social-Card.png",
     colorMode: {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "Gobley",
+      title: "Rustine",
       logo: {
-        alt: "Gobley Logo",
+        alt: "Rustine Logo",
         src: "img/logo.svg",
       },
       items: [
@@ -111,7 +119,7 @@ const config: Config = {
         {
           type: "custom-githubStargazersCountButton",
           position: "right",
-          repository: "gobley/gobley",
+          repository: "lidory-dev/rustine",
         },
       ],
     },
@@ -141,12 +149,12 @@ const config: Config = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/gobley/gobley",
+              href: "https://github.com/lidory-dev/rustine",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Gobley Contributors.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Rustine Contributors.`,
     },
     prism: {
       theme: prismThemes.github,
