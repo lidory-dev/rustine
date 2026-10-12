@@ -11,17 +11,17 @@ you can directly use this bindgen if you have more complicated build system.
 
 The minimum Rust version required to install `rustine-uniffi-bindgen` is `1.72`. Newer Rust versions
 should also work fine. The source code of the bindgen for Kotlin Multiplatform is in [
-`bindgen`](https://github.com/lidory-dev/rustine/tree/main/bindgen).
+`crates/rustine-uniffi-bindgen`](https://github.com/lidory-dev/rustine/tree/main/crates/rustine-uniffi-bindgen).
 See comments in [
-`bindgen/src/main.rs`](https://github.com/lidory-dev/rustine/tree/main/bindgen/src/main.rs) or
+`crates/rustine-uniffi-bindgen/src/main.rs`](https://github.com/lidory-dev/rustine/blob/main/crates/rustine-uniffi-bindgen/src/main.rs) or
 [
-`BuildBindingsTask.kt`](https://github.com/lidory-dev/rustine/tree/main/build-logic/rustine-gradle-uniffi/src/main/kotlin/tasks/BuildBindingsTask.kt)
+`BuildUniffiBindingsTask.kt`](https://github.com/lidory-dev/rustine/blob/main/build-logic/rustine-gradle-uniffi/src/main/kotlin/tasks/BuildUniffiBindingsTask.kt)
 to see how to use the bindgen from the command line.
 
 To install the bindgen, run:
 
 ```shell
-cargo install --bin rustine-uniffi-bindgen rustine-uniffi-bindgen@0.1.0
+cargo install --bin rustine-uniffi-bindgen rustine-uniffi-bindgen
 ```
 
 to invoke the bindgen, run:
@@ -70,7 +70,7 @@ Various settings used by the bindgen can be configured in `<manifest dir>/uniffi
 `uniffi {}` block in Gradle scripts. To learn more about configuring UniFFI settings using Gradle,
 see [Configuring Bindgen settings using Gradle DSL](./2-gradle-plugins/2-uniffi-plugin.md#configuring-bindgen-settings-using-gradle-dsl).
 For more details about each configuration, see [
-`bindgen/src/gen_kotlin_multiplatform/mod.rs`](https://github.com/lidory-dev/rustine/tree/main/bindgen/src/gen_kotlin_multiplatform/mod.rs)
+`crates/rustine-uniffi-bindgen/src/gen_kotlin_multiplatform/mod.rs`](https://github.com/lidory-dev/rustine/blob/main/crates/rustine-uniffi-bindgen/src/gen_kotlin_multiplatform/mod.rs)
 or [
 `Config.kt`](https://github.com/lidory-dev/rustine/tree/main/build-logic/rustine-gradle-uniffi/src/main/kotlin/Config.kt).
 

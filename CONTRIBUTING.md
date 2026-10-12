@@ -94,7 +94,7 @@ includeBuild("../rustine/build-logic") {
             "rustine-gradle-uniffi",
         )
         for (projectName in projectNames) {
-            substitute(module("dev.lidory.rustine.uniffi:$projectName"))
+            substitute(module("dev.lidory.rustine.gradle:$projectName"))
                 .using(project(":$projectName"))
         }
     }
