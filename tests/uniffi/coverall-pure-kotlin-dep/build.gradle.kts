@@ -1,4 +1,4 @@
-// Tests whether projects with Gobley plugins can depend on other pure-Kotlin projects
+// Tests whether projects with Rustine plugins can depend on other pure-Kotlin projects
 // without the Rust plugin.
 
 import rustine.gradle.rust.dsl.hostNativeTarget

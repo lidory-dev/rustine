@@ -5,5 +5,5 @@
  */
 
 fn main() {
-    gobley_fixture_build_common::generate_scaffolding_from_current_dir();
+    rustine_fixture_build_common::generate_scaffolding_from_current_dir();
 }

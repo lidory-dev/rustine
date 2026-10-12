@@ -27,7 +27,7 @@ if (RustineHost.Platform.Windows.isCurrent) {
         cargo {
             // A workaround for #207
             builds.android {
-                // Like the Gobley plugins, use the latest NDK installed in the SDK directory. The
+                // Like the Rustine plugins, use the latest NDK installed in the SDK directory. The
                 // NDK of Android Kotlin Multiplatform libraries can only be configured using the
                 // `com.android.settings` plugin.
                 val envVariables = rustTarget.ndkEnvVariables(
@@ -87,7 +87,7 @@ uniffi {
 kotlin {
     // The Android application is in the androidApp subproject.
     android {
-        namespace = "dev.gobley.uniffi.examples.tokioblake3app.kotlin"
+        namespace = "dev.lidory.rustine.uniffi.examples.tokioblake3app.kotlin"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 24
 
@@ -111,7 +111,7 @@ kotlin {
             it.binaries.framework {
                 baseName = "TokioBlake3AppKotlin"
                 isStatic = true
-                binaryOption("bundleId", "dev.gobley.uniffi.examples.tokioblake3app.kotlin")
+                binaryOption("bundleId", "dev.lidory.rustine.uniffi.examples.tokioblake3app.kotlin")
                 binaryOption("bundleVersion", "0")
             }
         }

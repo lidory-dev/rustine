@@ -30,7 +30,7 @@ uniffi {
 kotlin {
     // The Android application is in the androidApp subproject.
     android {
-        namespace = "dev.gobley.uniffi.examples.audiocppapp.kotlin"
+        namespace = "dev.lidory.rustine.uniffi.examples.audiocppapp.kotlin"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 26
 
@@ -53,7 +53,7 @@ kotlin {
             it.binaries.framework {
                 baseName = "AudioCppAppKotlin"
                 isStatic = true
-                binaryOption("bundleId", "dev.gobley.uniffi.examples.audiocppapp.kotlin")
+                binaryOption("bundleId", "dev.lidory.rustine.uniffi.examples.audiocppapp.kotlin")
                 binaryOption("bundleVersion", "0")
             }
         }

@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-large-error"
+name = "rustine-fixture-large-error"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_large_error"
+name = "rustine_fixture_large_error"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -14,4 +14,4 @@ thiserror = { workspace = true }
 uniffi = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }

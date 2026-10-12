@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app.widgets
+package rustine.uniffi.examples.app.widgets
 
 import kotlinx.cinterop.*
 import org.gnome.gitlab.gtk.*

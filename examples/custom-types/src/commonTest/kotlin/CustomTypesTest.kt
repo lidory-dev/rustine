@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import gobley.uniffi.examples.customtypes.*
+import rustine.uniffi.examples.customtypes.*
 import io.kotest.matchers.shouldBe
 import io.ktor.http.Url
 import kotlin.test.Test

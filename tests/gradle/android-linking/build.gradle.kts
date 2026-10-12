@@ -95,7 +95,7 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.tests.gradle.androidlinking"
+    namespace = "dev.lidory.rustine.uniffi.tests.gradle.androidlinking"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

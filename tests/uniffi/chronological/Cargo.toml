@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-chronological"
+name = "rustine-fixture-chronological"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_chronological"
+name = "rustine_fixture_chronological"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -18,4 +18,4 @@ chrono = { version = "0.4.23", default-features = false, features = [
 ] }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }

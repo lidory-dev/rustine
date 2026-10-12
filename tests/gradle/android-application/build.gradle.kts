@@ -5,7 +5,7 @@ import java.util.zip.ZipFile
 
 // Mirrors docs/docs/tutorial/1-tutorial-android.md: an Android application using the built-in
 // Kotlin support of the Android Gradle Plugin, with the Android Gradle Plugin applied before the
-// Gobley plugins.
+// Rustine plugins.
 plugins {
     alias(libs.plugins.android.application)
     id("dev.lidory.rustine.cargo")
@@ -16,7 +16,7 @@ plugins {
 uniffi {
     bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/rustine-uniffi-bindgen"))
     generateFromLibrary {
-        packageName = "gobley.uniffi.tests.gradle.androidapplication"
+        packageName = "rustine.uniffi.tests.gradle.androidapplication"
     }
 }
 
@@ -27,17 +27,17 @@ kotlin {
 }
 
 dependencies {
-    // A plain Android library without Gobley plugins.
+    // A plain Android library without Rustine plugins.
     implementation(project(":tests:gradle:android-application-plain-dep"))
     testImplementation(libs.junit)
 }
 
 android {
-    namespace = "dev.gobley.uniffi.tests.gradle.androidapplication"
+    namespace = "dev.lidory.rustine.uniffi.tests.gradle.androidapplication"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.gobley.uniffi.tests.gradle.androidapplication"
+        applicationId = "dev.lidory.rustine.uniffi.tests.gradle.androidapplication"
         minSdk = 29
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -93,7 +93,7 @@ androidComponents {
                             .toSortedSet()
                     }
                     val expectedNativeLibraries = sortedSetOf(
-                        "lib/arm64-v8a/libgobley_fixture_gradle_android_application.so",
+                        "lib/arm64-v8a/librustine_fixture_gradle_android_application.so",
                         "lib/arm64-v8a/libjnidispatch.so",
                     )
                     check(nativeLibraries == expectedNativeLibraries) {

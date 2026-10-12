@@ -15,7 +15,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
     // The Android application is in the androidApp subproject.
     android {
-        namespace = "dev.gobley.uniffi.examples.app.kotlin"
+        namespace = "dev.lidory.rustine.uniffi.examples.app.kotlin"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 24
 
@@ -38,7 +38,7 @@ kotlin {
         mingwX64(),
     ).forEach {
         it.binaries.executable {
-            entryPoint = "gobley.uniffi.examples.app.main"
+            entryPoint = "rustine.uniffi.examples.app.main"
         }
         it.compilations.configureEach {
             useRustUpLinker()
@@ -55,7 +55,7 @@ kotlin {
         linuxArm64(),
     ).forEach {
         it.binaries.executable {
-            entryPoint = "gobley.uniffi.examples.app.main"
+            entryPoint = "rustine.uniffi.examples.app.main"
         }
     }
 
@@ -140,7 +140,7 @@ kotlin {
             }
             val architecture = it.konanTarget.architecture
             // Resolve the NDK directory lazily, only when a link task is scheduled. This is the
-            // default NDK of AGP, while Gobley builds the Rust libraries of Android Kotlin
+            // default NDK of AGP, while Rustine builds the Rust libraries of Android Kotlin
             // Multiplatform libraries using the newest installed NDK.
             val clangRuntimeDir = androidComponents.sdkComponents.ndkDirectory.map { ndkDirectory ->
                 val toolchainDir = ndkDirectory.asFile
@@ -185,7 +185,7 @@ kotlin {
     //     linuxArm64(),
     // ).forEach {
     //     it.binaries.executable {
-    //         entryPoint = "gobley.uniffi.examples.app.main"
+    //         entryPoint = "rustine.uniffi.examples.app.main"
     //     }
     //     it.compilations.getByName("main") {
     //         cinterops.register("gtk") {
@@ -201,7 +201,7 @@ kotlin {
             macosX64(),
         ).forEach {
             it.binaries.executable {
-                entryPoint = "gobley.uniffi.examples.app.main"
+                entryPoint = "rustine.uniffi.examples.app.main"
             }
         }
 
@@ -223,7 +223,7 @@ kotlin {
             it.binaries.framework {
                 baseName = "ExamplesAppKotlin"
                 isStatic = true
-                binaryOption("bundleId", "dev.gobley.uniffi.examples.app.kotlin")
+                binaryOption("bundleId", "dev.lidory.rustine.uniffi.examples.app.kotlin")
                 binaryOption("bundleVersion", "0")
                 export(project(":examples:arithmetic-procmacro"))
                 export(project(":examples:todolist"))

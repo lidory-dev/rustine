@@ -45,7 +45,7 @@ uniffi {
 
 kotlin {
     android {
-        namespace = "dev.gobley.uniffi.examples.todolist"
+        namespace = "dev.lidory.rustine.uniffi.examples.todolist"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 21
 

@@ -1,22 +1,22 @@
 [package]
-name = "gobley-fixture-ext-types"
+name = "rustine-fixture-ext-types"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_ext_types"
+name = "rustine_fixture_ext_types"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
 [dependencies]
 uniffi = { workspace = true }
-external-crate = { path = "../external-crate", package = "gobley-fixture-ext-types-external-crate" }
-gobley-fixture-ext-types-uniffi-one = { path = "../uniffi-one" }
-gobley-fixture-ext-types-custom-types = { path = "../custom-types" }
-sub-lib = { path = "../sub-lib", package = "gobley-fixture-ext-types-sub-lib" }
-gobley-example-custom-types = { path = "../../../../examples/custom-types" }
+external-crate = { path = "../external-crate", package = "rustine-fixture-ext-types-external-crate" }
+rustine-fixture-ext-types-uniffi-one = { path = "../uniffi-one" }
+rustine-fixture-ext-types-custom-types = { path = "../custom-types" }
+sub-lib = { path = "../sub-lib", package = "rustine-fixture-ext-types-sub-lib" }
+rustine-example-custom-types = { path = "../../../../examples/custom-types" }
 url = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../../build-common" }
+rustine-fixture-build-common = { path = "../../../build-common" }

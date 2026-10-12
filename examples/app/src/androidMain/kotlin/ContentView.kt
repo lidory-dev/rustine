@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app
+package rustine.uniffi.examples.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,10 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import gobley.uniffi.examples.arithmeticpm.add
-import gobley.uniffi.examples.arithmeticpm.sub
-import gobley.uniffi.examples.todolist.TodoEntry
-import gobley.uniffi.examples.todolist.TodoList
+import rustine.uniffi.examples.arithmeticpm.add
+import rustine.uniffi.examples.arithmeticpm.sub
+import rustine.uniffi.examples.todolist.TodoEntry
+import rustine.uniffi.examples.todolist.TodoList
 
 @Composable
 fun ContentView(todoList: TodoList) {

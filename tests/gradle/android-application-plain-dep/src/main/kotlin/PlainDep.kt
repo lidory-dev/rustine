@@ -4,6 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.androidapplication.plaindep
+package rustine.uniffi.tests.gradle.androidapplication.plaindep
 
 fun formatGreeting(greeting: String, name: String): String = "$greeting, $name!"

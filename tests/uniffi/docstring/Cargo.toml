@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-docstring"
+name = "rustine-fixture-docstring"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_docstring"
+name = "rustine_fixture_docstring"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -14,4 +14,4 @@ uniffi = { workspace = true }
 thiserror = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }

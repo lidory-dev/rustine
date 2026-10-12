@@ -48,10 +48,10 @@ typedef dictionary UniffiOneProcMacroType;
 typedef string Guid;
 
 // And re-use the `custom-types` example - this exposes `Url` and `Handle`
-[Custom="gobley_example_custom_types"]
+[Custom="rustine_example_custom_types"]
 typedef string Url;
 
-[Custom="gobley_example_custom_types"]
+[Custom="rustine_example_custom_types"]
 typedef i64 Handle;
 
 // Here are some different kinds of remote types - the types are described

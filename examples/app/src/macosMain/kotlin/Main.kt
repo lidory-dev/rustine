@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app
+package rustine.uniffi.examples.app
 
-import gobley.uniffi.examples.todolist.TodoList
+import rustine.uniffi.examples.todolist.TodoList
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.zeroValue
 import platform.AppKit.*

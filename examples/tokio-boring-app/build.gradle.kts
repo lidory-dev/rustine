@@ -60,7 +60,7 @@ if (RustineHost.Platform.MacOS.isCurrent) {
 kotlin {
     // The Android application is in the androidApp subproject.
     android {
-        namespace = "dev.gobley.uniffi.examples.tokioboringapp.kotlin"
+        namespace = "dev.lidory.rustine.uniffi.examples.tokioboringapp.kotlin"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 24
 
@@ -84,7 +84,7 @@ kotlin {
             it.binaries.framework {
                 baseName = "TokioBoringAppKotlin"
                 isStatic = true
-                binaryOption("bundleId", "dev.gobley.uniffi.examples.tokioboringapp.kotlin")
+                binaryOption("bundleId", "dev.lidory.rustine.uniffi.examples.tokioboringapp.kotlin")
                 binaryOption("bundleVersion", "0")
             }
         }

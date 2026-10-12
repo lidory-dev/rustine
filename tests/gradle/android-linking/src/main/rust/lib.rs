@@ -10,7 +10,7 @@ use jni::JNIEnv;
 use log::LevelFilter;
 
 #[no_mangle]
-pub extern "system" fn Java_gobley_uniffi_tests_gradle_androidlinking_AndroidLinkingLibrary_libraryExists(
+pub extern "system" fn Java_rustine_uniffi_tests_gradle_androidlinking_AndroidLinkingLibrary_libraryExists(
     mut env: JNIEnv,
     _class: JClass,
     library_name: JString,

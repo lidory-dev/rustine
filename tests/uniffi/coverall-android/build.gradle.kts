@@ -36,7 +36,7 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.tests.uniffi.coverall"
+    namespace = "dev.lidory.rustine.uniffi.tests.uniffi.coverall"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

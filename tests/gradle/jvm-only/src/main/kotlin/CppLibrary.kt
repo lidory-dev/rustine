@@ -4,14 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.jvmonly
+package rustine.uniffi.tests.gradle.jvmonly
 
 import com.sun.jna.Library
 import com.sun.jna.Native
 
 object CppLibrary : Library {
     init {
-        Native.register(CppLibrary::class.java, "gobley-fixture-gradle-jvm-only-cpp")
+        Native.register(CppLibrary::class.java, "rustine-fixture-gradle-jvm-only-cpp")
     }
 
     @JvmName("my_pow")

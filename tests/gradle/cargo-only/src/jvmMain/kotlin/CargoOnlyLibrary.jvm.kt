@@ -13,12 +13,12 @@ actual object CargoOnlyLibrary {
     init {
         // This value can be configured in the Gradle script.
         val resourcePrefix = "jvm"
-        val mappedLibraryName = System.mapLibraryName("gobley_fixture_gradle_cargo_only")
+        val mappedLibraryName = System.mapLibraryName("rustine_fixture_gradle_cargo_only")
 
         // Extract the library file to a temporary location as in JNA so this works even when packaged as a .jar file.
         val isWindows = System.getProperty("os.name").startsWith("Windows")
         val librarySuffix = ".dll".takeIf { isWindows }
-        val libraryFile = File.createTempFile("gobley_fixture_gradle_cargo_only", librarySuffix)
+        val libraryFile = File.createTempFile("rustine_fixture_gradle_cargo_only", librarySuffix)
 
         CargoOnlyLibrary::class.java.classLoader!!
             .getResourceAsStream("$resourcePrefix/$mappedLibraryName")!!

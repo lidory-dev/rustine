@@ -4,14 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.jvmonly
+package rustine.uniffi.tests.gradle.jvmonly
 
 import com.sun.jna.Library
 import com.sun.jna.Native
 
 object RustLibrary : Library {
     init {
-        Native.register(RustLibrary::class.java, "gobley_fixture_gradle_jvm_only")
+        Native.register(RustLibrary::class.java, "rustine_fixture_gradle_jvm_only")
     }
 
     external fun add(lhs: Int, rhs: Int): Int

@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import gobley.uniffi.examples.arithmeticpm.*
+import rustine.uniffi.examples.arithmeticpm.*
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe

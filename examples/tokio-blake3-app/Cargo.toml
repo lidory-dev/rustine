@@ -1,11 +1,11 @@
 [package]
-name = "gobley-example-tokio-blake3-app"
+name = "rustine-example-tokio-blake3-app"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_example_tokio_blake3_app"
+name = "rustine_example_tokio_blake3_app"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 

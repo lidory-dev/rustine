@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-gradle-android-application"
+name = "rustine-fixture-gradle-android-application"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_gradle_android_application"
+name = "rustine_fixture_gradle_android_application"
 crate-type = ["cdylib"]
 path = "src/main/rust/lib.rs"
 

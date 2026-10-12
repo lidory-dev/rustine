@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-enum-types"
+name = "rustine-fixture-enum-types"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_enum_types"
+name = "rustine_fixture_enum_types"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -13,4 +13,4 @@ path = "src/commonMain/rust/lib.rs"
 uniffi = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }

@@ -1,5 +1,5 @@
-// Tests whether Android projects with Gobley plugins can depend on plain Android library projects
-// without Gobley plugins. Such projects have variants of multiple build types, which Gobley must
+// Tests whether Android projects with Rustine plugins can depend on plain Android library projects
+// without Rustine plugins. Such projects have variants of multiple build types, which Rustine must
 // not fail to choose from.
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -15,7 +15,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.tests.gradle.androidapplication.plaindep"
+    namespace = "dev.lidory.rustine.uniffi.tests.gradle.androidapplication.plaindep"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

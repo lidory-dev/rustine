@@ -6,6 +6,6 @@ plugins {
 
 cargo {
     builds.jvm {
-        dynamicLibraries.add("gobley_fixture_dynamic_library_dependencies_the_dependency")
+        dynamicLibraries.add("rustine_fixture_dynamic_library_dependencies_the_dependency")
     }
 }

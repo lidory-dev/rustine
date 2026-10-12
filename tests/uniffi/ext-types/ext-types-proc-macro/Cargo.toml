@@ -1,20 +1,20 @@
 [package]
-name = "gobley-fixture-ext-types-proc-macro"
+name = "rustine-fixture-ext-types-proc-macro"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_ext_types_proc_macro"
+name = "rustine_fixture_ext_types_proc_macro"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
 [dependencies]
 uniffi = { workspace = true }
-uniffi-one = { path = "../uniffi-one", package = "gobley-fixture-ext-types-uniffi-one" }
-custom = { path = "../custom-types", package = "gobley-fixture-ext-types-custom-types" }
-custom-types = { path = "../../../../examples/custom-types", package = "gobley-example-custom-types" }
+uniffi-one = { path = "../uniffi-one", package = "rustine-fixture-ext-types-uniffi-one" }
+custom = { path = "../custom-types", package = "rustine-fixture-ext-types-custom-types" }
+custom-types = { path = "../../../../examples/custom-types", package = "rustine-example-custom-types" }
 url = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../../build-common" }
+rustine-fixture-build-common = { path = "../../../build-common" }

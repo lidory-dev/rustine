@@ -20,11 +20,11 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.examples.app"
+    namespace = "dev.lidory.rustine.uniffi.examples.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.app"
+        applicationId = "dev.lidory.rustine.uniffi.examples.app"
         minSdk = 24
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

@@ -13,9 +13,9 @@ fn main() {
     let cmake_out_dir = cmake::build(".");
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let dylib_file_name = match target_os.as_str() {
-        "windows" => "gobley-fixture-gradle-jvm-only-cpp.dll",
-        "macos" => "libgobley-fixture-gradle-jvm-only-cpp.dylib",
-        _ => "libgobley-fixture-gradle-jvm-only-cpp.so",
+        "windows" => "rustine-fixture-gradle-jvm-only-cpp.dll",
+        "macos" => "librustine-fixture-gradle-jvm-only-cpp.dylib",
+        _ => "librustine-fixture-gradle-jvm-only-cpp.so",
     };
     fs::copy(
         cmake_out_dir.join("lib").join(dylib_file_name),

@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:name="gobley.uniffi.tests.gradle.androidapplication.AndroidApplication"
-        android:label="Gobley Android Application Test" />
+        android:name="rustine.uniffi.tests.gradle.androidapplication.AndroidApplication"
+        android:label="Rustine Android Application Test" />
 
 </manifest>

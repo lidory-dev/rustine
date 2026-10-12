@@ -1,5 +1,5 @@
 [package]
-name = "gobley-fixture-ext-types-uniffi-one"
+name = "rustine-fixture-ext-types-uniffi-one"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -17,4 +17,4 @@ thiserror = { workspace = true }
 uniffi = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../../build-common" }
+rustine-fixture-build-common = { path = "../../../build-common" }

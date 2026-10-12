@@ -4,13 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.jsonly
+package rustine.uniffi.tests.gradle.jsonly
 
-import gobley.wasm.gobley_fixture_gradle_js_only.RustWebAssemblyImports
-import gobley.wasm.gobley_fixture_gradle_js_only.addWasmBindgenModuleFactory
-import gobley.wasm.gobley_fixture_gradle_js_only.createInstance
-import gobley.wasm.gobley_fixture_gradle_js_only.wasmBindgenRequire
-import gobley.wasm.gobley_fixture_gradle_js_only.wasmBindgenRequireStem
+import rustine.wasm.rustine_fixture_gradle_js_only.RustWebAssemblyImports
+import rustine.wasm.rustine_fixture_gradle_js_only.addWasmBindgenModuleFactory
+import rustine.wasm.rustine_fixture_gradle_js_only.createInstance
+import rustine.wasm.rustine_fixture_gradle_js_only.wasmBindgenRequire
+import rustine.wasm.rustine_fixture_gradle_js_only.wasmBindgenRequireStem
 import org.khronos.webgl.Int32Array
 
 object RustLibrary {

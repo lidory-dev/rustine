@@ -1,11 +1,11 @@
 [package]
-name = "gobley-example-arithmetic-procmacro"
+name = "rustine-example-arithmetic-procmacro"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_example_arithmetic_procmacro"
+name = "rustine_example_arithmetic_procmacro"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 

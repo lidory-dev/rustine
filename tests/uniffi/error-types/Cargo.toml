@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-error-types"
+name = "rustine-fixture-error-types"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_error_types"
+name = "rustine_fixture_error_types"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -15,4 +15,4 @@ uniffi = { workspace = true }
 thiserror = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }

@@ -1,5 +1,5 @@
 APP_NAME=AudioCppApp
-PRODUCT_BUNDLE_IDENTIFIER=dev.gobley.uniffi.examples.audiocppapp
+PRODUCT_BUNDLE_IDENTIFIER=dev.lidory.rustine.uniffi.examples.audiocppapp
 GRADLE_ROOT_PROJECT_DIR=$SRCROOT/../../..
 GRADLE_PROJECT_NAME=:examples:audio-cpp-app
 GRADLE_PROJECT_CONFIGURE_OWN_APP=false

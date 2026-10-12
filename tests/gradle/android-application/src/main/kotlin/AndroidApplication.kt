@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.androidapplication
+package rustine.uniffi.tests.gradle.androidapplication
 
 import android.app.Application
 import android.util.Log
@@ -15,7 +15,7 @@ class AndroidApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Greeter("Hello").use { greeter ->
-            Log.i("AndroidApplication", "${greeter.greet("Gobley")} 1 + 2 = ${add(1, 2)}")
+            Log.i("AndroidApplication", "${greeter.greet("Rustine")} 1 + 2 = ${add(1, 2)}")
         }
     }
 }

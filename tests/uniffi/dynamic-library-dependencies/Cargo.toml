@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-dynamic-library-dependencies"
+name = "rustine-fixture-dynamic-library-dependencies"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_dynamic_library_dependencies"
+name = "rustine_fixture_dynamic_library_dependencies"
 crate-type = ["staticlib", "cdylib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -13,7 +13,7 @@ path = "src/commonMain/rust/lib.rs"
 uniffi = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common" }
+rustine-fixture-build-common = { path = "../../build-common" }
 
 [target.'cfg(all(target_os = "windows", target_env = "msvc"))'.build-dependencies]
 tempdir = "0.3"

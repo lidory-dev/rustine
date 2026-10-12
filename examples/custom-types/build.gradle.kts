@@ -23,7 +23,7 @@ cargo {
 uniffi {
     bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/rustine-uniffi-bindgen"))
     generateFromLibrary {
-        packageName = "gobley.uniffi.examples.customtypes"
+        packageName = "rustine.uniffi.examples.customtypes"
         customType("Url") {
             typeName = "io.ktor.http.Url"
             imports.add("io.ktor.http.Url")
@@ -35,7 +35,7 @@ uniffi {
 
 kotlin {
     android {
-        namespace = "dev.gobley.uniffi.examples.customtypes"
+        namespace = "dev.lidory.rustine.uniffi.examples.customtypes"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 21
 

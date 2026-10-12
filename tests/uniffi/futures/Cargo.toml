@@ -1,5 +1,5 @@
 [package]
-name = "gobley-fixture-futures"
+name = "rustine-fixture-futures"
 version = "0.21.0"
 authors = ["Ivan Enderlin <ivan@mnt.io>"]
 edition = "2021"
@@ -7,7 +7,7 @@ license = "MPL-2.0"
 publish = false
 
 [lib]
-name = "gobley_fixture_futures"
+name = "rustine_fixture_futures"
 crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -24,6 +24,6 @@ tokio = { workspace = true, features = ["time", "sync"] }
 once_cell = { workspace = true }
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../build-common", features = [
+rustine-fixture-build-common = { path = "../../build-common", features = [
     "scaffolding-ffi-buffer-fns",
 ] }

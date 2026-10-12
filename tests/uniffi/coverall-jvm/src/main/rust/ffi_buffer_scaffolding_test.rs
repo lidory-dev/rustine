@@ -36,7 +36,7 @@ fn test_ffi_buffer_scaffolding() {
         <RustBuffer as FfiSerialize>::write(args_cursor, value_as_text_lowered);
         // Call the ffi-buffer version of the scaffolding function
         unsafe {
-            crate::uniffi_ffibuffer_gobley_fixture_coverall_jvm_fn_func_divide_by_text(
+            crate::uniffi_ffibuffer_rustine_fixture_coverall_jvm_fn_func_divide_by_text(
                 args_ffi_buffer.as_mut_ptr(),
                 return_ffi_buffer.as_mut_ptr(),
             );

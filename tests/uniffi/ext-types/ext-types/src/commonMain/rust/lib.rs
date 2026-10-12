@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use gobley_example_custom_types as custom_types;
+use rustine_example_custom_types as custom_types;
 
 use custom_types::Handle;
 use external_crate::{

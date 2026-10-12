@@ -4,14 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app
+package rustine.uniffi.examples.app
 
-import gobley.uniffi.examples.todolist.TodoList
+import rustine.uniffi.examples.todolist.TodoList
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalStdlibApi::class)
 fun main(args: Array<String>) {
-    val application = object : Application("dev.gobley.uniffi.examples.app", args) {
+    val application = object : Application("dev.lidory.rustine.uniffi.examples.app", args) {
         override fun activate() {
             ContentWindow(this, TodoList()).run {
                 title = "TodoList App"

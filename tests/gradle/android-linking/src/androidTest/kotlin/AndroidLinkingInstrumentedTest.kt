@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.androidlinking
+package rustine.uniffi.tests.gradle.androidlinking
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

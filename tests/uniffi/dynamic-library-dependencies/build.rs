@@ -9,7 +9,7 @@ use std::process::Command;
 use std::{env, fs};
 
 fn main() {
-    gobley_fixture_build_common::generate_scaffolding_from_current_dir();
+    rustine_fixture_build_common::generate_scaffolding_from_current_dir();
 
     // Build the dependency. `target_dir` is the directory where the dependency build results will
     // be stored.
@@ -19,7 +19,7 @@ fn main() {
     // On Windows, when the path gets too long, the linker fails to open files to write the results.
     // Select a temporary directory to prevent this.
     #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    let target_dir = tempdir::TempDir::new("gobley").unwrap().into_path();
+    let target_dir = tempdir::TempDir::new("rustine").unwrap().into_path();
 
     // On other systems, just store the build results inside the build script output directory.
     #[cfg(not(all(target_os = "windows", target_env = "msvc")))]
@@ -32,7 +32,7 @@ fn main() {
         .args([
             "build",
             "-p",
-            "gobley-fixture-dynamic-library-dependencies-the-dependency",
+            "rustine-fixture-dynamic-library-dependencies-the-dependency",
         ])
         .arg("--target")
         .arg(env::var("TARGET").unwrap())
@@ -52,7 +52,7 @@ fn main() {
 
     let build_output_directory = target_dir.join(env::var("TARGET").unwrap()).join("debug");
     let library_filename =
-        get_library_filename("gobley_fixture_dynamic_library_dependencies_the_dependency");
+        get_library_filename("rustine_fixture_dynamic_library_dependencies_the_dependency");
 
     fs::copy(
         build_output_directory.join(&library_filename),

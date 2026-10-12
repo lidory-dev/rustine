@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app.windows.controls
+package rustine.uniffi.examples.app.windows.controls
 
-import gobley.uniffi.examples.app.windows.Window
+import rustine.uniffi.examples.app.windows.Window
 import platform.windows.*
 
 class TextControl(

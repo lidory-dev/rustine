@@ -4,12 +4,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app
+package rustine.uniffi.examples.app
 
-import gobley.uniffi.examples.arithmeticpm.add
-import gobley.uniffi.examples.arithmeticpm.sub
-import gobley.uniffi.examples.todolist.TodoEntry
-import gobley.uniffi.examples.todolist.TodoList
+import rustine.uniffi.examples.arithmeticpm.add
+import rustine.uniffi.examples.arithmeticpm.sub
+import rustine.uniffi.examples.todolist.TodoEntry
+import rustine.uniffi.examples.todolist.TodoList
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout

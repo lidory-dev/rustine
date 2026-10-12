@@ -4,17 +4,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app
+package rustine.uniffi.examples.app
 
-import gobley.uniffi.examples.app.windows.Window
-import gobley.uniffi.examples.app.windows.controls.ButtonControl
-import gobley.uniffi.examples.app.windows.controls.EditControl
-import gobley.uniffi.examples.app.windows.controls.ListControl
-import gobley.uniffi.examples.app.windows.controls.TextControl
-import gobley.uniffi.examples.arithmeticpm.add
-import gobley.uniffi.examples.arithmeticpm.sub
-import gobley.uniffi.examples.todolist.TodoEntry
-import gobley.uniffi.examples.todolist.TodoList
+import rustine.uniffi.examples.app.windows.Window
+import rustine.uniffi.examples.app.windows.controls.ButtonControl
+import rustine.uniffi.examples.app.windows.controls.EditControl
+import rustine.uniffi.examples.app.windows.controls.ListControl
+import rustine.uniffi.examples.app.windows.controls.TextControl
+import rustine.uniffi.examples.arithmeticpm.add
+import rustine.uniffi.examples.arithmeticpm.sub
+import rustine.uniffi.examples.todolist.TodoEntry
+import rustine.uniffi.examples.todolist.TodoList
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.windows.*
 

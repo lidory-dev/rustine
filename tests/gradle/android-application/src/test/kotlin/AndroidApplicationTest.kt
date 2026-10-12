@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.androidapplication
+package rustine.uniffi.tests.gradle.androidapplication
 
-import gobley.uniffi.tests.gradle.androidapplication.plaindep.formatGreeting
+import rustine.uniffi.tests.gradle.androidapplication.plaindep.formatGreeting
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -21,7 +21,7 @@ class AndroidApplicationTest {
     @Test
     fun greeterCallsRust() {
         Greeter("Hello").use { greeter ->
-            assertEquals(formatGreeting("Hello", "Gobley"), greeter.greet("Gobley"))
+            assertEquals(formatGreeting("Hello", "Rustine"), greeter.greet("Rustine"))
         }
     }
 }

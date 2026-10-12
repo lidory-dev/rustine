@@ -1,5 +1,5 @@
 APP_NAME=TokioBlake3App
-PRODUCT_BUNDLE_IDENTIFIER=dev.gobley.uniffi.examples.tokioblake3app
+PRODUCT_BUNDLE_IDENTIFIER=dev.lidory.rustine.uniffi.examples.tokioblake3app
 GRADLE_ROOT_PROJECT_DIR=$SRCROOT/../../..
 GRADLE_PROJECT_NAME=:examples:tokio-blake3-app
 GRADLE_PROJECT_CONFIGURE_OWN_APP=false

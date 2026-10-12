@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.tests.gradle.jvmonly
+package rustine.uniffi.tests.gradle.jvmonly
 
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test

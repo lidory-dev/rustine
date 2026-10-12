@@ -17,11 +17,11 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.examples.tokioboringapp"
+    namespace = "dev.lidory.rustine.uniffi.examples.tokioboringapp"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.tokioboringapp"
+        applicationId = "dev.lidory.rustine.uniffi.examples.tokioboringapp"
         minSdk = 24
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

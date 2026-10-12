@@ -1,11 +1,11 @@
 [package]
-name = "gobley-example-custom-types"
+name = "rustine-example-custom-types"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_example_custom_types"
+name = "rustine_example_custom_types"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 

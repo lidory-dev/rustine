@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-gradle-js-only"
+name = "rustine-fixture-gradle-js-only"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_gradle_js_only"
+name = "rustine_fixture_gradle_js_only"
 crate-type = ["cdylib"]
 path = "src/jsMain/rust/lib.rs"
 

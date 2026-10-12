@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    // The Android Gradle Plugin is applied before the Gobley plugins on purpose to test whether
-    // Gobley works regardless of the plugin order.
+    // The Android Gradle Plugin is applied before the Rustine plugins on purpose to test whether
+    // Rustine works regardless of the plugin order.
     alias(libs.plugins.android.kotlin.multiplatform.library)
     id("dev.lidory.rustine.cargo")
     id("dev.lidory.rustine.uniffi")
@@ -44,7 +44,7 @@ uniffi {
 
 kotlin {
     android {
-        namespace = "dev.gobley.uniffi.examples.arithmeticpm"
+        namespace = "dev.lidory.rustine.uniffi.examples.arithmeticpm"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = 21
 

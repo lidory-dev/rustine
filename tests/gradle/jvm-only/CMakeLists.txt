@@ -4,11 +4,11 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(gobley-fixture-gradle-jvm-only-cpp)
+project(rustine-fixture-gradle-jvm-only-cpp)
 
-add_library(gobley-fixture-gradle-jvm-only-cpp SHARED src/main/cpp/lib.cpp)
+add_library(rustine-fixture-gradle-jvm-only-cpp SHARED src/main/cpp/lib.cpp)
 
-install(TARGETS gobley-fixture-gradle-jvm-only-cpp
+install(TARGETS rustine-fixture-gradle-jvm-only-cpp
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION lib
 )

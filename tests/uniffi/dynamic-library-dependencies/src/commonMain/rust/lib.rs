@@ -4,11 +4,11 @@
 
 #[cfg_attr(
     target_os = "windows",
-    link(name = "gobley_fixture_dynamic_library_dependencies_the_dependency.dll")
+    link(name = "rustine_fixture_dynamic_library_dependencies_the_dependency.dll")
 )]
 #[cfg_attr(
     not(target_os = "windows"),
-    link(name = "gobley_fixture_dynamic_library_dependencies_the_dependency")
+    link(name = "rustine_fixture_dynamic_library_dependencies_the_dependency")
 )]
 extern "C" {
     fn the_dependency_add(lhs: i32, rhs: i32) -> i32;

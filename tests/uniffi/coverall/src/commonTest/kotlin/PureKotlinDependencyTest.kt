@@ -7,7 +7,7 @@
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-// Tests whether projects with Gobley plugins can depend on other pure-Kotlin projects
+// Tests whether projects with Rustine plugins can depend on other pure-Kotlin projects
 // without the Rust plugin.
 class PureKotlinDependencyTest {
     @Test

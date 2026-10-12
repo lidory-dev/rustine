@@ -1,11 +1,11 @@
 [package]
-name = "gobley-fixture-ext-types-http-headermap"
+name = "rustine-fixture-ext-types-http-headermap"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "gobley_fixture_ext_types_http_headermap"
+name = "rustine_fixture_ext_types_http_headermap"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
@@ -14,4 +14,4 @@ uniffi = { workspace = true }
 http = "0.2.9"
 
 [build-dependencies]
-gobley-fixture-build-common = { path = "../../../build-common" }
+rustine-fixture-build-common = { path = "../../../build-common" }

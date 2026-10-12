@@ -21,7 +21,7 @@ struct ContentView: View {
                 TextField("New task", text: $text, onCommit:  {
                     try! self.todoList.addEntry(entry: TodoEntry(text: "\(clicked) \(text)"))
                     text = ""
-                    clicked = try! Gobley_example_arithmetic_procmacro_nativeKt.add(a: clicked, b: stride)
+                    clicked = try! Rustine_example_arithmetic_procmacro_nativeKt.add(a: clicked, b: stride)
                 }).padding()
             }
 
@@ -34,7 +34,7 @@ struct ContentView: View {
                         if let i = index.first {
                             let entry = todoList.getEntries()[i]
                             try! todoList.clearItem(todo: entry.text)
-                            clicked = try! Gobley_example_arithmetic_procmacro_nativeKt.sub(a: clicked, b: stride)
+                            clicked = try! Rustine_example_arithmetic_procmacro_nativeKt.sub(a: clicked, b: stride)
                         }
                     }
                 }

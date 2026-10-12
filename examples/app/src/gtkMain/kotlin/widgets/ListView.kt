@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.app.widgets
+package rustine.uniffi.examples.app.widgets
 
-import gobley.uniffi.examples.app.signalConnect
+import rustine.uniffi.examples.app.signalConnect
 import kotlinx.cinterop.*
 import org.gnome.gitlab.gtk.*
 

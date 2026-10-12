@@ -1019,364 +1019,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gobley-example-arithmetic-procmacro"
-version = "0.1.0"
-dependencies = [
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-example-audio-cpp-app"
-version = "0.1.0"
-dependencies = [
- "cc",
- "thiserror 1.0.58",
- "tokio",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-example-custom-types"
-version = "0.1.0"
-dependencies = [
- "uniffi",
- "url",
-]
-
-[[package]]
-name = "gobley-example-todolist"
-version = "0.1.0"
-dependencies = [
- "once_cell",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-example-tokio-blake3-app"
-version = "0.1.0"
-dependencies = [
- "blake3",
- "reqwest",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-example-tokio-boring-app"
-version = "0.1.0"
-dependencies = [
- "boring",
- "tokio",
- "tokio-boring",
- "uniffi",
- "url",
-]
-
-[[package]]
-name = "gobley-fixture-build-common"
-version = "0.1.0"
-dependencies = [
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-callbacks"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-chronological"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-coverall"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "once_cell",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-coverall-android"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "once_cell",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-coverall-jvm"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "once_cell",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-docstring"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-docstring-proc-macro"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-dynamic-library-dependencies"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "tempdir",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-dynamic-library-dependencies-the-dependency"
-version = "0.1.0"
-
-[[package]]
-name = "gobley-fixture-enum-types"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-error-types"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types"
-version = "0.1.0"
-dependencies = [
- "gobley-example-custom-types",
- "gobley-fixture-build-common",
- "gobley-fixture-ext-types-custom-types",
- "gobley-fixture-ext-types-external-crate",
- "gobley-fixture-ext-types-sub-lib",
- "gobley-fixture-ext-types-uniffi-one",
- "uniffi",
- "url",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types-custom-types"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types-external-crate"
-version = "0.1.0"
-
-[[package]]
-name = "gobley-fixture-ext-types-http-headermap"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "http",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types-proc-macro"
-version = "0.1.0"
-dependencies = [
- "gobley-example-custom-types",
- "gobley-fixture-build-common",
- "gobley-fixture-ext-types-custom-types",
- "gobley-fixture-ext-types-uniffi-one",
- "uniffi",
- "url",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types-sub-lib"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "gobley-fixture-ext-types-uniffi-one",
- "once_cell",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-ext-types-uniffi-one"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-futures"
-version = "0.21.0"
-dependencies = [
- "async-trait",
- "futures",
- "gobley-fixture-build-common",
- "once_cell",
- "thiserror 1.0.58",
- "tokio",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-gradle-android-application"
-version = "0.1.0"
-dependencies = [
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-gradle-android-linking"
-version = "0.1.0"
-dependencies = [
- "android_logger",
- "cbindgen",
- "env_logger 0.11.8",
- "jni",
- "libc",
- "log",
- "windows",
-]
-
-[[package]]
-name = "gobley-fixture-gradle-cargo-only"
-version = "0.1.0"
-dependencies = [
- "cbindgen",
- "jni",
-]
-
-[[package]]
-name = "gobley-fixture-gradle-js-only"
-version = "0.1.0"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
-name = "gobley-fixture-gradle-jvm-only"
-version = "0.1.0"
-dependencies = [
- "cmake",
-]
-
-[[package]]
-name = "gobley-fixture-keywords"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-large-enum"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-large-error"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-proc-macro"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "thiserror 1.0.58",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-simple-fns"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-simple-iface"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-struct-default-values"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-trait-methods"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
-name = "gobley-fixture-type-limits"
-version = "0.1.0"
-dependencies = [
- "gobley-fixture-build-common",
- "uniffi",
-]
-
-[[package]]
 name = "goblin"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2357,6 +1999,364 @@ name = "rustc-hash"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
+
+[[package]]
+name = "rustine-example-arithmetic-procmacro"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-example-audio-cpp-app"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "thiserror 1.0.58",
+ "tokio",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-example-custom-types"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
+ "url",
+]
+
+[[package]]
+name = "rustine-example-todolist"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-example-tokio-blake3-app"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "reqwest",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-example-tokio-boring-app"
+version = "0.1.0"
+dependencies = [
+ "boring",
+ "tokio",
+ "tokio-boring",
+ "uniffi",
+ "url",
+]
+
+[[package]]
+name = "rustine-fixture-build-common"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-callbacks"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-chronological"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-coverall"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-coverall-android"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-coverall-jvm"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-docstring"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-docstring-proc-macro"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-dynamic-library-dependencies"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "tempdir",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-dynamic-library-dependencies-the-dependency"
+version = "0.1.0"
+
+[[package]]
+name = "rustine-fixture-enum-types"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-error-types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types"
+version = "0.1.0"
+dependencies = [
+ "rustine-example-custom-types",
+ "rustine-fixture-build-common",
+ "rustine-fixture-ext-types-custom-types",
+ "rustine-fixture-ext-types-external-crate",
+ "rustine-fixture-ext-types-sub-lib",
+ "rustine-fixture-ext-types-uniffi-one",
+ "uniffi",
+ "url",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types-custom-types"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types-external-crate"
+version = "0.1.0"
+
+[[package]]
+name = "rustine-fixture-ext-types-http-headermap"
+version = "0.1.0"
+dependencies = [
+ "http",
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types-proc-macro"
+version = "0.1.0"
+dependencies = [
+ "rustine-example-custom-types",
+ "rustine-fixture-build-common",
+ "rustine-fixture-ext-types-custom-types",
+ "rustine-fixture-ext-types-uniffi-one",
+ "uniffi",
+ "url",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types-sub-lib"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "rustine-fixture-build-common",
+ "rustine-fixture-ext-types-uniffi-one",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-ext-types-uniffi-one"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-futures"
+version = "0.21.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "once_cell",
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "tokio",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-gradle-android-application"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-gradle-android-linking"
+version = "0.1.0"
+dependencies = [
+ "android_logger",
+ "cbindgen",
+ "env_logger 0.11.8",
+ "jni",
+ "libc",
+ "log",
+ "windows",
+]
+
+[[package]]
+name = "rustine-fixture-gradle-cargo-only"
+version = "0.1.0"
+dependencies = [
+ "cbindgen",
+ "jni",
+]
+
+[[package]]
+name = "rustine-fixture-gradle-js-only"
+version = "0.1.0"
+dependencies = [
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "rustine-fixture-gradle-jvm-only"
+version = "0.1.0"
+dependencies = [
+ "cmake",
+]
+
+[[package]]
+name = "rustine-fixture-keywords"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-large-enum"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-large-error"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-proc-macro"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-simple-fns"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-simple-iface"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-struct-default-values"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-trait-methods"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-type-limits"
+version = "0.1.0"
+dependencies = [
+ "rustine-fixture-build-common",
+ "uniffi",
+]
 
 [[package]]
 name = "rustine-uniffi-bindgen"

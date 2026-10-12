@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package gobley.uniffi.examples.tokioblake3app
+package rustine.uniffi.examples.tokioblake3app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

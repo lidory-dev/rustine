@@ -17,11 +17,11 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.examples.tokioblake3app"
+    namespace = "dev.lidory.rustine.uniffi.examples.tokioblake3app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.tokioblake3app"
+        applicationId = "dev.lidory.rustine.uniffi.examples.tokioblake3app"
         minSdk = 24
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

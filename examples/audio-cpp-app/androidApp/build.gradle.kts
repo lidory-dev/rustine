@@ -17,11 +17,11 @@ dependencies {
 }
 
 android {
-    namespace = "dev.gobley.uniffi.examples.audiocppapp"
+    namespace = "dev.lidory.rustine.uniffi.examples.audiocppapp"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.gobley.uniffi.examples.audiocppapp"
+        applicationId = "dev.lidory.rustine.uniffi.examples.audiocppapp"
         minSdk = 26
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
