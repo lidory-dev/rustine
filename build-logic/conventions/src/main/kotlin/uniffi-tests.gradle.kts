@@ -13,7 +13,7 @@ cargo {
         embedRustLibrary.set(rustTarget == GobleyHost.current.rustTarget)
     }
     wasmTransformerFromPath(
-        rootProject.layout.projectDirectory.dir("crates/gobley-wasm-transformer")
+        rootProject.layout.projectDirectory.dir("crates/rustine-wasm-transformer")
     )
 }
 
@@ -22,7 +22,7 @@ kotlin {
 }
 
 uniffi {
-    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/gobley-uniffi-bindgen"))
+    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/rustine-uniffi-bindgen"))
 }
 
 tasks.withType<InstallUniffiBindgenTask> {

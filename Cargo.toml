@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "crates/gobley-uniffi-bindgen",
-    "crates/gobley-wasm-transformer",
+    "crates/rustine-uniffi-bindgen",
+    "crates/rustine-wasm-transformer",
 
     "tests/build-common",
 

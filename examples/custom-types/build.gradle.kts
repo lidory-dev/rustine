@@ -21,7 +21,7 @@ cargo {
 }
 
 uniffi {
-    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/gobley-uniffi-bindgen"))
+    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/rustine-uniffi-bindgen"))
     generateFromLibrary {
         packageName = "gobley.uniffi.examples.customtypes"
         customType("Url") {

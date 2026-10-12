@@ -11,8 +11,8 @@ use std::str::FromStr as _;
 use anyhow::Context;
 use camino::Utf8PathBuf;
 use clap::Parser;
-use gobley_wasm_transformer::import::WasmFunctionImport;
-use gobley_wasm_transformer::Transformer;
+use rustine_wasm_transformer::import::WasmFunctionImport;
+use rustine_wasm_transformer::Transformer;
 
 #[derive(Parser)]
 #[clap(name = clap::crate_name!())]

@@ -11,7 +11,7 @@ use std::fs;
 use anyhow::Context as _;
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
-use gobley_uniffi_bindgen::KotlinBindingGenerator;
+use rustine_uniffi_bindgen::KotlinBindingGenerator;
 use uniffi_bindgen::BindgenCrateConfigSupplier;
 
 #[derive(Parser)]

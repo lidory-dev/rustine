@@ -19,7 +19,7 @@ impl Transformer {
 
         let mut builder =
             FunctionBuilder::new(&mut self.module.types, &[ValType::I32], &[ValType::I32]);
-        builder.name("__gobley_add_to_stack_pointer".to_string());
+        builder.name("__rustine_add_to_stack_pointer".to_string());
 
         let mut body = builder.func_body();
         let arg = self.module.locals.add(ValType::I32);
@@ -34,7 +34,7 @@ impl Transformer {
 
         self.module
             .exports
-            .add("__gobley_add_to_stack_pointer", add_to_stack_pointer_func);
+            .add("__rustine_add_to_stack_pointer", add_to_stack_pointer_func);
 
         Ok(())
     }

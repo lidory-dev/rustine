@@ -112,7 +112,7 @@ private fun loadDynamicLibraryDependenciesByExtraction(
 ) {
     if (dependencies.isEmpty()) return
     // The directory where the dynamic library dependencies in zipped JAR files will be extracted
-    val extractionDestination = java.nio.file.Files.createTempDirectory("gobley-jna").toFile()
+    val extractionDestination = java.nio.file.Files.createTempDirectory("rustine-jna").toFile()
     val classLoader = UniffiLib::class.java.classLoader!!
     val dependenciesRequiringJnaHandling = mutableListOf<String>()
     for (dependency in dependencies) {

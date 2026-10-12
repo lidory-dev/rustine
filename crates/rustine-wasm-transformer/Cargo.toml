@@ -1,12 +1,12 @@
 [package]
-name = "gobley-wasm-transformer"
+name = "rustine-wasm-transformer"
 version = "0.3.7"
 edition = "2021"
-authors = ["Gobley Contributors"]
+authors = ["Rustine Contributors"]
 description = "WebAssembly module transformation for Kotlin interoperability"
-documentation = "https://github.com/gobley/gobley"
-homepage = "https://github.com/gobley/gobley"
-repository = "https://github.com/gobley/gobley"
+documentation = "https://github.com/lidory-dev/rustine"
+homepage = "https://github.com/lidory-dev/rustine"
+repository = "https://github.com/lidory-dev/rustine"
 license = "MPL-2.0"
 keywords = ["wasm", "kotlin"]
 

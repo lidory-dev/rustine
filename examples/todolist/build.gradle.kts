@@ -36,7 +36,7 @@ cargo {
 }
 
 uniffi {
-    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/gobley-uniffi-bindgen"))
+    bindgenFromPath(rootProject.layout.projectDirectory.dir("crates/rustine-uniffi-bindgen"))
     generateFromUdl {
         udlFile = layout.projectDirectory.file("src/todolist.udl")
         namespace = "todolist"

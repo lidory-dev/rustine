@@ -248,8 +248,8 @@ impl Transformer {
         })
     }
 
-    pub(crate) const WASM_BINDGEN_STEM: &str = "__gobley_wasm_transformer_wb_stem";
-    pub(crate) const WASM_BINDGEN_STEM_FILENAME: &str = "./__gobley_wasm_transformer_wb_stem_bg.js";
+    pub(crate) const WASM_BINDGEN_STEM: &str = "__rustine_wasm_transformer_wb_stem";
+    pub(crate) const WASM_BINDGEN_STEM_FILENAME: &str = "./__rustine_wasm_transformer_wb_stem_bg.js";
 }
 
 struct InMemoryFileLoader {

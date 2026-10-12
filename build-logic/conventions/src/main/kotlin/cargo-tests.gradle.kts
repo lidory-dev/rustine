@@ -15,7 +15,7 @@ cargo {
         resourcePrefix = "jvm"
     }
     wasmTransformerFromPath(
-        rootProject.layout.projectDirectory.dir("crates/gobley-wasm-transformer")
+        rootProject.layout.projectDirectory.dir("crates/rustine-wasm-transformer")
     )
 }
 

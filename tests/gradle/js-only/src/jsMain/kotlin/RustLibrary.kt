@@ -44,12 +44,12 @@ object RustLibrary {
 
     fun sendStructToRust(content: Array<Int>): Int {
         try {
-            val sp = instance.exports.__gobley_add_to_stack_pointer(-80)
+            val sp = instance.exports.__rustine_add_to_stack_pointer(-80)
             val slice = Int32Array(instance.exports.memory.buffer, sp, 20)
             slice.set(content)
             return instance.exports.consume_big_struct(sp)
         } finally {
-            instance.exports.__gobley_add_to_stack_pointer(80)
+            instance.exports.__rustine_add_to_stack_pointer(80)
         }
     }
 

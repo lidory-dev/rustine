@@ -1,12 +1,12 @@
 [package]
-name = "gobley-uniffi-bindgen"
+name = "rustine-uniffi-bindgen"
 version = "0.3.7"
 edition = "2021"
-authors = ["Gobley Contributors"]
+authors = ["Rustine Contributors"]
 description = "A UniFFI Kotlin Multiplatform bindings generator for Rust"
-documentation = "https://github.com/gobley/gobley"
-homepage = "https://github.com/gobley/gobley"
-repository = "https://github.com/gobley/gobley"
+documentation = "https://github.com/lidory-dev/rustine"
+homepage = "https://github.com/lidory-dev/rustine"
+repository = "https://github.com/lidory-dev/rustine"
 readme = "../../README.md"
 license = "MPL-2.0"
 keywords = ["ffi", "bindgen", "kotlin"]
