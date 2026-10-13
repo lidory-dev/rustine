@@ -62,7 +62,7 @@
     {{ visibility() }}data class {{ variant_type_name }}(
         {%- for field in variant.fields() -%}
         {%- call kt::docstring(field, 8) %}
-        val {% call kt::field_name(field, loop.index) %}: {{ field|type_name(ci) -}}
+        val {% call kt::field_name(field, loop.index) %}: {{ field|qualified_type_name(ci, config) -}}
         {%- match field.default_value() %}
         {%- when Some with(default) %} = {{ default|render_default(field, ci, config) }}
         {%- else %}

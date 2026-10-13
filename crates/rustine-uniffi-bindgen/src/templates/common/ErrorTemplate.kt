@@ -21,7 +21,7 @@
     {{ visibility() }}class {{ variant_name }}(
         {%- for field in variant.fields() -%}
         {%- call kt::docstring(field, 8) %}
-        {{ visibility() }}val {% call kt::field_name(field, loop.index) %}: {{ field|type_name(ci) }},
+        {{ visibility() }}val {% call kt::field_name(field, loop.index) %}: {{ field|qualified_type_name(ci, config) }},
         {%- endfor %}
     ) : {{ type_name }}() {
         override val message: String

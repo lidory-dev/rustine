@@ -111,7 +111,10 @@
 // code declares as `expect` and the platform code defines (see the `value_method_helper` filter).
 -#}
 
-{#- The public member of the class, which calls the helper. -#}
+{#-
+// The public member of the class, which calls the helper. A sealed class can have variants that
+// shadow the types of the signature (mozilla/uniffi-rs#2698), so they are fully qualified.
+-#}
 {%- macro value_method_decl(callable, indent) %}
                         {%- call docstring(callable, indent) -%}
                         {%- match callable.throws_type() -%}
@@ -121,10 +124,10 @@
                         {%- endmatch %}
 {{ " "|repeat(indent) }}{{ visibility() }}{% if callable.is_async() -%}suspend {% endif -%}
                         fun {{ callable.name()|fn_name }}(
-                            {%- call arg_list(callable, true) -%}
+                            {%- call qualified_arg_list(callable) -%}
                         )
                         {%- match callable.return_type() -%}
-                        {%-     when Some(return_type) %}: {{ return_type|type_name(ci) }} {
+                        {%-     when Some(return_type) %}: {{ return_type|qualified_type_name(ci, config) }} {
 {{ " "|repeat(indent) }}    return this.{{ callable|value_method_helper }}({% call arg_names(callable) %})
                         {%-     else %} {
 {{ " "|repeat(indent) }}    this.{{ callable|value_method_helper }}({% call arg_names(callable) %})
@@ -396,6 +399,18 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%-             else %}
 {%-         endmatch %}
 {%-     endif %}
+{%-     if !loop.last %}, {% endif -%}
+{%- endfor %}
+{%- endmacro %}
+
+{#- Like `arg_list(func, true)`, with fully qualified types. -#}
+{% macro qualified_arg_list(func) %}
+{%- for arg in func.arguments() -%}
+        {{ arg.name()|var_name }}: {{ arg|qualified_type_name(ci, config) }}
+{%-         match arg.default_value() %}
+{%-             when Some with(default) %} = {{ default|render_default(arg, ci, config) }}
+{%-             else %}
+{%-         endmatch %}
 {%-     if !loop.last %}, {% endif -%}
 {%- endfor %}
 {%- endmacro %}
