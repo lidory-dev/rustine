@@ -123,7 +123,7 @@
         } while (! this.callCounter.compareAndSet(c, c + 1L))
         // Now we can safely do the method call without the handle being freed concurrently.
         try {
-            return block(this.uniffiCloneHandle())
+            return block(this.uniffiCloneHandleUnchecked())
         } finally {
             // This decrement always matches the increment we performed above.
             if (this.callCounter.decrementAndGet() == 0L) {
@@ -146,10 +146,15 @@
         }
     }
 
+    // Upstream clones the handle without the call counter, so lowering a destroyed object cloned
+    // its freed Rust object. Throw `IllegalStateException` for it instead, like method calls do.
     /**
      * @suppress
      */
-    {{ visibility() }}fun uniffiCloneHandle(): Long {
+    {{ visibility() }}fun uniffiCloneHandle(): Long = callWithHandle { it }
+
+    // Only call this while the call counter keeps the Rust object alive.
+    private fun uniffiCloneHandleUnchecked(): Long {
         if (handle == 0L) {
             throw InternalException("uniffiCloneHandle() called on NoHandle object")
         }

@@ -42,6 +42,18 @@ class TraitMethodsTest {
         (TraitMethods("z") > m).shouldBeTrue()
     }
 
+    // Rustine: lowering a destroyed object throws instead of cloning its freed Rust object.
+    @Test
+    fun testDestroyedObjectsAreNotLowered() {
+        val m = TraitMethods("yo")
+        val destroyed = TraitMethods("yo")
+        destroyed.destroy()
+        destroyed.uniffiIsDestroyed.shouldBeTrue()
+        shouldThrow<IllegalStateException> { m.compareTo(destroyed) }
+        shouldThrow<IllegalStateException> { m == destroyed }
+        shouldThrow<IllegalStateException> { destroyed.toString() }
+    }
+
     @Test
     fun testProcMacroDisplay() {
         val m = ProcTraitMethods("yo")
