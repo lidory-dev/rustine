@@ -119,7 +119,7 @@
                         {%- call docstring(callable, indent) -%}
                         {%- match callable.throws_type() -%}
                         {%-     when Some(throwable) %}
-{{ " "|repeat(indent) }}@Throws({{ throwable|type_name(ci) }}::class {%- if callable.is_async() -%}, kotlin.coroutines.cancellation.CancellationException::class{%- endif -%})
+{{ " "|repeat(indent) }}@Throws({{ throwable|qualified_type_name(ci, config) }}::class {%- if callable.is_async() -%}, kotlin.coroutines.cancellation.CancellationException::class{%- endif -%})
                         {%-     else -%}
                         {%- endmatch %}
 {{ " "|repeat(indent) }}{{ visibility() }}{% if callable.is_async() -%}suspend {% endif -%}

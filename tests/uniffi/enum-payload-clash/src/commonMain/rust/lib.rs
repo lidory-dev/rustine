@@ -102,4 +102,31 @@ pub fn check_amounts(amounts: Vec<Amount>) -> Result<Vec<Amount>, AmountError> {
     }
 }
 
+// Rustine: a variant can shadow the error type of a method of the enum too.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum AmountOverflow {
+    #[error("the amount overflows")]
+    Overflow,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, uniffi::Enum)]
+pub enum AmountChange {
+    Add { amount: Amount },
+    AmountOverflow,
+}
+
+#[uniffi::export]
+impl AmountChange {
+    fn apply_to(&self, amount: Amount) -> Result<Amount, AmountOverflow> {
+        match self {
+            Self::Add { amount: added } => amount
+                .value
+                .checked_add(added.value)
+                .map(|value| Amount { value })
+                .ok_or(AmountOverflow::Overflow),
+            Self::AmountOverflow => Err(AmountOverflow::Overflow),
+        }
+    }
+}
+
 uniffi::setup_scaffolding!("enum_payload_clash");

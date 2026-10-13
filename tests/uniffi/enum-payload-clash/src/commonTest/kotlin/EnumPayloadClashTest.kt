@@ -92,4 +92,15 @@ class EnumPayloadClashTest {
             checkAmounts(amounts)
         }.amounts shouldBe amounts
     }
+
+    @Test
+    fun testMethodThrowingShadowedError() {
+        AmountChange.Add(Amount(1UL)).applyTo(Amount(2UL)) shouldBe Amount(3UL)
+        shouldThrow<AmountOverflow.Overflow> {
+            AmountChange.Add(Amount(ULong.MAX_VALUE)).applyTo(Amount(1UL))
+        }
+        shouldThrow<AmountOverflow.Overflow> {
+            AmountChange.AmountOverflow.applyTo(Amount(1UL))
+        }
+    }
 }
