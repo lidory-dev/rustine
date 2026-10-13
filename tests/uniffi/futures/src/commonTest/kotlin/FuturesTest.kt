@@ -156,6 +156,17 @@ class FuturesTest {
         result2 shouldBe "Hello, Bob!"
     }
 
+    // Test async trait methods backed by a tokio-using Rust impl
+    @Test
+    fun testAsyncTokioTraitMethods() = assertApproximateTime(200) {
+        val traits = getSayAfterTokioTraits()
+        val result1 = traits[0].sayAfter(100U, "Alice")
+        val result2 = traits[1].sayAfter(100U, "Bob")
+
+        result1 shouldBe "Hello, Alice (with Tokio)!"
+        result2 shouldBe "Hello, Bob (with Tokio)!"
+    }
+
     // Test foreign implemented async trait methods
     class KotlinAsyncParser : AsyncParser {
         var completedDelays: Int = 0
