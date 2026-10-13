@@ -170,12 +170,14 @@ Kotlin constructors can't suspend, so the bindings generation fails for an async
 constructor, as in UniFFI 0.32:
 
 ```
-Async primary constructors not supported but MyObject has one. Add "MyObject.new" to the `exclude` list in uniffi.toml.
+Async primary constructors not supported but MyObject has one. Add "MyObject.new" to the `exclude` list in the uniffi.toml of the `my_crate` crate.
 ```
 
 Add the constructor to `exclude`, using the names of the object and the constructor in Rust or UDL,
 and export an async constructor with another name, which becomes a `suspend` function of the
-companion object of the class.
+companion object of the class. Unlike UniFFI, the bindgen only checks the crates whose bindings it
+generates, so an async primary constructor in a dependency that isn't a Gradle project doesn't fail
+the bindings generation of the crates using it.
 
 ## The generated bindings
 

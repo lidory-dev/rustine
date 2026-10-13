@@ -27,7 +27,7 @@ Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7, and 
 - Breaking changes inherited from UniFFI 0.30 to 0.32:
   - UDL-defined trait interfaces must be marked with `#[uniffi::trait_interface]`.
   - `[ByRef] bytes` arguments in UDL map to `&[u8]` instead of `&Vec<u8>` in Rust.
-  - The bindings generation fails for async primary constructors, which the bindings left out before. Add them to the `exclude` setting, e.g., `exclude = ["MyObject.new"]` in `uniffi.toml`.
+  - The bindings generation fails for async primary constructors in the crates whose bindings are generated, which the bindings left out before. Add them to the `exclude` setting, e.g., `exclude = ["MyObject.new"]` in `uniffi.toml`.
   - `&[u8]` and `[ByRef] bytes` arguments are not supported in async functions, methods, and constructors, and in the methods of callback interfaces and traits that Kotlin can implement. The bindings generation fails for them.
   - On `wasm32` targets, which the Cargo plugin builds for Kotlin/JS targets, the futures of async functions and methods must be `Send`, unless the crate enables the `wasm-unstable-single-threaded` feature of `uniffi`.
   - Rust implementations of traits that Kotlin can implement are passed back to Rust as the original object, instead of a wrapper that calls it through Kotlin, so passing one to Rust increases its `Arc` strong count.

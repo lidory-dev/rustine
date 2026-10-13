@@ -29,6 +29,15 @@ pub struct GenerationSettings {
     pub crate_filter: Option<String>,
 }
 
+impl GenerationSettings {
+    /// Whether the bindings of the crate named `crate_name` are generated.
+    fn includes_crate(&self, crate_name: &str) -> bool {
+        self.crate_filter
+            .as_deref()
+            .is_none_or(|crate_filter| crate_filter == crate_name)
+    }
+}
+
 /// Generates Kotlin Multiplatform bindings from UniFFI components.
 ///
 /// Load the components with [uniffi_bindgen::BindgenLoader] and parse each crate's config with
@@ -97,7 +106,14 @@ impl KotlinBindingGenerator {
         renames::apply_renames(components)?;
         // Check after the exclusions, so that excluding an async primary constructor works, and
         // after the renames, like upstream: a constructor renamed to `new` is primary.
-        for c in &*components {
+        //
+        // Unlike upstream, only check the crates whose bindings are written. Their bindings don't
+        // render the constructors of other crates, and the config of another crate may be out of
+        // reach: the Gradle plugin only passes the configs of Gradle projects.
+        for c in components
+            .iter()
+            .filter(|c| settings.includes_crate(c.ci.crate_name()))
+        {
             check_async_primary_constructors(&c.ci, &constructor_keys)?;
         }
         for c in &mut *components {
@@ -200,8 +216,9 @@ fn check_async_primary_constructors(
                     .unwrap_or_else(|| format!("{}.{}", obj.name(), cons.name()));
                 bail!(
                     "Async primary constructors not supported but {} has one. Add \"{key}\" to \
-                     the `exclude` list in uniffi.toml.",
+                     the `exclude` list in the uniffi.toml of the `{}` crate.",
                     obj.name(),
+                    ci.crate_name(),
                 );
             }
         }
@@ -260,12 +277,16 @@ fn write_cinterop(ci: &ComponentInterface, out_dir: &Utf8Path, content: String) 
 mod tests {
     use super::*;
 
-    fn components_from_udl(udl: &str, config: &str) -> Result<Vec<Component<Config>>> {
-        let ci = ComponentInterface::from_webidl(udl, "rustine_test").unwrap();
+    fn component(crate_name: &str, udl: &str, config: &str) -> Component<Config> {
+        let ci = ComponentInterface::from_webidl(udl, crate_name).unwrap();
         let config = KotlinBindingGenerator
             .new_config(toml::from_str(config).unwrap())
             .unwrap();
-        let mut components = vec![Component { ci, config }];
+        Component { ci, config }
+    }
+
+    fn components_from_udl(udl: &str, config: &str) -> Result<Vec<Component<Config>>> {
+        let mut components = vec![component("rustine_test", udl, config)];
         KotlinBindingGenerator
             .update_component_configs(&GenerationSettings::default(), &mut components)?;
         Ok(components)
@@ -293,7 +314,8 @@ mod tests {
         assert_eq!(
             async_constructor_error(""),
             "Async primary constructors not supported but AsyncObject has one. Add \
-             \"AsyncObject.new\" to the `exclude` list in uniffi.toml."
+             \"AsyncObject.new\" to the `exclude` list in the uniffi.toml of the \
+             `rustine_test` crate."
         );
     }
 
@@ -317,7 +339,8 @@ mod tests {
         assert_eq!(
             err,
             "Async primary constructors not supported but KtObject has one. Add \
-             \"AsyncObject.new\" to the `exclude` list in uniffi.toml."
+             \"AsyncObject.new\" to the `exclude` list in the uniffi.toml of the \
+             `rustine_test` crate."
         );
 
         // A constructor renamed to `new` is primary.
@@ -332,7 +355,8 @@ mod tests {
         assert_eq!(
             err,
             "Async primary constructors not supported but KtObject has one. Add \
-             \"AsyncObject.secondary\" to the `exclude` list in uniffi.toml."
+             \"AsyncObject.secondary\" to the `exclude` list in the uniffi.toml of the \
+             `rustine_test` crate."
         );
 
         // A primary constructor renamed to another name is not.
@@ -358,5 +382,34 @@ mod tests {
             "#,
         )
         .unwrap();
+    }
+
+    /// Only the crates whose bindings are generated are checked. The config of a dependency that
+    /// is not a Gradle project can't exclude the constructor.
+    #[test]
+    fn async_primary_constructors_of_other_crates_are_accepted() {
+        let dep_udl = ASYNC_CONSTRUCTOR_UDL.replace("rustine_test", "dep");
+        let components = || {
+            vec![
+                component("dep", &dep_udl, ""),
+                component("top", "namespace top {};", ""),
+            ]
+        };
+        let settings = GenerationSettings {
+            crate_filter: Some("top".to_string()),
+            ..GenerationSettings::default()
+        };
+        KotlinBindingGenerator
+            .update_component_configs(&settings, &mut components())
+            .unwrap();
+
+        let err = KotlinBindingGenerator
+            .update_component_configs(&GenerationSettings::default(), &mut components())
+            .unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Async primary constructors not supported but AsyncObject has one. Add \
+             \"AsyncObject.new\" to the `exclude` list in the uniffi.toml of the `dep` crate."
+        );
     }
 }
