@@ -38,3 +38,14 @@ yarn.apply {
     // Kotlin/Wasm uses a separate lock file in kotlin-js-store/wasm. Use the same name for it.
     WasmYarnRootExtension[project].lockFileName = lockFileName
 }
+
+// Kotlin 2.4 leaves the Kotlin/Wasm npm tooling directory empty when the yarn install of
+// kotlinWasmToolingSetup has to wait for another yarn instance, so the Wasm tests can't find
+// kotlin-test-karma-runner.js (https://slack-chats.kotlinlang.org/t/34065440). Run the yarn installs
+// one after another instead.
+val yarnInstallTaskNames = listOf("kotlinNpmInstall", "kotlinWasmNpmInstall", "kotlinWasmToolingSetup")
+yarnInstallTaskNames.forEachIndexed { index, taskName ->
+    tasks.matching { it.name == taskName }.configureEach {
+        mustRunAfter(tasks.matching { it.name in yarnInstallTaskNames.subList(0, index) })
+    }
+}
