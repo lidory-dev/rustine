@@ -9,6 +9,7 @@ use std::{collections::HashMap, fs::File, io::Write, process::Command};
 use anyhow::{bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs_err as fs;
+use uniffi_bindgen::interface::apply_exclusions;
 use uniffi_bindgen::{Component, ComponentInterface};
 
 mod gen_kotlin_multiplatform;
@@ -52,6 +53,9 @@ impl KotlinBindingGenerator {
     ) -> Result<()> {
         self.update_component_configs(settings, &mut components);
 
+        // Check after the exclusions, so that excluding an async primary constructor works.
+        check_async_primary_constructors(&components)?;
+
         // Derive the FFI functions after the configs had a chance to update any names.
         for c in &mut components {
             c.ci.derive_ffi_funcs()
@@ -86,6 +90,10 @@ impl KotlinBindingGenerator {
         settings: &GenerationSettings,
         components: &mut [Component<Config>],
     ) {
+        // Remove excluded items, before anything looks at them.
+        for c in &mut *components {
+            apply_exclusions(&mut c.ci, &c.config.exclude);
+        }
         for c in &mut *components {
             c.config
                 .package_name
@@ -147,6 +155,29 @@ impl KotlinBindingGenerator {
     }
 }
 
+/// Fail for async primary constructors, like UniFFI 0.32 does.
+///
+/// Kotlin constructors can't suspend. The bindings used to leave these constructors out silently;
+/// excluding them in uniffi.toml does that explicitly.
+fn check_async_primary_constructors(components: &[Component<Config>]) -> Result<()> {
+    for c in components {
+        for obj in c.ci.object_definitions() {
+            for cons in obj.constructors() {
+                if cons.is_async() && cons.is_primary_constructor() {
+                    bail!(
+                        "Async primary constructors not supported but {} has one. Add \
+                         \"{}.{}\" to the `exclude` list in uniffi.toml.",
+                        obj.name(),
+                        obj.name(),
+                        cons.name(),
+                    );
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 fn write_bindings_target(
     ci: &ComponentInterface,
     settings: &GenerationSettings,
@@ -192,4 +223,53 @@ fn write_cinterop(ci: &ComponentInterface, out_dir: &Utf8Path, content: String) 
     let file_path = dst_dir.join(format!("{}.h", ci.namespace()));
     let mut f = File::create(file_path).unwrap();
     write!(f, "{}", content).unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn components_from_udl(udl: &str, config: &str) -> Vec<Component<Config>> {
+        let ci = ComponentInterface::from_webidl(udl, "rustine_test").unwrap();
+        let config = KotlinBindingGenerator
+            .new_config(toml::from_str(config).unwrap())
+            .unwrap();
+        let mut components = vec![Component { ci, config }];
+        KotlinBindingGenerator
+            .update_component_configs(&GenerationSettings::default(), &mut components);
+        components
+    }
+
+    const ASYNC_CONSTRUCTOR_UDL: &str = r#"
+        namespace rustine_test {};
+        interface AsyncObject {
+            [Async]
+            constructor();
+            [Async, Name="secondary"]
+            constructor();
+        };
+    "#;
+
+    #[test]
+    fn async_primary_constructors_are_rejected() {
+        let components = components_from_udl(ASYNC_CONSTRUCTOR_UDL, "");
+        let err = check_async_primary_constructors(&components).unwrap_err();
+        assert!(err.to_string().contains(
+            "Async primary constructors not supported but AsyncObject has one. Add \
+             \"AsyncObject.new\" to the `exclude` list in uniffi.toml."
+        ));
+    }
+
+    #[test]
+    fn excluded_async_primary_constructors_are_accepted() {
+        let components =
+            components_from_udl(ASYNC_CONSTRUCTOR_UDL, r#"exclude = ["AsyncObject.new"]"#);
+        check_async_primary_constructors(&components).unwrap();
+        let obj = components[0]
+            .ci
+            .get_object_definition("AsyncObject")
+            .unwrap();
+        assert!(obj.primary_constructor().is_none());
+        assert_eq!(obj.alternate_constructors().len(), 1);
+    }
 }

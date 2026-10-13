@@ -1,1 +1,3 @@
 package_name = "futures"
+# Kotlin doesn't support async constructors
+exclude = ["Megaphone.new", "FallibleMegaphone.new", "UdlMegaphone.new"]

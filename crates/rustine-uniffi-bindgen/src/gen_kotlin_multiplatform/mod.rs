@@ -131,6 +131,10 @@ pub struct Config {
     dynamic_library_dependencies: Vec<String>,
     #[serde(default, rename = "__enable_jna_interface_mapping")]
     enable_jna_interface_mapping: Option<bool>,
+    /// Functions, types, constructors and methods to leave out of the bindings, such as
+    /// `"MyObject.new"`.
+    #[serde(default)]
+    pub(super) exclude: Vec<String>,
 }
 
 // TODO: Make this public in 0.4.0
@@ -805,7 +809,10 @@ fn check_value_type_members(ci: &ComponentInterface) -> Result<()> {
             if let Some(meth) = e.methods().first() {
                 bail!(
                     "Kotlin bindings do not support methods on flat error `{}`, such as `{}`, \
-                     since flat errors can't be passed back to Rust",
+                     since flat errors can't be passed back to Rust. Remove `flat_error`, or add \
+                     \"{}.{}\" to the `exclude` list in uniffi.toml.",
+                    e.name(),
+                    meth.name(),
                     e.name(),
                     meth.name(),
                 );

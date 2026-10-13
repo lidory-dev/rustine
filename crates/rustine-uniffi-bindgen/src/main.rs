@@ -338,11 +338,19 @@ fn main() -> anyhow::Result<()> {
 
     // The `--config` file is a flat Rustine config. It is merged over the config of every crate.
     // Like UniFFI's deprecated entry points did, ignore it when it does not exist.
-    let config_override = config
+    let mut config_override = config
         .as_deref()
         .filter(|path| path.exists())
         .map(load_toml_file)
         .transpose()?;
+    // `exclude` names the items of a single crate, so it only comes from the config of that crate
+    // when a library holds several of them. The Gradle plugin passes the config of the crate it
+    // generates bindings for with `--crate-configs` too.
+    if library_mode {
+        if let Some(config_override) = &mut config_override {
+            config_override.remove("exclude");
+        }
+    }
     let binding_generator = KotlinBindingGenerator;
     let components = loader.load_components(cis, |ci, toml| {
         // A missing config file is an error when it was given explicitly and is used.

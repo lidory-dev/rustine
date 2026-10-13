@@ -28,11 +28,7 @@
      */
     {%- match obj.primary_constructor() %}
     {%- when Some(cons) %}
-    {%-     if cons.is_async() %}
-    @Suppress("ConvertSecondaryConstructorToPrimary")
-    {%-     else %}
     {%- call kt::docstring(cons, 4) %}
-    {%-     endif %}
     {%- when None %}
     @Suppress("ConvertSecondaryConstructorToPrimary")
     {%- endmatch %}
@@ -40,12 +36,8 @@
 
     {% match obj.primary_constructor() -%}
     {%- when Some(cons) -%}
-    {%-     if cons.is_async() -%}
-    // Note no constructor generated for this object as it is async.
-    {%     else -%}
     {%- call kt::docstring(cons, 4) %}
     {{ visibility() }}constructor({% call kt::arg_list(cons, true) -%})
-    {%-     endif %}
     {%- when None %}
     {%- endmatch %}
 

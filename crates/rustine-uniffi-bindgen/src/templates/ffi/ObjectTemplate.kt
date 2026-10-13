@@ -63,15 +63,11 @@
 
     {%- match obj.primary_constructor() %}
     {%- when Some(cons) %}
-    {%-     if cons.is_async() %}
-    // Note no constructor generated for this object as it is async.
-    {%-     else %}
     {%- call kt::docstring(cons, 4) %}
     {{ visibility() }}{% call emit_actual %}constructor({% call kt::arg_list(cons, false) -%}) : this(
         UniffiWithHandle,
         {% call kt::to_ffi_call(cons, 8) %},
     )
-    {%-     endif %}
     {%- when None %}
     {%- endmatch %}
 

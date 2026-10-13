@@ -38,7 +38,9 @@ internal data class Config(
     @SerialName("jvm_dynamic_library_dependencies") val jvmDynamicLibraryDependencies: List<String>? = null,
     @SerialName("android_dynamic_library_dependencies") val androidDynamicLibraryDependencies: List<String>? = null,
     @SerialName("dynamic_library_dependencies") val dynamicLibraryDependencies: List<String>? = null,
-    @SerialName("__enable_jna_interface_mapping") val enableJnaInterfaceMapping: Boolean? = null
+    @SerialName("__enable_jna_interface_mapping") val enableJnaInterfaceMapping: Boolean? = null,
+    // Not set by the DSL. Merging keeps the value of the original config.
+    @SerialName("exclude") val exclude: List<String>? = null,
 ) {
     @Serializable
     internal data class CustomType(
