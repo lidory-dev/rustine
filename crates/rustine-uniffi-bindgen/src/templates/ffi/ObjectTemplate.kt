@@ -115,10 +115,10 @@
         do {
             val c = this.callCounter.value
             if (c == 0L) {
-                throw IllegalStateException("${this::class::simpleName} object has already been destroyed")
+                throw IllegalStateException("${this::class.simpleName} object has already been destroyed")
             }
             if (c == Long.MAX_VALUE) {
-                throw IllegalStateException("${this::class::simpleName} call counter would overflow")
+                throw IllegalStateException("${this::class.simpleName} call counter would overflow")
             }
         } while (! this.callCounter.compareAndSet(c, c + 1L))
         // Now we can safely do the method call without the handle being freed concurrently.

@@ -49,9 +49,13 @@ class TraitMethodsTest {
         val destroyed = TraitMethods("yo")
         destroyed.destroy()
         destroyed.uniffiIsDestroyed.shouldBeTrue()
-        shouldThrow<IllegalStateException> { m.compareTo(destroyed) }
+        shouldThrow<IllegalStateException> {
+            m.compareTo(destroyed)
+        }.message shouldBe "TraitMethods object has already been destroyed"
         shouldThrow<IllegalStateException> { m == destroyed }
-        shouldThrow<IllegalStateException> { destroyed.toString() }
+        shouldThrow<IllegalStateException> {
+            destroyed.toString()
+        }.message shouldBe "TraitMethods object has already been destroyed"
     }
 
     @Test
