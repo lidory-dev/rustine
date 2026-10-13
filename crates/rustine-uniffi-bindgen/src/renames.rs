@@ -302,6 +302,7 @@ fn check_renames(ci: &ComponentInterface, renames: &CrateRenames) -> Result<()> 
             let location = format!("the method `{}.{}`", cbi.name(), meth.name());
             let types = meth.return_type().into_iter().chain(meth.throws_type());
             check_types(&location, types.cloned().collect())?;
+            check_argument_defaults(renames, &location, meth.arguments())?;
         }
     }
     for func in ci.function_definitions() {
@@ -856,6 +857,17 @@ mod tests {
         assert!(err(udl, "[rename]\n\"Color.Red\" = \"Crimson\"").contains(
             "Can't rename the enum variant `Color.Red` because the default value of `color` in \
              `Paint` uses it."
+        ));
+
+        // The interfaces of callback interfaces declare the defaults of their arguments too.
+        let udl = r#"
+            namespace one {};
+            enum Color { "Red", "Green" };
+            callback interface Callback { u32 call(optional Color color = "Red"); };
+        "#;
+        assert!(err(udl, "[rename]\n\"Color.Red\" = \"Crimson\"").contains(
+            "Can't rename the enum variant `Color.Red` because the default value of `color` in \
+             the method `Callback.call` uses it."
         ));
     }
 }
