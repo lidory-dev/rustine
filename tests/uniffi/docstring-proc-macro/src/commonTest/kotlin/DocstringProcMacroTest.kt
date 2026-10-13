@@ -33,6 +33,10 @@ class DocstringProcMacroTest {
 
         val rec = RecordTest(123)
         val recField = rec.test
+
+        // Unlike in other languages, these are typealiases of their builtin types in Kotlin.
+        val customNewType: CustomNewType = "hello"
+        val customType: CustomType = 0L
     }
 
     class CallbackImpls : CallbackTest {
