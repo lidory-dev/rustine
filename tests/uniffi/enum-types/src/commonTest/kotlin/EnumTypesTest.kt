@@ -31,4 +31,25 @@ class EnumTypesTest {
             // assert(a.v1.getRecord().name == "dog")
         }
     }
+
+    @Test
+    fun variantFieldDefaults() {
+        NamedEnumWithDefaults.I().d shouldBe 0U.toUByte()
+        NamedEnumWithDefaults.I().e shouldBe 1U.toUByte()
+        NamedEnumWithDefaults.I(e = 2U).d shouldBe 0U.toUByte()
+        NamedEnumWithDefaults.I(e = 2U).e shouldBe 2U.toUByte()
+    }
+
+    // Ported from upstream's test_enum_types.py.
+    @Test
+    fun boxedTypes() {
+        val boxed = createBoxedEnum("hello")
+        boxed.shouldBeInstanceOf<EnumWithBoxedVariant.Boxed>()
+        boxed.v1.value shouldBe "hello"
+        getBoxedEnumValue(boxed) shouldBe "hello"
+
+        getBoxedEnumValue(EnumWithBoxedVariant.Empty) shouldBe "empty"
+
+        roundtripBoxedRecord(BoxedContent("world")).value shouldBe "world"
+    }
 }
