@@ -75,6 +75,9 @@ internal object UniffiLib {
         {%- endfor %}
     }
 
+    // Accessing an object only to initialize it is an unused expression, so call this instead.
+    internal fun ensureInitialized() = Unit
+
     private fun uniffiCheckContractApiVersion() {
         // Get the bindings contract version from our ComponentInterface
         val bindingsContractVersion = {{ ci.uniffi_contract_version() }}
@@ -121,5 +124,5 @@ internal object UniffiLib {
 }
 
 {{ visibility() }}fun uniffiEnsureInitialized() {
-    UniffiLib
+    UniffiLib.ensureInitialized()
 }

@@ -362,7 +362,7 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
                             {%- when Some(return_type) %}
 {{ " "|repeat(indent) }}    { {{ return_type|lift_fn }}(it) },
                             {%- when None %}
-{{ " "|repeat(indent) }}    { Unit },
+{{ " "|repeat(indent) }}    { },
 {{ " "|repeat(indent) }}    {% endmatch %}
 {{ " "|repeat(indent) }}    // Error FFI converter
                             {%- match callable.throws_type() -%}

@@ -223,6 +223,9 @@ internal object IntegrityCheckingUniffiLib : Library {
     }
 {%- endif %}
 
+{{ " "|repeat(lib_private_fun_indent) }}// Accessing an object only to initialize it is an unused expression, so call this instead.
+{{ " "|repeat(lib_private_fun_indent) }}internal fun ensureInitialized() = Unit
+
 {{ " "|repeat(lib_private_fun_indent) }}private fun uniffiCheckContractApiVersion() {
 {{ " "|repeat(lib_private_fun_indent) }}    // Get the bindings contract version from our ComponentInterface
 {{ " "|repeat(lib_private_fun_indent) }}    val bindingsContractVersion = {{ ci.uniffi_contract_version() }}
@@ -279,7 +282,7 @@ internal interface UniffiLib : Library {
                 findLibraryName("{{ ci.namespace() }}"),
             )
             {%- endif %}
-            IntegrityCheckingUniffiLib
+            IntegrityCheckingUniffiLib.ensureInitialized()
             loadIndirect("{{ ci.namespace() }}")
         }
     ) {
@@ -302,7 +305,7 @@ internal object UniffiLib : Library {
             findLibraryName("{{ ci.namespace() }}"),
         )
         {%- endif %}
-        IntegrityCheckingUniffiLib
+        IntegrityCheckingUniffiLib.ensureInitialized()
         Native.register(UniffiLib::class.java, findLibraryName("{{ ci.namespace() }}"))
         // No need to check the contract version and checksums, since 
         // we already did that with `IntegrityCheckingUniffiLib` above.
@@ -311,6 +314,8 @@ internal object UniffiLib : Library {
         {%- endfor %}
     }
 {%- endif %}
+
+{{ " "|repeat(lib_private_fun_indent) }}internal fun ensureInitialized() = Unit
 
                                         {%- if ci.contains_object_types() %}
 {{ " "|repeat(lib_private_fun_indent) }}// The Cleaner for the whole library
@@ -336,5 +341,5 @@ internal object UniffiLib : Library {
 }
 
 {{ visibility() }}fun uniffiEnsureInitialized() {
-    UniffiLib
+    UniffiLib.ensureInitialized()
 }
