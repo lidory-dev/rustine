@@ -54,9 +54,6 @@ impl KotlinBindingGenerator {
     ) -> Result<()> {
         self.update_component_configs(settings, &mut components)?;
 
-        // Check after the exclusions, so that excluding an async primary constructor works.
-        check_async_primary_constructors(&components)?;
-
         // Derive the FFI functions after the configs had a chance to update any names.
         for c in &mut components {
             c.ci.derive_ffi_funcs()
@@ -96,7 +93,13 @@ impl KotlinBindingGenerator {
         for c in &mut *components {
             apply_exclusions(&mut c.ci, &c.config.exclude);
         }
+        let constructor_keys = constructor_exclude_keys(components);
         renames::apply_renames(components)?;
+        // Check after the exclusions, so that excluding an async primary constructor works, and
+        // after the renames, like upstream: a constructor renamed to `new` is primary.
+        for c in &*components {
+            check_async_primary_constructors(&c.ci, &constructor_keys)?;
+        }
         for c in &mut *components {
             c.config
                 .package_name
@@ -159,23 +162,47 @@ impl KotlinBindingGenerator {
     }
 }
 
+/// The keys that `exclude` matches for the constructors of the objects, such as `"MyObject.new"`,
+/// keyed by the FFI symbol of the constructor.
+///
+/// `exclude` matches the names in Rust or UDL. The renames change the names in the component
+/// interfaces, but keep the FFI symbols.
+fn constructor_exclude_keys(components: &[Component<Config>]) -> HashMap<String, String> {
+    components
+        .iter()
+        .flat_map(|c| c.ci.object_definitions())
+        .flat_map(|obj| {
+            obj.constructors().into_iter().map(|cons| {
+                (
+                    cons.ffi_func().name().to_string(),
+                    format!("{}.{}", obj.name(), cons.name()),
+                )
+            })
+        })
+        .collect()
+}
+
 /// Fail for async primary constructors, like UniFFI 0.32 does.
 ///
 /// Kotlin constructors can't suspend. The bindings used to leave these constructors out silently;
-/// excluding them in uniffi.toml does that explicitly.
-fn check_async_primary_constructors(components: &[Component<Config>]) -> Result<()> {
-    for c in components {
-        for obj in c.ci.object_definitions() {
-            for cons in obj.constructors() {
-                if cons.is_async() && cons.is_primary_constructor() {
-                    bail!(
-                        "Async primary constructors not supported but {} has one. Add \
-                         \"{}.{}\" to the `exclude` list in uniffi.toml.",
-                        obj.name(),
-                        obj.name(),
-                        cons.name(),
-                    );
-                }
+/// excluding them in uniffi.toml does that explicitly. `exclude_keys` are the keys of the
+/// constructors before the renames (see [constructor_exclude_keys]), for the hint.
+fn check_async_primary_constructors(
+    ci: &ComponentInterface,
+    exclude_keys: &HashMap<String, String>,
+) -> Result<()> {
+    for obj in ci.object_definitions() {
+        for cons in obj.constructors() {
+            if cons.is_async() && cons.is_primary_constructor() {
+                let key = exclude_keys
+                    .get(cons.ffi_func().name())
+                    .cloned()
+                    .unwrap_or_else(|| format!("{}.{}", obj.name(), cons.name()));
+                bail!(
+                    "Async primary constructors not supported but {} has one. Add \"{key}\" to \
+                     the `exclude` list in uniffi.toml.",
+                    obj.name(),
+                );
             }
         }
     }
@@ -233,16 +260,15 @@ fn write_cinterop(ci: &ComponentInterface, out_dir: &Utf8Path, content: String) 
 mod tests {
     use super::*;
 
-    fn components_from_udl(udl: &str, config: &str) -> Vec<Component<Config>> {
+    fn components_from_udl(udl: &str, config: &str) -> Result<Vec<Component<Config>>> {
         let ci = ComponentInterface::from_webidl(udl, "rustine_test").unwrap();
         let config = KotlinBindingGenerator
             .new_config(toml::from_str(config).unwrap())
             .unwrap();
         let mut components = vec![Component { ci, config }];
         KotlinBindingGenerator
-            .update_component_configs(&GenerationSettings::default(), &mut components)
-            .unwrap();
-        components
+            .update_component_configs(&GenerationSettings::default(), &mut components)?;
+        Ok(components)
     }
 
     const ASYNC_CONSTRUCTOR_UDL: &str = r#"
@@ -255,26 +281,82 @@ mod tests {
         };
     "#;
 
+    fn async_constructor_error(config: &str) -> String {
+        components_from_udl(ASYNC_CONSTRUCTOR_UDL, config)
+            .err()
+            .expect("the async primary constructor must be rejected")
+            .to_string()
+    }
+
     #[test]
     fn async_primary_constructors_are_rejected() {
-        let components = components_from_udl(ASYNC_CONSTRUCTOR_UDL, "");
-        let err = check_async_primary_constructors(&components).unwrap_err();
-        assert!(err.to_string().contains(
+        assert_eq!(
+            async_constructor_error(""),
             "Async primary constructors not supported but AsyncObject has one. Add \
              \"AsyncObject.new\" to the `exclude` list in uniffi.toml."
-        ));
+        );
     }
 
     #[test]
     fn excluded_async_primary_constructors_are_accepted() {
         let components =
-            components_from_udl(ASYNC_CONSTRUCTOR_UDL, r#"exclude = ["AsyncObject.new"]"#);
-        check_async_primary_constructors(&components).unwrap();
+            components_from_udl(ASYNC_CONSTRUCTOR_UDL, r#"exclude = ["AsyncObject.new"]"#).unwrap();
         let obj = components[0]
             .ci
             .get_object_definition("AsyncObject")
             .unwrap();
         assert!(obj.primary_constructor().is_none());
         assert_eq!(obj.alternate_constructors().len(), 1);
+    }
+
+    /// The renames apply before the check, like upstream, so they decide which constructor is
+    /// primary. The hint names the constructor as `exclude` matches it, in Rust or UDL.
+    #[test]
+    fn async_primary_constructor_hint_uses_the_names_before_the_renames() {
+        let err = async_constructor_error("[rename]\nAsyncObject = \"KtObject\"");
+        assert_eq!(
+            err,
+            "Async primary constructors not supported but KtObject has one. Add \
+             \"AsyncObject.new\" to the `exclude` list in uniffi.toml."
+        );
+
+        // A constructor renamed to `new` is primary.
+        let err = async_constructor_error(
+            r#"
+            exclude = ["AsyncObject.new"]
+            [rename]
+            AsyncObject = "KtObject"
+            "AsyncObject.secondary" = "new"
+            "#,
+        );
+        assert_eq!(
+            err,
+            "Async primary constructors not supported but KtObject has one. Add \
+             \"AsyncObject.secondary\" to the `exclude` list in uniffi.toml."
+        );
+
+        // A primary constructor renamed to another name is not.
+        let components = components_from_udl(
+            ASYNC_CONSTRUCTOR_UDL,
+            "[rename]\n\"AsyncObject.new\" = \"open\"",
+        )
+        .unwrap();
+        let obj = components[0]
+            .ci
+            .get_object_definition("AsyncObject")
+            .unwrap();
+        assert!(obj.primary_constructor().is_none());
+        assert_eq!(obj.alternate_constructors().len(), 2);
+
+        // The suggested key works.
+        components_from_udl(
+            ASYNC_CONSTRUCTOR_UDL,
+            r#"
+            exclude = ["AsyncObject.new"]
+            [rename]
+            AsyncObject = "KtObject"
+            "#,
+        )
+        .unwrap();
     }
 }
