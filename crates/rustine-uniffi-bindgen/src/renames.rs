@@ -184,7 +184,8 @@ fn for_each_type<'a>(ty: &'a Type, f: &mut impl FnMut(&'a Type) -> Result<()>) -
 /// - `uniffi_bindgen::interface::rename` doesn't visit the methods of records and enums, the
 ///   uniffi traits, the return and error types of the methods of callback interfaces and the
 ///   error types of constructors. The bindings would reference the old names of the types they
-///   use, and Rustine can't rename them from outside `uniffi_bindgen`.
+///   use, and Rustine can't rename them from outside `uniffi_bindgen`. Renaming the methods of
+///   records and enums and their arguments would have no effect.
 /// - Default values naming enum variants keep the old variant names.
 fn check_renames(ci: &ComponentInterface, renames: &CrateRenames) -> Result<()> {
     let crate_name = ci.crate_name();
@@ -242,6 +243,8 @@ fn check_renames(ci: &ComponentInterface, renames: &CrateRenames) -> Result<()> 
     };
 
     for rec in ci.record_definitions() {
+        let fields = rec.fields().iter().map(Field::name).collect();
+        check_value_method_renames(renames, crate_name, rec.name(), &fields, rec.methods())?;
         for meth in rec.methods() {
             let location = format!("the method `{}.{}`", rec.name(), meth.name());
             check_types(&location, method_types(meth))?;
@@ -258,6 +261,8 @@ fn check_renames(ci: &ComponentInterface, renames: &CrateRenames) -> Result<()> 
         }
     }
     for e in ci.enum_definitions() {
+        let variants = e.variants().iter().map(|v| v.name()).collect();
+        check_value_method_renames(renames, crate_name, e.name(), &variants, e.methods())?;
         for meth in e.methods() {
             let location = format!("the method `{}.{}`", e.name(), meth.name());
             check_types(&location, method_types(meth))?;
@@ -302,6 +307,36 @@ fn check_renames(ci: &ComponentInterface, renames: &CrateRenames) -> Result<()> 
     for func in ci.function_definitions() {
         let location = format!("the function `{}`", func.name());
         check_argument_defaults(renames, &location, func.arguments())?;
+    }
+    Ok(())
+}
+
+/// Fail for renames of the methods of a record or an enum named `type_name`, and of their
+/// arguments, which the renamer doesn't visit.
+///
+/// `members` are the names of the fields of the record or the variants of the enum. A key naming
+/// a member renames the member, even when a method has the same name, so it is not checked.
+fn check_value_method_renames(
+    renames: &CrateRenames,
+    crate_name: &str,
+    type_name: &str,
+    members: &HashSet<&str>,
+    methods: &[Method],
+) -> Result<()> {
+    for meth in methods.iter().filter(|meth| !members.contains(meth.name())) {
+        let method_key = format!("{type_name}.{}", meth.name());
+        let arg_keys = meth
+            .arguments()
+            .into_iter()
+            .map(|arg| format!("{method_key}.{}", arg.name()));
+        for key in std::iter::once(method_key.clone()).chain(arg_keys) {
+            if let Some(new_name) = new_name(renames, crate_name, &key) {
+                bail!(
+                    "Can't rename `{key}` to `{new_name}`. Renaming the methods of records and \
+                     enums and their arguments is not supported."
+                );
+            }
+        }
     }
     Ok(())
 }
@@ -473,7 +508,8 @@ impl VisitMut for RenameFixups<'_> {
 mod tests {
     use super::*;
     use uniffi_meta::{
-        FieldMetadata, Metadata, ObjectImpl, ObjectTraitImplMetadata, RecordMetadata, TraitKind,
+        FieldMetadata, FnParamMetadata, Metadata, MethodMetadata, ObjectImpl,
+        ObjectTraitImplMetadata, RecordMetadata, TraitKind,
     };
 
     fn component(
@@ -702,6 +738,62 @@ mod tests {
             .stub
             .unwrap()
             .contains("public actual fun `ktSecondary`(`value`: kotlin.UInt): KtThing {"));
+    }
+
+    #[test]
+    fn rejects_renaming_methods_of_records_and_enums() {
+        let udl = r#"
+            namespace one {};
+            dictionary Point { u32 x; };
+            enum Shape { "Circle" };
+        "#;
+        let method = |self_name: &str, name: &str, inputs| {
+            Metadata::Method(MethodMetadata {
+                module_path: "one".to_string(),
+                self_name: self_name.to_string(),
+                name: name.to_string(),
+                orig_name: None,
+                is_async: false,
+                inputs,
+                return_type: None,
+                throws: None,
+                takes_self_by_arc: false,
+                checksum: Some(0),
+                docstring: None,
+            })
+        };
+        let methods = || {
+            vec![
+                method("Point", "x", vec![]),
+                method(
+                    "Point",
+                    "scale",
+                    vec![FnParamMetadata::simple("factor", Type::UInt32)],
+                ),
+                method("Shape", "area", vec![]),
+            ]
+        };
+        let apply = |rename: &str| {
+            let config = format!("[rename]\n{rename}");
+            let mut components = vec![component("one", udl, methods(), &config)];
+            apply_renames(&mut components).map(|()| components.remove(0).ci)
+        };
+
+        for key in ["Point.scale", "Point.scale.factor", "Shape.area"] {
+            let err = apply(&format!("\"{key}\" = \"renamed\"")).unwrap_err();
+            assert!(
+                err.to_string().contains(&format!(
+                    "Can't rename `{key}` to `renamed`. Renaming the methods of records and \
+                     enums and their arguments is not supported."
+                )),
+                "{err}"
+            );
+        }
+
+        // A key naming a field renames the field, also when a method has the same name.
+        let ci = apply("\"Point.x\" = \"kt_x\"").unwrap();
+        let rec = ci.get_record_definition("Point").unwrap();
+        assert_eq!(rec.fields()[0].name(), "kt_x");
     }
 
     #[test]
