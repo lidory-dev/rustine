@@ -30,13 +30,18 @@
     // normal FFI type.
     {{ visibility() }}fun lowerIntoRustBuffer(value: KotlinType): RustBufferByValue {
         val rbuf = RustBufferHelper.allocValue(allocationSize(value))
-        val bbuf = rbuf.asByteBuffer()!!
-        write(value, bbuf)
-        return RustBufferByValue(
-            capacity = rbuf.capacity,
-            len = bbuf.position().toLong(),
-            data = rbuf.data,
-        )
+        try {
+            val bbuf = rbuf.asByteBuffer()!!
+            write(value, bbuf)
+            return RustBufferByValue(
+                capacity = rbuf.capacity,
+                len = bbuf.position().toLong(),
+                data = rbuf.data,
+            )
+        } catch (e: Throwable) {
+            RustBufferHelper.free(rbuf)
+            throw e
+        }
     }
 
     // Lift a value from a `RustBuffer`.
