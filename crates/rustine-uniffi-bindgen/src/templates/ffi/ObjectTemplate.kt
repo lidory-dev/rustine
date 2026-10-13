@@ -190,14 +190,10 @@
 
 {% if is_error %}
 {{ visibility() }}object {{ impl_class_name }}ErrorHandler : UniffiRustCallStatusErrorHandler<{{ impl_class_name }}> {
-    override fun lift(errorBuf: RustBufferByValue): {{ impl_class_name }} {
-        // Due to some mismatches in the ffi converter mechanisms, errors are a RustBuffer.
-        val bb = errorBuf.asByteBuffer()
-        if (bb == null) {
-            throw InternalException("?")
-        }
-        return {{ ffi_converter_name }}.read(bb)
-    }
+    // Due to some mismatches in the ffi converter mechanisms, errors are a RustBuffer. Upstream
+    // reads the handle without freeing the buffer.
+    override fun lift(errorBuf: RustBufferByValue): {{ impl_class_name }} =
+        {{ ffi_converter_name }}.liftFromRustBuffer(errorBuf)
 }
 {% endif %}
 
