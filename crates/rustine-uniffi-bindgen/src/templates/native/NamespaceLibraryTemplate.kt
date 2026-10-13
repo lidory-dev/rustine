@@ -64,12 +64,39 @@ internal val {{ ffi_struct.name()|ffi_struct_name }}UniffiByValue.{{ field.name(
 
 internal object UniffiLib {
     init {
+        // The Rust library is linked statically, but it may still come from a different version
+        // of UniFFI than these bindings, so check that they match like the JVM bindings do.
+        uniffiCheckContractApiVersion()
+        {%- if !config.omit_checksums %}
+        uniffiCheckApiChecksums()
+        {%- endif %}
         {%- for init_fn in self.initialization_fns(ci) %}
-            {{ init_fn }}
+        {{ init_fn }}
         {%- endfor %}
     }
 
+    private fun uniffiCheckContractApiVersion() {
+        // Get the bindings contract version from our ComponentInterface
+        val bindingsContractVersion = {{ ci.uniffi_contract_version() }}
+        // Get the scaffolding contract version by calling into the library
+        val scaffoldingContractVersion = {{ ci.ffi_uniffi_contract_version().name() }}()
+        if (bindingsContractVersion != scaffoldingContractVersion) {
+            throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
+        }
+    }
+    {%- if !config.omit_checksums %}
+
+    private fun uniffiCheckApiChecksums() {
+        {%- for (name, expected_checksum) in ci.iter_checksums() %}
+        {#- The checksum functions return a `Short`, so mask the sign extension of `toInt()` away. #}
+        if (({{ name }}().toInt() and 0xFFFF) != {{ expected_checksum }}) {
+            throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+        }
+        {%- endfor %}
+    }
+    {%- endif %}
     {%- if ci.contains_object_types() %}
+
     // The Cleaner for the whole library
     internal val CLEANER: UniffiCleaner by lazy {
         UniffiCleaner.create()

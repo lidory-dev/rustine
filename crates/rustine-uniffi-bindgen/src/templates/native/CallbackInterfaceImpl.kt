@@ -103,7 +103,20 @@ internal object {{ trait_impl }} {
         {{ ffi_converter_name }}.handleMap.remove(handle)
     }
 
+    internal fun uniffiClone(handle: Long): Long {
+        return {{ ffi_converter_name }}.handleMap.clone(handle)
+    }
+
+    // The fields are assigned by name, so their order doesn't matter, but every one of them must be
+    // assigned. For example, Rust calls `uniffiClone` when it passes a Kotlin implementation of a
+    // trait back to Kotlin.
     internal val vtable = nativeHeap.alloc<{{ci.namespace()}}.cinterop.{{ vtable|ffi_type_name(ci) }}> {
+        this.uniffiFree = staticCFunction { handle: Long ->
+            {{ trait_impl }}.uniffiFree(handle)
+        }
+        this.uniffiClone = staticCFunction { handle: Long ->
+            {{ trait_impl }}.uniffiClone(handle)
+        }
         {%- for (ffi_callback, meth) in vtable_methods.iter() %}
         {% if ffi_callback|ffi_callback_needs_casting_native -%}
         @Suppress("UNCHECKED_CAST")
@@ -129,9 +142,6 @@ internal object {{ trait_impl }} {
         {{ "" }} as {{ ci.namespace() }}.cinterop.{{ ffi_callback.name()|ffi_callback_name }}
         {%- endif -%}
         {%- endfor %}
-        this.uniffiFree = staticCFunction { handle: Long ->
-            {{ trait_impl }}.uniffiFree(handle)
-        }
     }.ptr
 
     internal fun register(lib: UniffiLib) {
