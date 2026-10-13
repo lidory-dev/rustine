@@ -39,14 +39,18 @@ internal data class Config(
     @SerialName("android_dynamic_library_dependencies") val androidDynamicLibraryDependencies: List<String>? = null,
     @SerialName("dynamic_library_dependencies") val dynamicLibraryDependencies: List<String>? = null,
     @SerialName("__enable_jna_interface_mapping") val enableJnaInterfaceMapping: Boolean? = null,
-    // Not set by the DSL. Merging keeps the value of the original config.
     @SerialName("exclude") val exclude: List<String>? = null,
+    // Keys like "MyRecord.field" are quoted when encoded, so they aren't read as nested tables.
+    @SerialName("rename") val rename: Map<String, String>? = null,
+    @SerialName("mutable_records") val mutableRecords: List<String>? = null,
 ) {
     @Serializable
     internal data class CustomType(
         @SerialName("imports") val imports: List<String>? = null,
         @SerialName("type_name") val typeName: String? = null,
+        @SerialName("into_custom") val intoCustom: String? = null,
         @SerialName("lift") val lift: String? = null,
+        @SerialName("from_custom") val fromCustom: String? = null,
         @SerialName("lower") val lower: String? = null,
     )
 

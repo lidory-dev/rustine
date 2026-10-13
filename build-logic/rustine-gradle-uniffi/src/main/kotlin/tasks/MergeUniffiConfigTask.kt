@@ -16,6 +16,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -109,6 +110,18 @@ abstract class MergeUniffiConfigTask : DefaultTask() {
     @InternalRustineGradleApi
     abstract val enableJnaInterfaceMapping: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    abstract val exclude: ListProperty<String>
+
+    @get:Input
+    @get:Optional
+    abstract val rename: MapProperty<String, String>
+
+    @get:Input
+    @get:Optional
+    abstract val mutableRecords: SetProperty<String>
+
     @get:OutputFile
     abstract val outputConfig: RegularFileProperty
 
@@ -172,6 +185,9 @@ abstract class MergeUniffiConfigTask : DefaultTask() {
             ),
             enableJnaInterfaceMapping = originalConfig.enableJnaInterfaceMapping
                 ?: enableJnaInterfaceMapping.orNull,
+            exclude = mergeSet(originalConfig.exclude, exclude.orNull),
+            rename = mergeMap(originalConfig.rename, rename.orNull),
+            mutableRecords = mergeSet(originalConfig.mutableRecords, mutableRecords.orNull?.toList()),
         )
         outputConfig.get().asFile.writeText(toml.encodeToString(result), Charsets.UTF_8)
     }

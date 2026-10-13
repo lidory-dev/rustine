@@ -12,10 +12,13 @@ public abstract class rustine/gradle/uniffi/dsl/BindingsGeneration {
 	public abstract fun getCdylibName ()Lorg/gradle/api/provider/Property;
 	public abstract fun getConfig ()Lorg/gradle/api/file/RegularFileProperty;
 	public abstract fun getDisableJavaCleaner ()Lorg/gradle/api/provider/Property;
+	public abstract fun getExclude ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getGenerateImmutableRecords ()Lorg/gradle/api/provider/Property;
+	public abstract fun getMutableRecords ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getNamespace ()Lorg/gradle/api/provider/Property;
 	public abstract fun getOmitChecksums ()Lorg/gradle/api/provider/Property;
 	public abstract fun getPackageName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getRename ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getUsePascalCaseEnumClass ()Lorg/gradle/api/provider/Property;
 	public abstract fun getVariant ()Lorg/gradle/api/provider/Property;
 }
@@ -89,17 +92,20 @@ public abstract class rustine/gradle/uniffi/tasks/MergeUniffiConfigTask : org/gr
 	public abstract fun getCustomTypes ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getDisableJavaCleaner ()Lorg/gradle/api/provider/Property;
 	public abstract fun getDynamicLibraryDependencies ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getExclude ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getExternalPackageConfigs ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getGenerateImmutableRecords ()Lorg/gradle/api/provider/Property;
 	public abstract fun getJvmDynamicLibraryDependencies ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getKotlinMultiplatform ()Lorg/gradle/api/provider/Property;
 	public abstract fun getKotlinTargets ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getKotlinVersion ()Lorg/gradle/api/provider/Property;
+	public abstract fun getMutableRecords ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getOmitChecksums ()Lorg/gradle/api/provider/Property;
 	public abstract fun getOriginalConfig ()Lorg/gradle/api/file/RegularFileProperty;
 	public abstract fun getOutputConfig ()Lorg/gradle/api/file/RegularFileProperty;
 	public abstract fun getPackageName ()Lorg/gradle/api/provider/Property;
 	public abstract fun getPackageRoot ()Lorg/gradle/api/provider/Property;
+	public abstract fun getRename ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getUseKotlinXSerialization ()Lorg/gradle/api/provider/Property;
 	public abstract fun getUsePascalCaseEnumClass ()Lorg/gradle/api/provider/Property;
 	public final fun mergeConfig ()V

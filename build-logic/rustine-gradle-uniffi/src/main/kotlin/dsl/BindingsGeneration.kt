@@ -12,8 +12,10 @@ import rustine.gradle.rust.targets.RustTarget
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
@@ -72,6 +74,29 @@ sealed class BindingsGeneration(internal val project: Project) {
      * When `true`, generated data classes has `val` properties instead of `var`.
      */
     abstract val generateImmutableRecords: Property<Boolean>
+
+    /**
+     * The records whose data classes keep `var` properties when [generateImmutableRecords] is
+     * `true`, by their names in the bindings (after [rename]). Added to the `mutable_records` list
+     * of the config file.
+     */
+    abstract val mutableRecords: SetProperty<String>
+
+    /**
+     * The functions, types, constructors and methods to leave out of the bindings, such as
+     * `"my_function"`, `"MyRecord"`, `"MyObject.new"` or `"MyObject.my_method"`. Async primary
+     * constructors must be excluded, as Kotlin constructors can't suspend. Added to the `exclude`
+     * list of the config file.
+     */
+    abstract val exclude: ListProperty<String>
+
+    /**
+     * New names for the items of the crate, keyed by their UniFFI names: `"MyRecord"`,
+     * `"MyRecord.field"`, `"MyEnum.Variant"`, `"MyEnum.Variant.field"`, `"my_function"`,
+     * `"my_function.arg"`, `"MyObject.my_method"`, `"MyObject.my_method.arg"`, and so on. Added
+     * to the `rename` table of the config file, whose entries take precedence.
+     */
+    abstract val rename: MapProperty<String, String>
 
     /**
      * When `true`, the library checksums are not checked during initialization, making the process
