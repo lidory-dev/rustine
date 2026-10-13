@@ -1,0 +1,15 @@
+[package]
+name = "rustine-fixture-rename"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "rustine_fixture_rename"
+crate-type = ["cdylib", "staticlib"]
+path = "src/commonMain/rust/lib.rs"
+
+[dependencies]
+thiserror = { workspace = true }
+uniffi = { workspace = true }
+url = { workspace = true }

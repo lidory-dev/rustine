@@ -1,0 +1,59 @@
+package_name = "rename"
+
+# Item exclusions.
+#
+# The excluded items are renamed to an empty string below. This way if an item isn't excluded,
+# we'll get a syntax error because the item will have an invalid name.
+#
+# Rustine: "RecordToExclude" is excluded in build.gradle.kts.
+exclude = [
+    "function_to_exclude",
+    "RenamedObject.new",
+    "RenamedObject.method_to_exclude",
+]
+
+# Rename support is via a single flat table using a dot notation/convention.
+#
+# Rustine: "BindingObject.method.arg" is renamed in build.gradle.kts.
+[rename]
+# Rename a function and its args.
+binding_function = "ktFunction"
+"binding_function.record" = "kotlinRecord"
+
+# Rename a record and its items.
+BindingRecord = "KtRecord"
+"BindingRecord.item" = "kotlinItem"
+
+# Enum
+BindingEnum = "KtEnum"
+"BindingEnum.VariantA" = "KotlinVariantA"
+"BindingEnum.Record" = "KotlinRecord"
+
+BindingEnumWithFields = "KtEnumWithFields"
+"BindingEnumWithFields.VariantA" = "KotlinVariantA"
+"BindingEnumWithFields.VariantA.binding_int" = "kotlin_int"
+
+# New error name still gets passed through normal Error->Exception processing.
+BindingError = "KtError"
+"BindingError.Simple" = "KotlinSimple"
+
+BindingTrait = "KtTrait"
+"BindingTrait.trait_method" = "kotlinTraitMethod"
+
+BindingObject = "KtObject"
+# Note "kotlin_method" vs "kotlinTraitMethod" above - equiv as we always do the case-change thing.
+"BindingObject.method" = "kotlin_method"
+
+Url = "RenamedUrl"
+
+function_to_exclude = ""
+"RenamedObject.new" = ""
+"RenamedObject.method_to_exclude" = ""
+RecordToExclude = ""
+
+# Custom type config for a renamed item uses the new name, like upstream's Kotlin bindings.
+[custom_types.RenamedUrl]
+type_name = "Url"
+imports = ["io.ktor.http.Url"]
+lift = "Url({})"
+lower = "{}.toString()"

@@ -287,4 +287,26 @@ fn get_binding_renamed_type(value: Option<String>) -> BindingRenamedType {
     }
 }
 
+// Rustine: the renamed type of the external crate nested in other types, which the renames of
+// that crate apply to too.
+#[uniffi::export]
+fn get_binding_renamed_types(values: Vec<String>) -> Vec<BindingRenamedType> {
+    values
+        .into_iter()
+        .map(|value| BindingRenamedType { value })
+        .collect()
+}
+
+#[uniffi::export]
+fn get_maybe_binding_renamed_type(value: Option<String>) -> Option<BindingRenamedType> {
+    value.map(|value| BindingRenamedType { value })
+}
+
+#[uniffi::export]
+fn roundtrip_boxed_binding_renamed_type(
+    value: Box<BindingRenamedType>,
+) -> Box<BindingRenamedType> {
+    value
+}
+
 uniffi::include_scaffolding!("ext-types");

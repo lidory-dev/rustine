@@ -2313,6 +2313,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustine-fixture-gh-2600"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
+]
+
+[[package]]
 name = "rustine-fixture-gradle-android-application"
 version = "0.1.0"
 dependencies = [
@@ -2381,12 +2388,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustine-fixture-mutable-records"
+version = "0.1.0"
+dependencies = [
+ "uniffi",
+]
+
+[[package]]
 name = "rustine-fixture-proc-macro"
 version = "0.1.0"
 dependencies = [
  "rustine-fixture-build-common",
  "thiserror 1.0.58",
  "uniffi",
+]
+
+[[package]]
+name = "rustine-fixture-rename"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.58",
+ "uniffi",
+ "url",
 ]
 
 [[package]]

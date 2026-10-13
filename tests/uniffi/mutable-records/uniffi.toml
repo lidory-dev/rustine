@@ -1,0 +1,4 @@
+package_name = "mutable_records"
+# Overrides the CI variants of the UniFFI tests, which set `generateImmutableRecords` in Gradle.
+generate_immutable_records = true
+mutable_records = ["MutableRecord"]

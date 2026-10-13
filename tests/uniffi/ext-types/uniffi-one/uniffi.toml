@@ -1,1 +1,5 @@
 package_name = "uniffi_one"
+
+[rename]
+BindingRenamedType = "KotlinRenamedType"
+"BindingRenamedType.value" = "kotlinValue"

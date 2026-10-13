@@ -103,7 +103,16 @@ class ExtTypesTest {
         ContainsExternalError2(notToThrow).error shouldBe notToThrow
         takesExternalError(notToThrow)
 
-        getBindingRenamedType("external_rename_test").value shouldBe "external_rename_test"
-        getBindingRenamedType(null).value shouldBe "test_renamed_type"
+        // `BindingRenamedType` is renamed in the config of uniffi-one.
+        val renamedType: KotlinRenamedType = getBindingRenamedType("external_rename_test")
+        renamedType.kotlinValue shouldBe "external_rename_test"
+        getBindingRenamedType(null).kotlinValue shouldBe "test_renamed_type"
+        getBindingRenamedTypes(listOf("a", "b")) shouldBe listOf(
+            KotlinRenamedType("a"),
+            KotlinRenamedType("b"),
+        )
+        getMaybeBindingRenamedType("maybe")?.kotlinValue shouldBe "maybe"
+        getMaybeBindingRenamedType(null) shouldBe null
+        roundtripBoxedBindingRenamedType(renamedType) shouldBe renamedType
     }
 }
