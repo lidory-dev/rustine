@@ -417,3 +417,106 @@ fn main() -> anyhow::Result<()> {
 
     binding_generator.generate(components, &settings)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uniffi_bindgen::Component;
+
+    /// A directory for the files of a test, removed when dropped.
+    struct TestDir(Utf8PathBuf);
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let dir = Utf8PathBuf::from_path_buf(std::env::temp_dir())
+                .unwrap()
+                .join(format!(
+                    "rustine-uniffi-bindgen-{name}-{}",
+                    std::process::id()
+                ));
+            if dir.exists() {
+                fs::remove_dir_all(&dir).unwrap();
+            }
+            fs::create_dir_all(&dir).unwrap();
+            Self(dir)
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    /// The scaffolding checks the checksums computed from the UDL file. Renaming a UDL function
+    /// with the `rename` table of uniffi.toml must not change the checksum the bindings expect.
+    #[test]
+    fn renamed_udl_functions_keep_their_checksums() {
+        let dir = TestDir::new("udl-checksums");
+        let udl_file = dir.0.join("rustine_test.udl");
+        fs::write(
+            &udl_file,
+            r#"
+            namespace rustine_test {
+                u32 add(u32 a, u32 b);
+            };
+            "#,
+        )
+        .unwrap();
+
+        let metadata = load_udl_metadata(&udl_file, "rustine_test", None).unwrap();
+        let Some(Metadata::Func(add)) = metadata["rustine_test"].items.first().cloned() else {
+            panic!("`add` not found");
+        };
+        let checksum = add.checksum.unwrap();
+        // The checksum of the renamed function differs, so the bindings must not compute it.
+        let renamed = uniffi_meta::FnMetadata {
+            name: "kt_add".to_string(),
+            checksum: None,
+            ..add
+        };
+        assert_ne!(Function::checksum_from_metadata(renamed), checksum);
+
+        let loader = BindgenLoader::new(BindgenPaths::default(), GlobalConfig::default());
+        let cis = loader.load_cis(metadata).unwrap();
+        let components: Vec<Component<_>> = loader
+            .load_components(cis, |_, _| {
+                KotlinBindingGenerator.new_config(
+                    toml::toml! {
+                        package_name = "rustine_test"
+                        cdylib_name = "rustine_test"
+                        kotlin_multiplatform = true
+                        kotlin_targets = ["jvm", "native"]
+
+                        [rename]
+                        add = "kt_add"
+                    }
+                    .into(),
+                )
+            })
+            .unwrap();
+        let out_dir = dir.0.join("out");
+        let settings = GenerationSettings {
+            out_dir: out_dir.clone(),
+            ..GenerationSettings::default()
+        };
+        KotlinBindingGenerator
+            .generate(components, &settings)
+            .unwrap();
+
+        let read = |target: &str| {
+            fs::read_to_string(out_dir.join(format!(
+                "{target}Main/kotlin/rustine_test/rustine_test.{target}.kt"
+            )))
+            .unwrap()
+        };
+        assert!(read("common").contains("public expect fun `ktAdd`("));
+        // The FFI symbols keep their Rust names.
+        assert!(read("jvm").contains(&format!(
+            "if ((uniffi_rustine_test_checksum_func_add() and 0xFFFF) != {checksum}) {{"
+        )));
+        assert!(read("native").contains(&format!(
+            "if ((uniffi_rustine_test_checksum_func_add().toInt() and 0xFFFF) != {checksum}) {{"
+        )));
+    }
+}

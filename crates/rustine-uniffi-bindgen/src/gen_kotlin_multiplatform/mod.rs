@@ -1995,11 +1995,25 @@ mod filters {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uniffi_meta::{EnumShape, Metadata};
+    use uniffi_meta::{
+        CustomTypeMetadata, EnumShape, FnMetadata, Metadata, MethodMetadata, ObjectImpl,
+        ObjectTraitImplMetadata, TraitKind,
+    };
 
-    /// Generate bindings for a UDL file. UDL can't declare flat errors with uniffi traits, so the
-    /// errors named in `flat_errors` are made flat.
-    fn generate_from_udl(udl: &str, flat_errors: &[&str]) -> Result<MultiplatformBindings> {
+    const TEST_CONFIG: &str = r#"
+        package_name = "rustine_test"
+        cdylib_name = "rustine_test"
+        kotlin_multiplatform = true
+        kotlin_targets = ["jvm", "native", "stub"]
+    "#;
+
+    /// Parse a UDL file. UDL can't declare flat errors with uniffi traits, so the errors named in
+    /// `flat_errors` are made flat. `extra` adds metadata that UDL can't declare.
+    fn ci_from_udl(
+        udl: &str,
+        flat_errors: &[&str],
+        extra: Vec<Metadata>,
+    ) -> Result<ComponentInterface> {
         let mut group = uniffi_udl::parse_udl(udl, "rustine_test")?;
         group.items = group
             .items
@@ -2011,18 +2025,379 @@ mod tests {
                 }
                 item => item,
             })
+            .chain(extra)
             .collect();
-        let mut ci = ComponentInterface::from_metadata(group)?;
+        ComponentInterface::from_metadata(group)
+    }
+
+    /// Generate the bindings of `ci` with the test config, followed by `extra_config`.
+    ///
+    /// Like UDL mode, this doesn't give `ci` the component interfaces of other crates.
+    fn generate(mut ci: ComponentInterface, extra_config: &str) -> Result<MultiplatformBindings> {
         ci.derive_ffi_funcs()?;
-        let config: Config = toml::from_str(
-            r#"
-            package_name = "rustine_test"
-            cdylib_name = "rustine_test"
-            kotlin_multiplatform = true
-            kotlin_targets = ["jvm", "native", "stub"]
-            "#,
-        )?;
+        let config: Config = toml::from_str(&format!("{TEST_CONFIG}{extra_config}"))?;
         generate_bindings(&config, &ci)
+    }
+
+    fn generate_from_udl(udl: &str, flat_errors: &[&str]) -> Result<MultiplatformBindings> {
+        generate(ci_from_udl(udl, flat_errors, vec![])?, "")
+    }
+
+    fn function(name: &str, throws: Option<Type>) -> Metadata {
+        Metadata::Func(FnMetadata {
+            module_path: "rustine_test".to_string(),
+            name: name.to_string(),
+            orig_name: None,
+            is_async: false,
+            inputs: vec![],
+            return_type: None,
+            throws,
+            checksum: Some(0),
+            docstring: None,
+        })
+    }
+
+    /// Port of upstream's test of mozilla/uniffi-rs#2897 and #2935.
+    ///
+    /// JNA returns u8 and u16 values with the wrong signedness or undefined upper bits on some
+    /// platforms, so they are returned as `Int`, and the checksum checks mask the result.
+    #[test]
+    fn checksum_functions_use_direct_return_carriers() {
+        let ci = ComponentInterface::from_webidl(
+            r#"
+            namespace rustine_test {
+                u16 get_value();
+            };
+            "#,
+            "rustine_test",
+        )
+        .unwrap();
+        let checksum = ci.get_function_definition("get_value").unwrap().checksum();
+        let bindings = generate(ci, "").unwrap();
+
+        let jvm = bindings.jvm.unwrap();
+        assert!(
+            jvm.contains("external fun uniffi_rustine_test_checksum_func_get_value(\n    ): Int\n"),
+            "checksum functions should use Int as the JNA direct return carrier"
+        );
+        assert!(
+            jvm.contains(&format!(
+                "if ((uniffi_rustine_test_checksum_func_get_value() and 0xFFFF) != {checksum}) {{"
+            )),
+            "checksum comparisons should mask the widened Int carrier"
+        );
+        // Rustine narrows u8 and u16 results at the call site, where upstream lifts an `Int`.
+        assert!(jvm.contains(
+            "external fun uniffi_rustine_test_fn_func_get_value(\n        \
+             uniffiCallStatus: UniffiRustCallStatus,\n    ): Int\n"
+        ));
+        assert!(jvm.contains(
+            "UniffiLib.uniffi_rustine_test_fn_func_get_value(\n            \
+             uniffiRustCallStatus,\n        ).toShort()\n"
+        ));
+
+        // Kotlin/Native returns the checksum as a `Short`, so the check masks its sign extension.
+        let native = bindings.native.unwrap();
+        assert!(
+            native.contains("fun uniffi_rustine_test_checksum_func_get_value(\n    ): Short = ")
+        );
+        assert!(native.contains(&format!(
+            "if ((uniffi_rustine_test_checksum_func_get_value().toInt() and 0xFFFF) != {checksum}) {{"
+        )));
+    }
+
+    #[test]
+    fn omitted_checksums_are_not_checked() {
+        let udl = r#"
+            namespace rustine_test {
+                u16 get_value();
+            };
+        "#;
+        let bindings = generate(
+            ci_from_udl(udl, &[], vec![]).unwrap(),
+            "omit_checksums = true\n",
+        )
+        .unwrap();
+        for platform in [bindings.jvm.unwrap(), bindings.native.unwrap()] {
+            assert!(!platform.contains("uniffiCheckApiChecksums"));
+            assert!(platform.contains("uniffiCheckContractApiVersion()"));
+        }
+    }
+
+    #[test]
+    fn rejects_borrowed_bytes_that_kotlin_cannot_pass() {
+        let message = |name: &str, reason: &str| {
+            format!(
+                "`{name}` takes the borrowed byte slice `buf` (`&[u8]` or `[ByRef] bytes`), which \
+                 is not supported in {reason}. Take a `Vec<u8>` (`bytes`) instead."
+            )
+        };
+
+        // Synchronous calls into Rust can borrow them.
+        let bindings = generate_from_udl(
+            r#"
+            namespace rustine_test {
+                u32 sum([ByRef] bytes buf);
+            };
+            interface Summer {
+                constructor([ByRef] bytes buf);
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .unwrap();
+        assert!(bindings
+            .common
+            .contains("public expect fun `sum`(`buf`: kotlin.ByteArray): kotlin.UInt"));
+
+        let err = generate_from_udl(
+            r#"
+            namespace rustine_test {
+                [Async]
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .err()
+        .unwrap();
+        assert!(
+            err.to_string()
+                .contains(&message("sum", "async functions, methods and constructors")),
+            "{err}"
+        );
+
+        let err = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            interface Summer {
+                [Async]
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .err()
+        .unwrap();
+        assert!(
+            err.to_string().contains(&message(
+                "Summer::sum",
+                "async functions, methods and constructors"
+            )),
+            "{err}"
+        );
+
+        let kotlin_implementations = "methods of callback interfaces or traits that Kotlin can \
+                                      implement";
+        let err = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            callback interface Summer {
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .err()
+        .unwrap();
+        assert!(
+            err.to_string()
+                .contains(&message("Summer::sum", kotlin_implementations)),
+            "{err}"
+        );
+
+        let err = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            [Trait, WithForeign]
+            interface Summer {
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .err()
+        .unwrap();
+        assert!(
+            err.to_string()
+                .contains(&message("Summer::sum", kotlin_implementations)),
+            "{err}"
+        );
+
+        // Only Rust implements this trait, so Kotlin only calls it.
+        generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            [Trait]
+            interface Summer {
+                u32 sum([ByRef] bytes buf);
+            };
+            "#,
+            &[],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn rejects_methods_of_flat_errors() {
+        let udl = r#"
+            namespace rustine_test {
+                [Throws=FlatError]
+                void fails();
+            };
+            [Error]
+            interface FlatError { A(); B(); };
+        "#;
+        let method = Metadata::Method(MethodMetadata {
+            module_path: "rustine_test".to_string(),
+            self_name: "FlatError".to_string(),
+            name: "describe".to_string(),
+            orig_name: None,
+            is_async: false,
+            inputs: vec![],
+            return_type: Some(Type::String),
+            throws: None,
+            takes_self_by_arc: false,
+            checksum: Some(0),
+            docstring: None,
+        });
+
+        // The same error with fields can be passed back to Rust.
+        let bindings = generate(ci_from_udl(udl, &[], vec![method.clone()]).unwrap(), "").unwrap();
+        assert!(bindings
+            .common
+            .contains("public fun `describe`(): kotlin.String {"));
+
+        let err = generate(ci_from_udl(udl, &["FlatError"], vec![method]).unwrap(), "")
+            .err()
+            .unwrap();
+        assert!(
+            err.to_string().contains(
+                "Kotlin bindings do not support methods on flat error `FlatError`, such as \
+                 `describe`, since flat errors can't be passed back to Rust. Remove `flat_error`, \
+                 or add \"FlatError.describe\" to the `exclude` list in uniffi.toml."
+            ),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn rejects_custom_errors_over_types_that_are_not_errors() {
+        let custom_error = |builtin: &str| {
+            vec![
+                Metadata::CustomType(CustomTypeMetadata {
+                    module_path: "rustine_test".to_string(),
+                    name: "CustomError".to_string(),
+                    orig_name: None,
+                    builtin: Type::Enum {
+                        module_path: "rustine_test".to_string(),
+                        name: builtin.to_string(),
+                    },
+                    docstring: None,
+                }),
+                function(
+                    "fails_with_custom_error",
+                    Some(Type::Custom {
+                        module_path: "rustine_test".to_string(),
+                        name: "CustomError".to_string(),
+                        builtin: Box::new(Type::Enum {
+                            module_path: "rustine_test".to_string(),
+                            name: builtin.to_string(),
+                        }),
+                    }),
+                ),
+            ]
+        };
+        let udl = r#"
+            namespace rustine_test {
+                [Throws=ThrownError]
+                void fails();
+            };
+            [Error]
+            enum ThrownError { "A" };
+            enum NotThrown { "A" };
+        "#;
+
+        // A custom type over an error can be thrown (mozilla/uniffi-rs#2658).
+        let bindings = generate(
+            ci_from_udl(udl, &[], custom_error("ThrownError")).unwrap(),
+            "",
+        )
+        .unwrap();
+        assert!(bindings
+            .common
+            .contains("public typealias CustomException = ThrownException"));
+        for platform in [bindings.jvm.unwrap(), bindings.native.unwrap()] {
+            assert!(platform.contains(
+                "public object CustomExceptionErrorHandler : \
+                 UniffiRustCallStatusErrorHandler<CustomException> {"
+            ));
+        }
+
+        let err = generate(
+            ci_from_udl(udl, &[], custom_error("NotThrown")).unwrap(),
+            "",
+        )
+        .err()
+        .unwrap();
+        assert!(
+            err.to_string().contains(
+                "The custom type `CustomError` is used as an error, but its builtin type \
+                 `NotThrown` is not."
+            ),
+            "{err}"
+        );
+    }
+
+    /// In UDL mode, the component interfaces of other crates are unknown. Upstream fails to name
+    /// the traits of other crates then; the type metadata tells whether Kotlin can implement them.
+    #[test]
+    fn names_traits_of_unknown_crates() {
+        let udl = r#"
+            namespace rustine_test {};
+            interface RustOnlyImpl {};
+            interface WithForeignImpl {};
+        "#;
+        let trait_impl = |name: &str, trait_name: &str, kind: TraitKind| {
+            Metadata::ObjectTraitImpl(ObjectTraitImplMetadata {
+                ty: Type::Object {
+                    module_path: "rustine_test".to_string(),
+                    name: name.to_string(),
+                    imp: ObjectImpl::Struct,
+                },
+                trait_ty: Type::Object {
+                    module_path: "other_crate".to_string(),
+                    name: trait_name.to_string(),
+                    imp: ObjectImpl::Trait(kind),
+                },
+            })
+        };
+        let ci = ci_from_udl(
+            udl,
+            &[],
+            vec![
+                trait_impl("RustOnlyImpl", "RustOnlyTrait", TraitKind::RustOnly),
+                trait_impl("WithForeignImpl", "WithForeignTrait", TraitKind::Both),
+            ],
+        )
+        .unwrap();
+        let bindings = generate(ci, "[external_packages]\nother_crate = \"other.pkg\"\n").unwrap();
+        let common = &bindings.common;
+        assert!(
+            common.contains(
+                "public expect open class RustOnlyImpl: Disposable, RustOnlyImplInterface, \
+                 other.pkg.RustOnlyTraitInterface {"
+            ),
+            "{common}"
+        );
+        assert!(
+            common.contains(
+                "public expect open class WithForeignImpl: Disposable, WithForeignImplInterface, \
+                 other.pkg.WithForeignTrait {"
+            ),
+            "{common}"
+        );
     }
 
     #[test]
