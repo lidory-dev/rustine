@@ -777,6 +777,65 @@ fn object_trait_impls(obj: &Object) -> TraitImpls {
     TraitImpls::new(obj.uniffi_trait_methods())
 }
 
+/// A constructor of an object, which returns the type of that object.
+///
+/// `Constructor::return_type()` is a copy of the object's type made from the metadata, which the
+/// `rename` table doesn't rename: neither the renamer nor `VisitMut` visit it, and it can't be
+/// changed from outside `uniffi_bindgen`. Upstream renders it, so the alternate constructors of a
+/// renamed object return the old type, which doesn't exist. The constructors return the type of
+/// the object they belong to instead, which is the same type when nothing is renamed.
+pub struct ObjectConstructor<'a> {
+    cons: &'a Constructor,
+    return_type: Type,
+}
+
+impl<'a> ObjectConstructor<'a> {
+    fn new(obj: &Object, cons: &'a Constructor) -> Self {
+        Self {
+            cons,
+            return_type: obj.as_type(),
+        }
+    }
+
+    fn name(&self) -> &str {
+        self.cons.name()
+    }
+}
+
+impl Callable for ObjectConstructor<'_> {
+    fn arguments(&self) -> Vec<&Argument> {
+        self.cons.arguments()
+    }
+
+    fn return_type(&self) -> Option<&Type> {
+        Some(&self.return_type)
+    }
+
+    fn throws_type(&self) -> Option<&Type> {
+        self.cons.throws_type()
+    }
+
+    fn is_async(&self) -> bool {
+        self.cons.is_async()
+    }
+
+    fn docstring(&self) -> Option<&str> {
+        self.cons.docstring()
+    }
+
+    fn ffi_func(&self) -> &FfiFunction {
+        self.cons.ffi_func()
+    }
+}
+
+/// The alternate constructors of an object, which the companion object exposes.
+fn object_alternate_constructors(obj: &Object) -> Vec<ObjectConstructor<'_>> {
+    obj.alternate_constructors()
+        .into_iter()
+        .map(|cons| ObjectConstructor::new(obj, cons))
+        .collect()
+}
+
 /// The uniffi traits implemented by the class of a record.
 ///
 /// A record without fields is a Kotlin `object`, which has a single value, so only its

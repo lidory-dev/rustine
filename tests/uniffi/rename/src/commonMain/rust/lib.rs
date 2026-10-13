@@ -149,6 +149,18 @@ mod submodule {
             BindingObject { value }
         }
 
+        // Rustine: alternate constructors of an object renamed in uniffi.toml, which return the
+        // renamed type.
+        #[uniffi::constructor]
+        pub fn secondary(value: i32) -> Self {
+            BindingObject { value }
+        }
+
+        #[uniffi::constructor]
+        pub async fn secondary_async(value: i32) -> Self {
+            BindingObject { value }
+        }
+
         pub fn method(&self, arg: i32) -> Result<i32, BindingError> {
             Ok(self.value + arg)
         }

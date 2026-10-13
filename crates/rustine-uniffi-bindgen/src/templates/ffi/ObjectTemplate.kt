@@ -174,7 +174,7 @@
     {# XXX - "companion object" confusion? How to have alternate constructors *and* be an error? #}
     {% if !obj.alternate_constructors().is_empty() -%}
     {{ visibility() }}{% call emit_actual %}companion object {
-        {% for cons in obj.alternate_constructors() -%}
+        {% for cons in self::object_alternate_constructors(obj) -%}
         {%- call kt::func_decl_with_body(actual, cons, 8) %}
         {% endfor %}
     }

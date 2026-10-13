@@ -8,6 +8,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.Url
+import kotlinx.coroutines.test.runTest
 import rename.*
 import kotlin.test.Test
 
@@ -62,6 +63,10 @@ class RenameTest {
         // method -> kotlinMethod, arg -> kotlinArg
         ktObj.kotlinMethod(kotlinArg = 10) shouldBe 110
 
+        // Rustine: the alternate constructors of a renamed object return the renamed type.
+        val secondary: KtObject = KtObject.secondary(5)
+        secondary.kotlinMethod(kotlinArg = 1) shouldBe 6
+
         // Test enum renaming with dot notation for variants
         KtEnum.KotlinVariantA.shouldBeInstanceOf<KtEnum>() // Variant renamed: VariantA -> KotlinVariantA
         KtEnum.KotlinRecord(ktRecord).v1 shouldBe ktRecord // Variant renamed: Record -> KotlinRecord
@@ -76,5 +81,12 @@ class RenameTest {
 
         // We can't test excluded items directly, however the tests will fail if the code is not
         // working since that will result in items generated with "" as their name
+    }
+
+    // Rustine: an async alternate constructor of an object renamed in uniffi.toml.
+    @Test
+    fun renamedObjectAsyncConstructor() = runTest {
+        val obj: KtObject = KtObject.secondaryAsync(7)
+        obj.kotlinMethod(kotlinArg = 1) shouldBe 8
     }
 }

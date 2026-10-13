@@ -20,6 +20,9 @@
 //!   of the trait's crate.
 //! - It renames the names of errors with the table of the current crate. The names of errors from
 //!   other crates are renamed here with the table of their own crate.
+//! - It doesn't rename the type that constructors return, which can't be changed from outside
+//!   `uniffi_bindgen`. The generator renders the type of the object that a constructor belongs to
+//!   instead (see `ObjectConstructor`).
 //!
 //! Other places can't be renamed from outside `uniffi_bindgen`, so generation fails when a
 //! rename would apply to them (see [check_renames]).
@@ -645,6 +648,60 @@ mod tests {
                 imp: ObjectImpl::Trait(TraitKind::RustOnly),
             }
         );
+    }
+
+    #[test]
+    fn renamed_objects_keep_their_alternate_constructors() {
+        let udl = r#"
+            namespace one {};
+            interface Thing {
+                constructor();
+                [Name=secondary]
+                constructor(u32 value);
+                [Name=fallible, Throws=OneError]
+                constructor();
+            };
+            [Error]
+            enum OneError { "Oops" };
+        "#;
+        let config = r#"
+            package_name = "one"
+            cdylib_name = "one"
+            kotlin_multiplatform = true
+            kotlin_targets = ["jvm", "native", "stub"]
+            [rename]
+            Thing = "KtThing"
+            "Thing.secondary" = "kt_secondary"
+        "#;
+        let mut components = vec![component("one", udl, vec![], config)];
+        apply_renames(&mut components).unwrap();
+        let Component { ci, config } = &mut components[0];
+        ci.derive_ffi_funcs().unwrap();
+
+        let obj = ci.get_object_definition("KtThing").unwrap();
+        // Upstream's renamer doesn't rename the type that constructors return, so the generator
+        // takes the type of the object instead.
+        let cons = obj
+            .alternate_constructors()
+            .into_iter()
+            .find(|cons| cons.name() == "kt_secondary")
+            .unwrap();
+        assert_eq!(Callable::return_type(cons).unwrap().name(), Some("Thing"));
+
+        let bindings = crate::gen_kotlin_multiplatform::generate_bindings(config, ci).unwrap();
+        let common = &bindings.common;
+        assert!(common.contains("public fun `ktSecondary`(`value`: kotlin.UInt): KtThing\n"));
+        assert!(common.contains("public fun `fallible`(): KtThing\n"));
+        for platform in [bindings.jvm.unwrap(), bindings.native.unwrap()] {
+            assert!(platform
+                .contains("public actual fun `ktSecondary`(`value`: kotlin.UInt): KtThing {"));
+            assert!(platform.contains("return FfiConverterTypeKtThing.lift("));
+            assert!(!platform.contains("FfiConverterTypeThing."));
+        }
+        assert!(bindings
+            .stub
+            .unwrap()
+            .contains("public actual fun `ktSecondary`(`value`: kotlin.UInt): KtThing {"));
     }
 
     #[test]
