@@ -44,5 +44,11 @@ fn take_string(v: String) -> String {
 fn take_bytes(v: Vec<u8>) -> Vec<u8> {
     v
 }
+fn take_bytes_by_ref(v: &[u8]) -> Vec<u8> {
+    v.to_vec()
+}
+fn sum_bytes_udl(buf: &[u8]) -> u32 {
+    buf.iter().map(|b| *b as u32).sum()
+}
 
 uniffi::include_scaffolding!("type-limits");

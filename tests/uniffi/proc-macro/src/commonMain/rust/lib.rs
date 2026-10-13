@@ -434,6 +434,84 @@ pub fn join(parts: &[String], sep: &str) -> String {
     parts.join(sep)
 }
 
+// Borrowed byte slices cross the FFI as `ForeignBytes`, a pointer and a length, instead of a
+// RustBuffer (mozilla/uniffi-rs#2878). These two functions are upstream's
+// (bindgen-tests/lib/src/bytes.rs).
+#[uniffi::export]
+pub fn sum_bytes_procmacro(buf: &[u8]) -> u32 {
+    buf.iter().map(|b| *b as u32).sum()
+}
+
+#[uniffi::export]
+pub fn first_byte_procmacro(buf: &[u8]) -> Option<u8> {
+    buf.first().copied()
+}
+
+// Rustine: borrowed byte slices next to other arguments, in fallible functions, and in the
+// constructors and methods of objects, records and traits that only Rust implements.
+#[uniffi::export]
+fn join_bytes(a: &[u8], separator: u8, b: &[u8]) -> Vec<u8> {
+    [a, &[separator], b].concat()
+}
+
+#[uniffi::export]
+fn bytes_to_string(buf: &[u8]) -> Result<String, BasicError> {
+    String::from_utf8(buf.to_vec()).map_err(|_| BasicError::InvalidInput)
+}
+
+#[uniffi::export]
+pub trait ByteSliceTrait: Send + Sync {
+    fn count_byte(&self, buf: &[u8], byte: u8) -> u32;
+}
+
+#[derive(uniffi::Object)]
+pub struct ByteSlices {
+    prefix: Vec<u8>,
+}
+
+#[uniffi::export]
+impl ByteSlices {
+    #[uniffi::constructor]
+    fn new(prefix: &[u8]) -> Arc<Self> {
+        Arc::new(Self {
+            prefix: prefix.to_vec(),
+        })
+    }
+
+    #[uniffi::constructor]
+    fn from_utf8(prefix: &[u8]) -> Result<Arc<Self>, BasicError> {
+        std::str::from_utf8(prefix).map_err(|_| BasicError::InvalidInput)?;
+        Ok(Self::new(prefix))
+    }
+
+    fn prefix(&self) -> Vec<u8> {
+        self.prefix.clone()
+    }
+
+    fn prepend_to(&self, buf: &[u8]) -> Vec<u8> {
+        [&self.prefix, buf].concat()
+    }
+
+    fn get_trait(&self) -> Arc<dyn ByteSliceTrait> {
+        Arc::new(ByteSliceTraitImpl)
+    }
+}
+
+struct ByteSliceTraitImpl;
+
+impl ByteSliceTrait for ByteSliceTraitImpl {
+    fn count_byte(&self, buf: &[u8], byte: u8) -> u32 {
+        buf.iter().filter(|b| **b == byte).count() as u32
+    }
+}
+
+#[uniffi::export]
+impl RecordWithBytes {
+    fn starts_with(&self, prefix: &[u8]) -> bool {
+        self.some_bytes.starts_with(prefix)
+    }
+}
+
 // Custom names
 #[derive(uniffi::Object)]
 pub struct Renamed;

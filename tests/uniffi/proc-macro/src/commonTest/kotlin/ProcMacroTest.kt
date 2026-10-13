@@ -93,6 +93,50 @@ class ProcMacroTest {
     }
 
     @Test
+    fun testBorrowedBytes() {
+        sumBytesProcmacro(byteArrayOf()) shouldBe 0u
+        sumBytesProcmacro(byteArrayOf(1, 2, 3)) shouldBe 6u
+        firstByteProcmacro(byteArrayOf()) shouldBe null
+        firstByteProcmacro(byteArrayOf(42)) shouldBe 42.toUByte()
+
+        val large = ByteArray(4 * 1024 * 1024) { (it % 251).toByte() }
+        sumBytesProcmacro(large) shouldBe large.sumOf { it.toUByte().toUInt() }
+        firstByteProcmacro(large) shouldBe 0.toUByte()
+
+        joinBytes(byteArrayOf(1, 2), 0u, byteArrayOf(3)) shouldBe byteArrayOf(1, 2, 0, 3)
+        joinBytes(byteArrayOf(), 0u, byteArrayOf()) shouldBe byteArrayOf(0)
+        bytesToString("hello".encodeToByteArray()) shouldBe "hello"
+        bytesToString(byteArrayOf()) shouldBe ""
+        shouldThrow<BasicException.InvalidInput> {
+            bytesToString(byteArrayOf(-1))
+        }
+    }
+
+    @Test
+    fun testBorrowedBytesInObjects() {
+        val slices = ByteSlices(byteArrayOf(1, 2))
+        slices.prefix() shouldBe byteArrayOf(1, 2)
+        slices.prependTo(byteArrayOf(3)) shouldBe byteArrayOf(1, 2, 3)
+        slices.prependTo(byteArrayOf()) shouldBe byteArrayOf(1, 2)
+        slices.getTrait().countByte(byteArrayOf(1, 2, 1), 1u) shouldBe 2u
+        slices.getTrait().countByte(byteArrayOf(), 1u) shouldBe 0u
+
+        ByteSlices(byteArrayOf()).prefix() shouldBe byteArrayOf()
+        ByteSlices.fromUtf8("abc".encodeToByteArray()).prefix() shouldBe "abc".encodeToByteArray()
+        shouldThrow<BasicException.InvalidInput> {
+            ByteSlices.fromUtf8(byteArrayOf(-1))
+        }
+
+        val large = ByteArray(4 * 1024 * 1024) { it.toByte() }
+        ByteSlices(large).prependTo(large).size shouldBe 2 * large.size
+
+        val rwb = RecordWithBytes(byteArrayOf(1, 2, 3))
+        rwb.startsWith(byteArrayOf(1, 2)) shouldBe true
+        rwb.startsWith(byteArrayOf(2)) shouldBe false
+        rwb.startsWith(byteArrayOf()) shouldBe true
+    }
+
+    @Test
     fun testJoin() {
         join(listOf("a", "b", "c"), ":") shouldBe "a:b:c"
     }

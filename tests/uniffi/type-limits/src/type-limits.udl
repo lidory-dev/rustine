@@ -14,4 +14,8 @@ namespace type_limits {
 
   string take_string(string v);
   bytes take_bytes(bytes v);
+
+  // Rustine: borrowed bytes, which cross the FFI as `ForeignBytes` (mozilla/uniffi-rs#2878).
+  bytes take_bytes_by_ref([ByRef] bytes v);
+  u32 sum_bytes_udl([ByRef] bytes buf);
 };
