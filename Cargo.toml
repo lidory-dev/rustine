@@ -71,4 +71,5 @@ uniffi = "=0.32.2"
 uniffi_bindgen = { version = "=0.32.2", default-features = false }
 uniffi_macros = "=0.32.2"
 uniffi_meta = "=0.32.2"
+uniffi_udl = "=0.32.2"
 url = "2.2"
