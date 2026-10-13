@@ -54,6 +54,13 @@ pub trait UniffiOneTrait: Send + Sync {
     fn hello(&self) -> String;
 }
 
+// Rustine: a trait that only Rust implements. An object of `ext-types-proc-macro` implements it
+// without using it anywhere else, so the bindings of that crate don't import it.
+#[uniffi::export]
+pub trait UniffiOneRustOnlyTrait: Send + Sync {
+    fn rust_only_hello(&self) -> String;
+}
+
 // A couple of errors used as external types.
 #[derive(thiserror::Error, uniffi::Error, Debug)]
 pub enum UniffiOneError {

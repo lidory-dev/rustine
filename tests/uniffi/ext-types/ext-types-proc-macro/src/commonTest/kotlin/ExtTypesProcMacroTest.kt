@@ -13,6 +13,18 @@ import kotlinx.coroutines.runBlocking
 
 class ExtTypesProcMacroTest {
     @Test
+    fun testExternalTraitImpls() {
+        val traitObject = UniffiOneTraitObject()
+        val uniffiOneTrait: UniffiOneTrait = traitObject
+        uniffiOneTrait.hello() shouldBe "uniffi-one-trait-object"
+        // The object is lowered like a Kotlin implementation of the trait.
+        getUniffiOneTrait(traitObject)!!.hello() shouldBe "uniffi-one-trait-object"
+
+        val rustOnlyTrait: UniffiOneRustOnlyTraitInterface = UniffiOneRustOnlyTraitObject()
+        rustOnlyTrait.rustOnlyHello() shouldBe "uniffi-one-rust-only-trait-object"
+    }
+
+    @Test
     fun run() {
         val ct = getCombinedType(null)
         ct.uot.sval shouldBe "hello"

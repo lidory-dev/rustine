@@ -163,6 +163,45 @@ fn get_uniffi_one_trait(t: Option<Arc<dyn UniffiOneTrait>>) -> Option<Arc<dyn Un
     t
 }
 
+// local impl of a remote trait.
+#[derive(uniffi::Object)]
+pub struct UniffiOneTraitObject;
+
+#[uniffi::export]
+impl uniffi_one::UniffiOneTrait for UniffiOneTraitObject {
+    fn hello(&self) -> String {
+        "uniffi-one-trait-object".to_string()
+    }
+}
+
+// Rustine: a constructor to test the object above, and a local impl of a remote trait that only
+// Rust implements, which nothing else here uses.
+#[uniffi::export]
+impl UniffiOneTraitObject {
+    #[uniffi::constructor]
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+#[derive(uniffi::Object)]
+pub struct UniffiOneRustOnlyTraitObject;
+
+#[uniffi::export]
+impl UniffiOneRustOnlyTraitObject {
+    #[uniffi::constructor]
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+#[uniffi::export]
+impl uniffi_one::UniffiOneRustOnlyTrait for UniffiOneRustOnlyTraitObject {
+    fn rust_only_hello(&self) -> String {
+        "uniffi-one-rust-only-trait-object".to_string()
+    }
+}
+
 // Some custom types via macros.
 // Another guid - here we use a regular struct.
 pub struct Uuid {

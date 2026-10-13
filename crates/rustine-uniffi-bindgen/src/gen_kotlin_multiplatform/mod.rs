@@ -633,7 +633,15 @@ fn object_interface_name(ci: &ComponentInterface, obj: &Object) -> String {
 
 // *sigh* - same thing for a trait, which might be either Object or CallbackInterface.
 // (we should either fold it into object or kill it!)
-fn trait_interface_name(ci: &ComponentInterface, trait_ty: &Type) -> Result<String> {
+//
+// The name of a trait from another crate is fully qualified. Upstream relies on an import, but
+// trait implementations are not part of `Object::iter_types()`, so nothing imports a trait that
+// the crate doesn't use otherwise.
+fn trait_interface_name(
+    ci: &ComponentInterface,
+    config: &Config,
+    trait_ty: &Type,
+) -> Result<String> {
     let Some(crate_name) = trait_ty.crate_name() else {
         bail!("Invalid trait_type: {trait_ty:?}");
     };
@@ -663,10 +671,17 @@ fn trait_interface_name(ci: &ComponentInterface, trait_ty: &Type) -> Result<Stri
         Some(ci_look) => KotlinCodeOracle.class_name(ci_look, obj_name),
         None => obj_name.to_upper_camel_case(),
     };
-    if has_callback_interface {
-        Ok(class_name)
+    let interface_name = if has_callback_interface {
+        class_name
     } else {
-        Ok(format!("{class_name}Interface"))
+        format!("{class_name}Interface")
+    };
+    if crate_name == ci.crate_name() {
+        Ok(interface_name)
+    } else {
+        let namespace = ci.namespace_for_module_path(crate_name).ok();
+        let package_name = config.external_package_name(crate_name, namespace);
+        Ok(format!("{package_name}.{interface_name}"))
     }
 }
 
