@@ -15,8 +15,10 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
+import java.io.File
 
 @CacheableTask
 abstract class CargoInstallTask : CargoTask() {
@@ -28,6 +30,29 @@ abstract class CargoInstallTask : CargoTask() {
 
     @get:OutputDirectory
     abstract val installDirectory: DirectoryProperty
+
+    init {
+        // A crate at a local path can change while the path stays the same. Track the files
+        // Cargo reads to build it, so the binary is reinstalled when one of them changes instead
+        // of being reused while stale. The task stays up to date otherwise, which matters because
+        // `cargo install` updates the registry index even when there is nothing to rebuild, and
+        // fails without network access.
+        val crateFiles = binaryCrateSource.map { source ->
+            when (source) {
+                is CargoBinaryCrateSource.Path -> localCrateFiles(File(source.path))
+                else -> emptyList()
+            }
+        }
+        inputs.files(crateFiles)
+            .withPropertyName("localCrateFiles")
+            .withPathSensitivity(PathSensitivity.ABSOLUTE)
+        // The tracked files do not cover everything that affects the binary, such as path
+        // dependencies or the installed toolchains, so do not share it through the build cache.
+        outputs.doNotCacheIf("The binary crate is installed from a local path") { task ->
+            (task as CargoInstallTask).binaryCrateSource.get() is CargoBinaryCrateSource.Path
+        }
+    }
+
     protected fun binaryCrateOutput(crateName: String): RegularFileProperty {
         return project.objects.fileProperty()
             .convention(
@@ -89,4 +114,26 @@ abstract class CargoInstallTask : CargoTask() {
             suppressXcodeIosToolchains()
         }.get().assertNormalExitValue()
     }
+}
+
+/**
+ * The sources of the crate at [crateDirectory], plus the manifests, lockfiles, toolchain files and
+ * Cargo configurations that Cargo looks up in its ancestor directories. Files that do not exist
+ * are included too, so creating one also reinstalls the crate. This only computes paths and does
+ * not access the file system.
+ */
+private fun localCrateFiles(crateDirectory: File): List<File> {
+    val directory = crateDirectory.absoluteFile
+    val crateSources = listOf("src", "build.rs", "askama.toml").map(directory::resolve)
+    val workspaceFiles = generateSequence(directory) { it.parentFile }.flatMap { ancestor ->
+        listOf(
+            "Cargo.toml",
+            "Cargo.lock",
+            "rust-toolchain",
+            "rust-toolchain.toml",
+            ".cargo/config",
+            ".cargo/config.toml",
+        ).map(ancestor::resolve)
+    }
+    return crateSources + workspaceFiles
 }

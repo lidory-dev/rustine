@@ -36,6 +36,7 @@ Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7, and 
 - Made the UniFFI plugin prefer the default `androidx.annotation` version (1.8.2) instead of the `kotlinx-coroutines` version.
 - Made project dependencies declared with `api`, `implementation`, or `compileOnly` in single-platform Android or Kotlin/JVM modules propagate the Rust runtime libraries and the UniFFI configurations of the dependencies.
 - Fixed ambiguous variant errors when a module using Rustine depends on a project not using Rustine, such as a plain `com.android.library` project, by resolving such dependencies leniently.
+- Made `installUniffiBindgen` and `installWasmTransformer` reinstall a crate set with `bindgenFromPath` or `wasmTransformerFromPath` when its sources, or the manifests, lockfiles, toolchain files, or Cargo configurations in its ancestor directories change. Before, the tasks kept using the binary built from the old sources.
 
 ### Dependencies
 
