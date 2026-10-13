@@ -19,6 +19,9 @@ on:
 jobs:
   build-image:
     name: Build Docker image containing required dependencies
+    permissions:
+      contents: read
+      packages: write
     timeout-minutes: 120
     runs-on: ubuntu-latest
     outputs:

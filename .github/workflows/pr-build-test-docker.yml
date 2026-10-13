@@ -8,6 +8,9 @@ on:
 jobs:
   build-image:
     name: Build Docker image containing required dependencies
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/dependency-image.yml
     secrets: inherit
     with:
