@@ -535,6 +535,10 @@ impl Coveralls {
         value
     }
 
+    fn reverse_borrowed(&self, value: &[u8]) -> Vec<u8> {
+        value.iter().rev().copied().collect()
+    }
+
     fn set_and_get_empty_struct(&self, empty_struct: EmptyStruct) -> EmptyStruct {
         empty_struct
     }

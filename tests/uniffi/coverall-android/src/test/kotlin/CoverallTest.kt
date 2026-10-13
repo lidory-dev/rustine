@@ -607,6 +607,9 @@ class CoverallTest {
     fun bytes() = withCoverallLock {
         Coveralls("test_bytes").use { coveralls ->
             coveralls.reverse("123".encodeToByteArray()).decodeToString() shouldBe "321"
+            // Borrowed bytes are copied to native memory for the call on Android.
+            coveralls.reverseBorrowed("123".encodeToByteArray()).decodeToString() shouldBe "321"
+            coveralls.reverseBorrowed(ByteArray(0)).size shouldBe 0
         }
         runGCWithDelay()
     }

@@ -215,6 +215,9 @@ interface Coveralls {
     /// Reverses the bytes.
     bytes reverse(bytes value);
 
+    /// Reverses the bytes, which are borrowed for the call.
+    bytes reverse_borrowed([ByRef] bytes value);
+
     EmptyStruct set_and_get_empty_struct(EmptyStruct empty_struct);
 };
 

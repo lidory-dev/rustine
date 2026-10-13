@@ -267,6 +267,27 @@ fn oops_custom(i: u16) -> Result<(), CustomError> {
     Err(CustomError(i))
 }
 
+// Rustine: a custom type over an object, thrown as an error (mozilla/uniffi-rs#2658). Upstream
+// only tests a custom type over an enum.
+#[derive(Debug)]
+struct CustomErrorInterface(Arc<ErrorInterface>);
+
+impl std::fmt::Display for CustomErrorInterface {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+uniffi::custom_type!(CustomErrorInterface, Arc<ErrorInterface>, {
+    try_lift: |val| Ok(CustomErrorInterface(val)),
+    lower: |val| val.0,
+});
+
+#[uniffi::export]
+fn oops_custom_object(message: String) -> Result<(), CustomErrorInterface> {
+    Err(CustomErrorInterface(get_error(message)))
+}
+
 #[uniffi::export(default(t = None))]
 fn get_tuple(t: Option<TupleError>) -> TupleError {
     t.unwrap_or_else(|| TupleError::Oops("oops".to_string()))

@@ -128,6 +128,14 @@ class ErrorTypesTest {
             oopsCustom(1u)
         }.v1 shouldBe 1u.toUShort()
 
+        // A custom type over `ErrorInterface`, an object.
+        shouldThrow<ErrorInterface> {
+            oopsCustomObject("custom-oops")
+        }.also { e ->
+            e.toString() shouldBe "custom-oops"
+            e.link(0U) shouldBe "custom-oops"
+        }
+
     }
 
     @Test
