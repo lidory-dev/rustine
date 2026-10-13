@@ -63,9 +63,10 @@ enum EnumWithVariousVariants {
     },
 }
 
-// Methods on records, enums and errors, which are plain classes in common Kotlin code. The stubs
-// for the JS and Wasm targets must define them too.
-#[derive(uniffi::Record)]
+// Methods and uniffi traits of records, enums and errors, which are plain classes in common Kotlin
+// code. The stubs for the JS and Wasm targets must define them too.
+#[derive(uniffi::Record, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[uniffi::export(Debug, Eq, Hash, Ord)]
 struct RecordWithMethods {
     value: i32,
 }
@@ -82,9 +83,19 @@ impl RecordWithMethods {
 }
 
 #[derive(uniffi::Enum)]
+#[uniffi::export(Display)]
 enum FlatEnumWithMethods {
     First,
     Second,
+}
+
+impl std::fmt::Display for FlatEnumWithMethods {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::First => write!(f, "first"),
+            Self::Second => write!(f, "second"),
+        }
+    }
 }
 
 #[uniffi::export]
@@ -97,7 +108,8 @@ impl FlatEnumWithMethods {
     }
 }
 
-#[derive(uniffi::Enum)]
+#[derive(uniffi::Enum, PartialEq, Eq, PartialOrd, Ord)]
+#[uniffi::export(Eq, Ord)]
 enum EnumWithMethods {
     Empty,
     Value(i32),
@@ -114,6 +126,7 @@ impl EnumWithMethods {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Display)]
 enum MethodsError {
     #[error("code {code}")]
     Code { code: i32 },
@@ -131,4 +144,33 @@ impl MethodsError {
 #[uniffi::export]
 fn throw_methods_error(code: i32) -> Result<(), MethodsError> {
     Err(MethodsError::Code { code })
+}
+
+// Kotlin compares ByteArrays by reference, so the bindings generate `equals()` and `hashCode()`,
+// unless they come from Rust.
+#[derive(uniffi::Record, PartialEq, Eq)]
+#[uniffi::export(Eq)]
+struct RecordWithBytesAndEq {
+    bytes: Vec<u8>,
+}
+
+#[derive(uniffi::Enum, PartialEq, Eq)]
+#[uniffi::export(Eq)]
+enum EnumWithBytesAndEq {
+    Empty,
+    Bytes(Vec<u8>),
+}
+
+#[derive(uniffi::Object, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[uniffi::export(Debug, Eq, Ord)]
+struct OrderedObject {
+    value: i32,
+}
+
+#[uniffi::export]
+impl OrderedObject {
+    #[uniffi::constructor]
+    fn new(value: i32) -> Arc<Self> {
+        Arc::new(Self { value })
+    }
 }

@@ -58,6 +58,8 @@ class ProcMacroTest {
 
         val obj2 = Object()
         obj.isOtherHeavy(obj2) shouldBe MaybeBool.UNCERTAIN
+        // `Object` exports `Eq`, and all instances of the unit struct are equal.
+        (obj == obj2) shouldBe true
     }
 
     @Test

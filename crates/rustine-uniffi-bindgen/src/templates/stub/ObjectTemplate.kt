@@ -6,15 +6,18 @@
 {%- let interface_docstring = obj.docstring() %}
 {%- let is_error = ci.is_name_used_as_error(name) %}
 {%- let ffi_converter_name = obj|ffi_converter_name %}
+{%- let trait_impls = self::object_trait_impls(obj) %}
 
 {%- call kt::docstring(obj, 0) %}
 {% if (is_error) %}
-{{ visibility() }}actual open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }} {
+{{ visibility() }}actual open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {% else -%}
 {{ visibility() }}actual open class {{ impl_class_name }}: Disposable, {{ interface_name }}
 {%- for t in obj.trait_impls() -%}
 , {{ self::trait_interface_name(ci, t.trait_ty)? }}
-{%- endfor %} {
+{%- endfor %}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {%- endif %}
 
     /**
@@ -50,24 +53,7 @@
     {%- call kt::func_decl_with_stub("actual override", meth, 4) -%}
     {% endfor %}
 
-    {%- for tm in obj.uniffi_traits() %}
-    {%-     match tm %}
-    {%         when UniffiTrait::Display { fmt } %}
-    actual override fun toString(): String {
-        TODO()
-    }
-    {%         when UniffiTrait::Eq { eq, ne } %}
-    {# only equals used #}
-    actual override fun equals(other: Any?): Boolean {
-        TODO()
-    }
-    {%         when UniffiTrait::Hash { hash } %}
-    actual override fun hashCode(): Int {
-        TODO()
-    }
-    {%-         else %}
-    {%-     endmatch %}
-    {%- endfor %}
+    {%- call kt::object_trait_impl_stubs(trait_impls, impl_class_name) %}
 
     {# XXX - "companion object" confusion? How to have alternate constructors *and* be an error? #}
     {% if !obj.alternate_constructors().is_empty() -%}

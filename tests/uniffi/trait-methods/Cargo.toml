@@ -10,6 +10,7 @@ crate-type = ["cdylib", "staticlib"]
 path = "src/commonMain/rust/lib.rs"
 
 [dependencies]
+thiserror = { workspace = true }
 uniffi = { workspace = true }
 
 [build-dependencies]

@@ -1,5 +1,6 @@
 
 {%- let rec = ci.get_record_definition(name).unwrap() %}
+{%- let trait_impls = self::record_trait_impls(rec) %}
 
 {{ visibility() }}object {{ rec|ffi_converter_name }}: FfiConverterRustBuffer<{{ type_name }}> {
     override fun read(buf: ByteBuffer): {{ type_name }} {
@@ -26,4 +27,4 @@
         {%- endfor %}
     }
 }
-{%- call kt::value_method_helper_actuals(rec.methods(), type_name) %}
+{%- call kt::value_method_helper_actuals(rec.methods(), trait_impls, type_name) %}

@@ -680,21 +680,134 @@ fn object_impl_name(ci: &ComponentInterface, obj: &Object) -> String {
     }
 }
 
-/// Fail for methods of records, enums and errors that the bindings can't render.
+/// The Kotlin members that implement the uniffi traits exported for a type.
 ///
-/// Flat errors can't be lowered back to Rust, so they can't be the receiver of a method. Upstream
-/// drops their methods silently.
+/// Kotlin has a single `toString()` for the `Display` and `Debug` traits. It uses `Display`, and
+/// `Debug` otherwise. Only `eq` of the `Eq` trait is used, for `equals()`.
+#[derive(Debug, Clone, Default)]
+pub struct TraitImpls {
+    to_string: Option<Method>,
+    equals: Option<Method>,
+    hash_code: Option<Method>,
+    compare_to: Option<Method>,
+}
+
+impl TraitImpls {
+    fn new(methods: UniffiTraitMethods) -> Self {
+        Self {
+            to_string: methods.display_fmt.or(methods.debug_fmt),
+            equals: methods.eq_eq,
+            hash_code: methods.hash_hash,
+            compare_to: methods.ord_cmp,
+        }
+    }
+
+    /// Keep `toString()` only, for types whose Kotlin class can't override the others.
+    fn to_string_only(self) -> Self {
+        Self {
+            to_string: self.to_string,
+            ..Self::default()
+        }
+    }
+
+    fn to_string(&self) -> Option<&Method> {
+        self.to_string.as_ref()
+    }
+
+    fn equals(&self) -> Option<&Method> {
+        self.equals.as_ref()
+    }
+
+    fn hash_code(&self) -> Option<&Method> {
+        self.hash_code.as_ref()
+    }
+
+    fn compare_to(&self) -> Option<&Method> {
+        self.compare_to.as_ref()
+    }
+
+    /// The methods the Kotlin members call.
+    fn methods(&self) -> Vec<&Method> {
+        [
+            &self.to_string,
+            &self.equals,
+            &self.hash_code,
+            &self.compare_to,
+        ]
+        .into_iter()
+        .flatten()
+        .collect()
+    }
+}
+
+fn object_trait_impls(obj: &Object) -> TraitImpls {
+    TraitImpls::new(obj.uniffi_trait_methods())
+}
+
+/// The uniffi traits implemented by the class of a record.
+///
+/// A record without fields is a Kotlin `object`, which has a single value, so only its
+/// `toString()` comes from Rust, like upstream generates no trait methods for it at all.
+fn record_trait_impls(rec: &Record) -> TraitImpls {
+    let trait_impls = TraitImpls::new(rec.uniffi_trait_methods());
+    if rec.has_fields() {
+        trait_impls
+    } else {
+        trait_impls.to_string_only()
+    }
+}
+
+/// The uniffi traits implemented by the class of an enum or an error.
+///
+/// Kotlin `enum class`es can only override `toString()`; `check_value_type_members()` rejects
+/// the other traits on flat enums. Flat errors can't be lowered back to Rust, so like upstream,
+/// they implement no trait at all.
+fn enum_trait_impls(ci: &ComponentInterface, e: &Enum) -> TraitImpls {
+    let trait_impls = TraitImpls::new(e.uniffi_trait_methods());
+    match (e.is_flat(), ci.is_name_used_as_error(e.name())) {
+        (false, _) => trait_impls,
+        (true, false) => trait_impls.to_string_only(),
+        (true, true) => TraitImpls::default(),
+    }
+}
+
+/// Fail for methods and uniffi traits of records, enums and errors that the bindings can't
+/// render.
+///
+/// - Kotlin `enum class`es can't override `equals()`, `hashCode()` or `compareTo()`, so flat
+///   enums can only export `Display` and `Debug`, like upstream.
+/// - Flat errors can't be lowered back to Rust, so they can't be the receiver of a method or of
+///   `Ord`. Upstream drops their methods silently, and emits a `Comparable` supertype without
+///   `compareTo()` for `Ord`, which does not compile.
 fn check_value_type_members(ci: &ComponentInterface) -> Result<()> {
     for e in ci.enum_definitions() {
-        if !e.is_flat() || !ci.is_name_used_as_error(e.name()) {
+        if !e.is_flat() {
             continue;
         }
-        if let Some(meth) = e.methods().first() {
+        let trait_methods = e.uniffi_trait_methods();
+        if ci.is_name_used_as_error(e.name()) {
+            if let Some(meth) = e.methods().first() {
+                bail!(
+                    "Kotlin bindings do not support methods on flat error `{}`, such as `{}`, \
+                     since flat errors can't be passed back to Rust",
+                    e.name(),
+                    meth.name(),
+                );
+            }
+            if trait_methods.ord_cmp.is_some() {
+                bail!(
+                    "Kotlin bindings do not support exporting Ord for flat error `{}`, since flat \
+                     errors can't be passed back to Rust",
+                    e.name(),
+                );
+            }
+        } else if trait_methods.eq_eq.is_some()
+            || trait_methods.hash_hash.is_some()
+            || trait_methods.ord_cmp.is_some()
+        {
             bail!(
-                "Kotlin bindings do not support methods on flat error `{}`, such as `{}`, since \
-                 flat errors can't be passed back to Rust",
-                e.name(),
-                meth.name(),
+                "Kotlin bindings do not support exporting Eq/Ord/Hash for flat enum `{}`",
+                e.name()
             );
         }
     }
@@ -1678,5 +1791,131 @@ mod filters {
     pub fn repeat(string: &str, n: &i32) -> Result<String, askama::Error> {
         let n = usize::try_from(*n).unwrap_or_default();
         Ok(string.repeat(n))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uniffi_meta::{EnumShape, Metadata};
+
+    /// Generate bindings for a UDL file. UDL can't declare flat errors with uniffi traits, so the
+    /// errors named in `flat_errors` are made flat.
+    fn generate_from_udl(udl: &str, flat_errors: &[&str]) -> Result<MultiplatformBindings> {
+        let mut group = uniffi_udl::parse_udl(udl, "rustine_test")?;
+        group.items = group
+            .items
+            .into_iter()
+            .map(|item| match item {
+                Metadata::Enum(mut e) if flat_errors.contains(&e.name.as_str()) => {
+                    e.shape = EnumShape::Error { flat: true };
+                    Metadata::Enum(e)
+                }
+                item => item,
+            })
+            .collect();
+        let mut ci = ComponentInterface::from_metadata(group)?;
+        ci.derive_ffi_funcs()?;
+        let config: Config = toml::from_str(
+            r#"
+            package_name = "rustine_test"
+            cdylib_name = "rustine_test"
+            kotlin_multiplatform = true
+            kotlin_targets = ["jvm", "native", "stub"]
+            "#,
+        )?;
+        generate_bindings(&config, &ci)
+    }
+
+    #[test]
+    fn flat_enums_implement_display_only() {
+        let bindings = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            [Enum, Traits=(Display)]
+            interface FlatEnum { A(); B(); };
+            "#,
+            &[],
+        )
+        .unwrap();
+        assert!(bindings.common.contains("public enum class FlatEnum {"));
+        assert!(bindings
+            .common
+            .contains("    override fun toString(): String {"));
+
+        let err = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            [Enum, Traits=(Eq)]
+            interface FlatEnum { A(); B(); };
+            "#,
+            &[],
+        )
+        .err()
+        .unwrap();
+        assert!(err
+            .to_string()
+            .contains("do not support exporting Eq/Ord/Hash for flat enum `FlatEnum`"));
+    }
+
+    #[test]
+    fn flat_errors_reject_ord() {
+        let udl = |traits: &str| {
+            format!(
+                r#"
+                namespace rustine_test {{
+                    [Throws=FlatError]
+                    void fails();
+                }};
+                [Error, Traits=({traits})]
+                interface FlatError {{ A(); B(); }};
+                "#
+            )
+        };
+        // Like upstream, flat errors implement no uniffi traits.
+        let bindings = generate_from_udl(&udl("Display, Eq, Hash"), &["FlatError"]).unwrap();
+        assert!(!bindings.common.contains("override fun toString()"));
+        assert!(!bindings.common.contains("override fun equals("));
+
+        let err = generate_from_udl(&udl("Ord"), &["FlatError"])
+            .err()
+            .unwrap();
+        assert!(err
+            .to_string()
+            .contains("do not support exporting Ord for flat error `FlatError`"));
+    }
+
+    #[test]
+    fn sealed_classes_implement_traits_once() {
+        let bindings = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            [Enum, Traits=(Debug, Eq, Hash, Ord)]
+            interface SealedEnum {
+                A();
+                B(i32 value);
+            };
+            "#,
+            &[],
+        )
+        .unwrap();
+        let common = &bindings.common;
+        assert!(common.contains("public sealed class SealedEnum: Comparable<SealedEnum>"));
+        for member in [
+            "final override fun toString(): String {",
+            "final override fun equals(other: Any?): Boolean {",
+            "final override fun hashCode(): Int {",
+            "final override fun compareTo(other: SealedEnum): Int {",
+        ] {
+            assert_eq!(common.matches(member).count(), 1, "{member}");
+        }
+        assert!(bindings
+            .jvm
+            .unwrap()
+            .contains("internal actual fun SealedEnum."));
+        assert!(bindings
+            .stub
+            .unwrap()
+            .contains("internal actual fun SealedEnum."));
     }
 }

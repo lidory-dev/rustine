@@ -7,6 +7,7 @@
 #}
 
 {%- let should_generate_serializable = config.generate_serializable() && e|serializable_enum(ci) -%}
+{%- let trait_impls = self::enum_trait_impls(ci, e) -%}
 
 {%- if e.is_flat() %}
 
@@ -22,6 +23,7 @@
     {%- for meth in e.methods() %}
 {% call kt::value_method_decl(meth, 4) %}
     {%- endfor %}
+    {%- call kt::value_trait_impls(trait_impls, type_name, "override", 4) %}
     {{ visibility() }}companion object
 }
 {% when Some(variant_discr_type) %}
@@ -34,14 +36,16 @@
     {%- for meth in e.methods() %}
 {% call kt::value_method_decl(meth, 4) %}
     {%- endfor %}
+    {%- call kt::value_trait_impls(trait_impls, type_name, "override", 4) %}
     {{ visibility() }}companion object
 }
 {% endmatch %}
 {% else %}
 
+{%- let comparable = trait_impls.compare_to().is_some() -%}
 {%- call kt::docstring(e, 0) %}
 {% if should_generate_serializable %}@kotlinx.serialization.Serializable{% endif %}
-{{ visibility() }}sealed class {{ type_name }}{% if contains_object_references %}: Disposable {% endif %} {
+{{ visibility() }}sealed class {{ type_name }}{% if contains_object_references && comparable %}: Disposable, Comparable<{{ type_name }}> {% elif contains_object_references %}: Disposable {% elif comparable %}: Comparable<{{ type_name }}> {% endif %} {
     {% for variant in e.variants() -%}
     {%- let variant_type_name = variant|variant_type_name(ci) -%}
     {%- let should_generate_variant_serializable = config.generate_serializable() && variant|serializable_enum_variant(ci) -%}
@@ -66,7 +70,8 @@
         {%- endfor %}
     ) : {{ type_name }}() {
         {%- if should_generate_equals_hash_code -%}
-        {%- call kt::generate_equals_hash_code(variant, variant_type_name, 8) -%}
+        {#- The sealed class implements `equals()` and `hashCode()` when they come from uniffi traits. -#}
+        {%- call kt::generate_equals_hash_code(variant, variant_type_name, 8, trait_impls.equals().is_none(), trait_impls.hash_code().is_none()) -%}
         {%- endif -%}
         {%- if contains_object_references %}
         override fun destroy() {
@@ -83,7 +88,9 @@
     {%- for meth in e.methods() %}
 {% call kt::value_method_decl(meth, 4) %}
     {%- endfor %}
+    {#- Upstream overrides these members in each data class variant too. #}
+    {%- call kt::value_trait_impls(trait_impls, type_name, "final override", 4) %}
 }
 
 {% endif %}
-{%- call kt::value_method_helper_expects(e.methods(), type_name) %}
+{%- call kt::value_method_helper_expects(e.methods(), trait_impls, type_name) %}

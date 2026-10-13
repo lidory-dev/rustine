@@ -6,17 +6,20 @@
 {%- let interface_docstring = obj.docstring() %}
 {%- let is_error = ci.is_name_used_as_error(name) %}
 {%- let ffi_converter_name = obj|ffi_converter_name %}
+{%- let trait_impls = self::object_trait_impls(obj) %}
 
 {%- include "Interface.kt" %}
 {% if config.kotlin_multiplatform %}
 {% call kt::docstring(obj, 0) %}
 {% if (is_error) %}
-{{ visibility() }}expect open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }} {
+{{ visibility() }}expect open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {% else -%}
 {{ visibility() }}expect open class {{ impl_class_name }}: Disposable, {{ interface_name }}
 {%- for t in obj.trait_impls() -%}
 , {{ self::trait_interface_name(ci, t.trait_ty)? }}
-{%- endfor %} {
+{%- endfor %}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {%- endif %}
     /**
      * This constructor can be used to instantiate a fake object. Only used for tests. Any
@@ -53,18 +56,7 @@
     {%- call kt::func_decl("override", meth, 4, false) %}
     {% endfor %}
 
-    {%- for tm in obj.uniffi_traits() %}
-    {%-     match tm %}
-    {%         when UniffiTrait::Display { fmt } %}
-    override fun toString(): String
-    {%         when UniffiTrait::Eq { eq, ne } %}
-    {# only equals used #}
-    override fun equals(other: Any?): Boolean
-    {%         when UniffiTrait::Hash { hash } %}
-    override fun hashCode(): Int
-    {%-         else %}
-    {%-     endmatch %}
-    {%- endfor %}
+    {%- call kt::object_trait_impl_decls(trait_impls, impl_class_name) %}
 
     {# XXX - "companion object" confusion? How to have alternate constructors *and* be an error? #}
     {%- if !obj.alternate_constructors().is_empty() -%}

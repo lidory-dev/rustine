@@ -146,17 +146,20 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- endmacro %}
 
 {#- The `expect` declarations of the helpers in common code. -#}
-{%- macro value_method_helper_expects(methods, receiver) %}
-{%- if config.kotlin_multiplatform && !methods.is_empty() %}
+{%- macro value_method_helper_expects(methods, trait_impls, receiver) %}
+{%- if config.kotlin_multiplatform && (!methods.is_empty() || !trait_impls.methods().is_empty()) %}
 
 {% for meth in methods -%}
+{% call value_method_helper_signature("expect", meth, receiver) %}
+{% endfor -%}
+{% for meth in trait_impls.methods() -%}
 {% call value_method_helper_signature("expect", meth, receiver) %}
 {% endfor -%}
 {%- endif %}
 {%- endmacro %}
 
 {#- The definitions of the helpers in the platform code. -#}
-{%- macro value_method_helper_actuals(methods, receiver) %}
+{%- macro value_method_helper_actuals(methods, trait_impls, receiver) %}
 {%- let helper_decl -%}
 {%- if config.kotlin_multiplatform -%}
 {%-     let helper_decl = "actual" -%}
@@ -167,16 +170,149 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 
 {% call value_method_helper_signature(helper_decl, meth, receiver) %} {% call func_body(meth, 0) %}
 {%- endfor %}
+{%- for meth in trait_impls.methods() %}
+
+{% call value_method_helper_signature(helper_decl, meth, receiver) %} {% call func_body(meth, 0) %}
+{%- endfor %}
 {%- endmacro %}
 
 {#- The definitions of the helpers in the stub code. -#}
-{%- macro value_method_helper_stubs(methods, receiver) %}
+{%- macro value_method_helper_stubs(methods, trait_impls, receiver) %}
 {%- for meth in methods %}
 
 {% call value_method_helper_signature("actual", meth, receiver) %} {
     TODO()
 }
 {%- endfor %}
+{%- for meth in trait_impls.methods() %}
+
+{% call value_method_helper_signature("actual", meth, receiver) %} {
+    TODO()
+}
+{%- endfor %}
+{%- endmacro %}
+
+{#-
+// The members of a record, enum or error that implement its uniffi traits with the helpers.
+// `modifier` is `final override` on a sealed class, which keeps its data class and data object
+// subclasses from generating their own.
+-#}
+{%- macro value_trait_impls(trait_impls, type_name, modifier, indent) %}
+{%- if let Some(fmt) = trait_impls.to_string() %}
+
+{{ " "|repeat(indent) }}// The local Rust `Display`/`Debug` implementation.
+{{ " "|repeat(indent) }}{{ modifier }} fun toString(): String {
+{{ " "|repeat(indent) }}    return this.{{ fmt|value_method_helper }}()
+{{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
+{%- if let Some(eq) = trait_impls.equals() %}
+
+{{ " "|repeat(indent) }}// The local Rust `Eq` implementation - only `eq` is used.
+{{ " "|repeat(indent) }}{{ modifier }} fun equals(other: Any?): Boolean {
+{{ " "|repeat(indent) }}    if (other !is {{ type_name }}) return false
+{{ " "|repeat(indent) }}    return this.{{ eq|value_method_helper }}(other)
+{{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
+{%- if let Some(hash) = trait_impls.hash_code() %}
+
+{{ " "|repeat(indent) }}// The local Rust `Hash` implementation
+{{ " "|repeat(indent) }}{{ modifier }} fun hashCode(): Int {
+{{ " "|repeat(indent) }}    return this.{{ hash|value_method_helper }}().toInt()
+{{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
+{%- if let Some(cmp) = trait_impls.compare_to() %}
+
+{{ " "|repeat(indent) }}// The local Rust `Ord` implementation
+{{ " "|repeat(indent) }}{{ modifier }} fun compareTo(other: {{ type_name }}): Int {
+{{ " "|repeat(indent) }}    return this.{{ cmp|value_method_helper }}(other).toInt()
+{{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
+{%- endmacro %}
+
+{#-
+// The uniffi traits of objects: the declarations in the `expect` class, ...
+-#}
+{%- macro object_trait_impl_decls(trait_impls, impl_class_name) %}
+{%- if trait_impls.to_string().is_some() %}
+    override fun toString(): String
+{%- endif %}
+{%- if trait_impls.equals().is_some() %}
+    override fun equals(other: Any?): Boolean
+{%- endif %}
+{%- if trait_impls.hash_code().is_some() %}
+    override fun hashCode(): Int
+{%- endif %}
+{%- if trait_impls.compare_to().is_some() %}
+    override fun compareTo(other: {{ impl_class_name }}): Int
+{%- endif %}
+{%- endmacro %}
+
+{#-
+// ... the definitions, which call into Rust, ...
+//
+// Upstream uses the object name in `equals()` and `compareTo()`, which is the interface for trait
+// interfaces that Kotlin can implement. Use the class of the Rust implementation, like the
+// `Comparable` supertype.
+-#}
+{%- macro object_trait_impl_bodies(trait_impls, impl_class_name, decl_prefix) %}
+{%- if let Some(fmt) = trait_impls.to_string() %}
+
+    // The local Rust `Display`/`Debug` implementation.
+    {{ decl_prefix }}override fun toString(): String {
+        return {{ fmt.return_type().unwrap()|lift_fn }}({% call to_ffi_call(fmt, 8) %})
+    }
+{%- endif %}
+{%- if let Some(eq) = trait_impls.equals() %}
+
+    // The local Rust `Eq` implementation - only `eq` is used.
+    {{ decl_prefix }}override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is {{ impl_class_name }}) return false
+        return {{ eq.return_type().unwrap()|lift_fn }}({% call to_ffi_call(eq, 8) %})
+    }
+{%- endif %}
+{%- if let Some(hash) = trait_impls.hash_code() %}
+
+    // The local Rust `Hash` implementation
+    {{ decl_prefix }}override fun hashCode(): Int {
+        return {{ hash.return_type().unwrap()|lift_fn }}({%- call to_ffi_call(hash, 8) %}).toInt()
+    }
+{%- endif %}
+{%- if let Some(cmp) = trait_impls.compare_to() %}
+
+    // The local Rust `Ord` implementation
+    {{ decl_prefix }}override fun compareTo(other: {{ impl_class_name }}): Int {
+        return {{ cmp.return_type().unwrap()|lift_fn }}({%- call to_ffi_call(cmp, 8) %}).toInt()
+    }
+{%- endif %}
+{%- endmacro %}
+
+{#- ... and the stubs. -#}
+{%- macro object_trait_impl_stubs(trait_impls, impl_class_name) %}
+{%- if trait_impls.to_string().is_some() %}
+
+    actual override fun toString(): String {
+        TODO()
+    }
+{%- endif %}
+{%- if trait_impls.equals().is_some() %}
+
+    actual override fun equals(other: Any?): Boolean {
+        TODO()
+    }
+{%- endif %}
+{%- if trait_impls.hash_code().is_some() %}
+
+    actual override fun hashCode(): Int {
+        TODO()
+    }
+{%- endif %}
+{%- if trait_impls.compare_to().is_some() %}
+
+    actual override fun compareTo(other: {{ impl_class_name }}): Int {
+        TODO()
+    }
+{%- endif %}
 {%- endmacro %}
 
 {%- macro func_decl_with_stub(func_decl, callable, indent) %}
@@ -326,8 +462,12 @@ v{{- field_num -}}
 {{ " "|repeat(indent) }})
 {%- endmacro -%}
 
-{#- Macro for generating equals() ans hashCode() -#}
-{%- macro generate_equals_hash_code(data_class, type_name, indent) %}
+{#-
+// Macro for generating equals() and hashCode() of data classes with ByteArray fields, which
+// Kotlin compares by reference. Either can be left out when a uniffi trait implements it.
+-#}
+{%- macro generate_equals_hash_code(data_class, type_name, indent, gen_equals, gen_hash_code) %}
+{%- if gen_equals %}
 {{ " "|repeat(indent) }}override fun equals(other: Any?): Boolean {
 {{ " "|repeat(indent) }}    if (this === other) return true
 {{ " "|repeat(indent) }}    if (other == null || this::class != other::class) return false
@@ -368,6 +508,8 @@ v{{- field_num -}}
 {{ " "|repeat(indent) }}    return true
                             {%- endif %}
 {{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
+{%- if gen_hash_code %}
 {{ " "|repeat(indent) }}override fun hashCode(): Int {
                             {%- for field in data_class.fields() -%}
                             {%-     if loop.first -%}
@@ -394,6 +536,7 @@ v{{- field_num -}}
 {{ " "|repeat(indent) }}    return result
                             {%- endif %}
 {{ " "|repeat(indent) }}{{ '}' }}
+{%- endif %}
 {%- endmacro -%}
 
 {%- macro docstring_value(maybe_docstring, indent_spaces) %}

@@ -6,6 +6,7 @@
 {%- let interface_docstring = obj.docstring() %}
 {%- let is_error = ci.is_name_used_as_error(name) %}
 {%- let ffi_converter_name = obj|ffi_converter_name %}
+{%- let trait_impls = self::object_trait_impls(obj) %}
 {%- let actual -%}
 {%- if config.kotlin_multiplatform -%}
 {%-     let actual = "actual" -%}
@@ -19,16 +20,25 @@
 {%-     let actual_override = "override" -%}
 {%- endif %}
 
+{%- let actual_prefix -%}
+{%- if config.kotlin_multiplatform -%}
+{%-     let actual_prefix = "actual " -%}
+{%- else -%}
+{%-     let actual_prefix = "" -%}
+{%- endif %}
+
 {%- macro emit_actual %}{% if config.kotlin_multiplatform %}actual {% endif %}{% endmacro -%}
 
 {%- call kt::docstring(obj, 0) %}
 {% if (is_error) %}
-{{ visibility() }}{% call emit_actual %}open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }} {
+{{ visibility() }}{% call emit_actual %}open class {{ impl_class_name }} : kotlin.Exception, Disposable, {{ interface_name }}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {% else -%}
 {{ visibility() }}{% call emit_actual %}open class {{ impl_class_name }}: Disposable, {{ interface_name }}
 {%- for t in obj.trait_impls() -%}
 , {{ self::trait_interface_name(ci, t.trait_ty)? }}
-{%- endfor %} {
+{%- endfor %}
+{%- if trait_impls.compare_to().is_some() %}, Comparable<{{ impl_class_name }}>{% endif %} {
 {%- endif %}
 
     /**
@@ -157,26 +167,7 @@
     {%- call kt::func_decl_with_body(actual_override, meth, 4) -%}
     {% endfor %}
 
-    {%- for tm in obj.uniffi_traits() %}
-    {%-     match tm %}
-    {%         when UniffiTrait::Display { fmt } %}
-    {% call emit_actual %}override fun toString(): String {
-        return {{ fmt.return_type().unwrap()|lift_fn }}({% call kt::to_ffi_call(fmt, 8) %})
-    }
-    {%         when UniffiTrait::Eq { eq, ne } %}
-    {# only equals used #}
-    {% call emit_actual %}override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is {{ impl_class_name}}) return false
-        return {{ eq.return_type().unwrap()|lift_fn }}({% call kt::to_ffi_call(eq, 8) %})
-    }
-    {%         when UniffiTrait::Hash { hash } %}
-    {% call emit_actual %}override fun hashCode(): Int {
-        return {{ hash.return_type().unwrap()|lift_fn }}({%- call kt::to_ffi_call(hash, 8) %}).toInt()
-    }
-    {%-         else %}
-    {%-     endmatch %}
-    {%- endfor %}
+    {%- call kt::object_trait_impl_bodies(trait_impls, impl_class_name, actual_prefix) %}
 
     {# XXX - "companion object" confusion? How to have alternate constructors *and* be an error? #}
     {% if !obj.alternate_constructors().is_empty() -%}

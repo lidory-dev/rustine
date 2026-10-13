@@ -2,6 +2,7 @@
 {%- let type_name = type_|type_name(ci) %}
 {%- let ffi_converter_name = type_|ffi_converter_name %}
 {%- let canonical_type_name = type_|canonical_name %}
+{%- let trait_impls = self::enum_trait_impls(ci, e) %}
 
 {{ visibility() }}object {{ type_name }}ErrorHandler : UniffiRustCallStatusErrorHandler<{{ type_name }}> {
     override fun lift(errorBuf: RustBufferByValue): {{ type_name }} = {{ ffi_converter_name }}.lift(errorBuf)
@@ -62,4 +63,4 @@
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
-{%- call kt::value_method_helper_actuals(e.methods(), type_name) %}
+{%- call kt::value_method_helper_actuals(e.methods(), trait_impls, type_name) %}

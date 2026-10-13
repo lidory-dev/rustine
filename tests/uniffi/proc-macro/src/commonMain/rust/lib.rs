@@ -153,7 +153,8 @@ impl Trait for StructWithTrait {
     }
 }
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Object, Eq, PartialEq)]
+#[uniffi::export(Eq)]
 pub struct Object;
 
 #[cfg_attr(feature = "myfeature", uniffi::export)]

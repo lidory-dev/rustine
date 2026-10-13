@@ -24,11 +24,13 @@
 
 {%- when Type::Record { name, module_path } %}
 {%- let rec = ci.get_record_definition(name).unwrap() %}
-{%- call kt::value_method_helper_stubs(rec.methods(), type_name) %}
+{%- let trait_impls = self::record_trait_impls(rec) %}
+{%- call kt::value_method_helper_stubs(rec.methods(), trait_impls, type_name) %}
 
 {%- when Type::Enum { name, module_path } %}
 {%- let e = ci.get_enum_definition(name).unwrap() %}
-{%- call kt::value_method_helper_stubs(e.methods(), type_name) %}
+{%- let trait_impls = self::enum_trait_impls(ci, e) %}
+{%- call kt::value_method_helper_stubs(e.methods(), trait_impls, type_name) %}
 
 {%- else %}
 {%- endmatch %}

@@ -2410,6 +2410,7 @@ name = "rustine-fixture-trait-methods"
 version = "0.1.0"
 dependencies = [
  "rustine-fixture-build-common",
+ "thiserror 1.0.58",
  "uniffi",
 ]
 

@@ -6,6 +6,8 @@
 // and `sealed class` for the general case.
 #}
 
+{%- let trait_impls = self::enum_trait_impls(ci, e) %}
+
 {%- if e.is_flat() %}
 
 {{ visibility() }}object {{ e|ffi_converter_name }}: FfiConverterRustBuffer<{{ type_name }}> {
@@ -72,4 +74,4 @@
 }
 
 {%- endif %}
-{%- call kt::value_method_helper_actuals(e.methods(), type_name) %}
+{%- call kt::value_method_helper_actuals(e.methods(), trait_impls, type_name) %}
