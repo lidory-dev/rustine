@@ -11,8 +11,8 @@ so you don't have to know all the details of the bindgen. Still, you can directl
 if you have more complicated build system.
 
 The minimum Rust version required to install `rustine-uniffi-bindgen` is `1.88`, which UniFFI 0.32
-requires. Newer Rust versions should also work fine. The source code of the bindgen for Kotlin
-Multiplatform is in [
+and its dependencies require. Newer Rust versions should also work fine. The source code of the
+bindgen for Kotlin Multiplatform is in [
 `crates/rustine-uniffi-bindgen`](https://github.com/lidory-dev/rustine/tree/main/crates/rustine-uniffi-bindgen).
 See comments in [
 `crates/rustine-uniffi-bindgen/src/main.rs`](https://github.com/lidory-dev/rustine/blob/main/crates/rustine-uniffi-bindgen/src/main.rs) or
@@ -125,7 +125,7 @@ UniFFI user guide. Like the other settings of the bindgen, `rename`, `exclude`, 
 `mutable_records` are at the top level of `uniffi.toml`, not in a `[bindings.kotlin]` table.
 
 ```toml
-# The items to leave out of the bindings.
+# The items to leave out of the bindings, with their names in Rust or UDL.
 exclude = ["function_to_exclude", "MyObject.new", "MyObject.method_to_exclude"]
 
 # The keys are the names of the items in Rust or UDL. Members are separated with dots.
@@ -159,9 +159,11 @@ Renaming the following items is not supported, and the bindings generation fails
 naming the item:
 
 - Callback interfaces and traits that Kotlin can implement.
-- The methods of records and enums, and their arguments.
-- The types used by the methods of records and enums, by the uniffi traits they export, by the
-  return values and errors of callback interface methods, and by the errors of constructors.
+- Records, enums, and errors that have methods or export uniffi traits (`Display`, `Debug`, `Eq`,
+  `Hash`, or `Ord`), and objects that export `Eq` or `Ord`.
+- The methods of records, enums, and errors, and their arguments.
+- The other types used by the methods of records, enums, and errors, by the return values and errors
+  of the methods of callback interfaces, and by the errors of constructors.
 - Enum variants used by default values.
 
 Kotlin constructors can't suspend, so the bindings generation fails for an async primary
@@ -171,14 +173,15 @@ constructor, as in UniFFI 0.32:
 Async primary constructors not supported but MyObject has one. Add "MyObject.new" to the `exclude` list in uniffi.toml.
 ```
 
-Add the constructor to `exclude`, and export an async constructor with another name, which becomes a
-`suspend` function of the companion object of the class.
+Add the constructor to `exclude`, using the names of the object and the constructor in Rust or UDL,
+and export an async constructor with another name, which becomes a `suspend` function of the
+companion object of the class.
 
 ## The generated bindings
 
 The bindings follow the Kotlin bindings of UniFFI, and have the same API in common code and on every
 platform. The following sections describe what differs from the Kotlin bindings of UniFFI, and the
-changes in Rustine 1.0.0, which moved from UniFFI 0.29.5 to UniFFI 0.32.2.
+changes in Rustine 1.0.0, which moved from UniFFI 0.29.4 to UniFFI 0.32.2.
 
 ### Objects
 
@@ -243,12 +246,13 @@ mismatch throws a `RuntimeException` like
 
 ### Limitations
 
-- In UDL mode, which `generateFromUdl {}` uses, the bindgen only knows the crate of the UDL file.
-  When a crate uses an error of another crate only as a field or an argument, without throwing it,
-  the bindgen needs the interface of the other crate to know that the type is an error
-  ([mozilla/uniffi-rs#2641](https://github.com/mozilla/uniffi-rs/pull/2641)). In UDL mode, the type
-  is named like a type that is not an error, e.g., `MyError` instead of `MyException`, which doesn't
-  match the class in the bindings of the other crate. Generate the bindings from the library instead.
+- In UDL mode, which `generateFromUdl {}` uses, the bindgen only loads the crate of the UDL file,
+  like UniFFI does. The bindings generation fails for a crate using the types of another UniFFI
+  crate, e.g., with `unresolved module path other_crate`. Generate the bindings from the library
+  instead, which loads every crate of the library: the types of other crates are renamed with the
+  `rename` tables of their crates, and the errors of other crates that a crate only uses as fields
+  or arguments are known as errors
+  ([mozilla/uniffi-rs#2641](https://github.com/mozilla/uniffi-rs/pull/2641)).
 - On `wasm32` targets, which the Cargo plugin builds for Kotlin/JS targets, the futures of async
   functions and methods must be `Send` since UniFFI 0.32, unless the crate enables the
   `wasm-unstable-single-threaded` feature of `uniffi`.
@@ -260,9 +264,9 @@ The Rustine bindgen is versioned separately from UniFFI. UniFFI follows the
 which states "Versions are considered compatible if their left-most non-zero major/minor/patch
 component is the same". A breaking change is any modification to the Kotlin Multiplatform bindings
 that demands the consumer of the bindings to make corresponding changes to their code to ensure that
-the bindings continue to function properly. `rustine-uniffi-bindgen` is young, and it's
-unclear how stable the generated bindings are going to be between versions. For this reason, major
-version is currently 0, and most changes are probably going to bump minor version.
+the bindings continue to function properly. Gobley released the bindgen with major version 0, as it
+was unclear how stable the generated bindings were going to be between versions, and most changes
+bumped the minor version. Rustine's first release is 1.0.0.
 
 To ensure consistent feature set across external binding generators, `rustine-uniffi-bindgen`
 targets a specific `uniffi-rs` version. A consumer using these bindings or any other external

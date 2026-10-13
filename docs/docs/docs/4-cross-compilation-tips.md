@@ -380,9 +380,9 @@ cargo {
 ## LLVM version compatibility on Apple Platforms
 
 If you suspect that a linker error is due to an LLVM version incompatibility, consider downgrading
-the Rust version. Note that UniFFI 0.32, which Rustine 1.0.0 uses, requires Rust 1.88 or higher, so
-you can't downgrade below Rust 1.88. To determine the LLVM version used by your current Rust
-toolchain, use `rustc --version --verbose`. For example,
+the Rust version. Note that UniFFI 0.32, which Rustine 1.0.0 uses, and its dependencies require
+Rust 1.88 or higher, so you can't downgrade below Rust 1.88. To determine the LLVM version used by
+your current Rust toolchain, use `rustc --version --verbose`. For example,
 
 ```
 > rustc --version --verbose

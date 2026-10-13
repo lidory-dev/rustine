@@ -127,7 +127,9 @@ are added to the `rename` table of `uniffi.toml`, whose entries take precedence.
 is renamed, pass its new name to `customType()`.
 
 For details about each bindgen setting properties,
-see [Bindgen configuration](../3-bindgen.md#bindgen-configuration).
+see [Bindgen configuration](../3-bindgen.md#bindgen-configuration). See
+[Renaming and excluding items](../3-bindgen.md#renaming-and-excluding-items) for the items that
+can't be renamed.
 
 ## JNA ProGuard rules for Android
 

@@ -38,7 +38,7 @@ To build this project locally, you'll need:
   watchOS examples on macOS also need a nightly toolchain recent enough for Rust 1.88 with the
   `rust-src` component (see
   [`.github/workflows/pr-build-test/dependencies.ps1`](.github/workflows/pr-build-test/dependencies.ps1)).
-- Zig 0.13 (for Linux cross-compilation)
+- Zig 0.15.1 (for Linux cross-compilation)
 - MinGW (GCC 13)
 - OpenJDK 17 or higher (Gradle is provided by the Gradle wrapper, which uses Gradle 9.3.1)
 - Android SDK Platform 35 and Android SDK Build-Tools 36.0.0

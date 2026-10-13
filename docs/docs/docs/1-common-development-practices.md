@@ -68,7 +68,7 @@ using the `rust-version` field in the `[package]` section. For example:
 rust-version = "1.90"
 ```
 
-UniFFI 0.32, which Rustine 1.0.0 uses, requires Rust 1.88 or higher.
+UniFFI 0.32, which Rustine 1.0.0 uses, and its dependencies require Rust 1.88 or higher.
 
 With `resolver = "3"`, which is the default in the 2024 edition, Cargo picks dependency versions
 that support the `rust-version` of your package, or the version of your Rust toolchain when it is
