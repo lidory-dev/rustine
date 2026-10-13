@@ -223,7 +223,7 @@ dependencies = [
  "memchr",
  "serde",
  "serde_derive",
- "winnow 0.7.15",
+ "winnow 0.7.11",
 ]
 
 [[package]]
@@ -1104,7 +1104,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "slab",
  "tokio",
  "tokio-util",
@@ -1127,12 +1127,6 @@ dependencies = [
  "allocator-api2",
  "serde",
 ]
-
-[[package]]
-name = "hashbrown"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
 name = "heck"
@@ -1379,14 +1373,13 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.14.2"
+version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
+checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
- "hashbrown 0.17.1",
+ "hashbrown 0.14.5",
  "serde",
- "serde_core",
 ]
 
 [[package]]
@@ -2440,7 +2433,7 @@ dependencies = [
  "heck 0.5.0",
  "serde",
  "textwrap",
- "toml 1.1.8+spec-1.1.0",
+ "toml 0.9.0",
  "uniffi_bindgen",
  "uniffi_meta",
  "uniffi_udl",
@@ -2845,7 +2838,7 @@ dependencies = [
  "bytes-str",
  "dashmap",
  "globset",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "once_cell",
  "regex",
  "rustc-hash",
@@ -2957,7 +2950,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90d26800e88866ba9abf15cf92b6c76b6222890c81d43e5e7e5ebad8d875db3b"
 dependencies = [
  "arrayvec",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "is-macro",
  "rustc-hash",
  "serde",
@@ -3186,7 +3179,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c6f1b8f4232e7a7f614ff7c0f6ccb89c2d028cdf7629f79ad710cff5b28b62c"
 dependencies = [
  "better_scoped_tls",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "once_cell",
  "par-core",
  "phf",
@@ -3220,7 +3213,7 @@ version = "31.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00c5447bc83ba1f71f2836c1ae8b23b876318e93c7b9770d82e38b43e41446ef"
 dependencies = [
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "par-core",
  "serde",
  "swc_atoms",
@@ -3264,7 +3257,7 @@ dependencies = [
  "Inflector",
  "anyhow",
  "bitflags 2.5.0",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "is-macro",
  "path-clean",
  "pathdiff",
@@ -3289,7 +3282,7 @@ version = "21.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83259addd99ed4022aa9fc4d39428c008d3d42533769e1a005529da18cde4568"
 dependencies = [
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "num_cpus",
  "once_cell",
  "par-core",
@@ -3622,24 +3615,24 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "1.1.8+spec-1.1.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20489e00e4d8741d6be680764cc12e270655e375a20d1011e844a9c3379e678d"
+checksum = "f271e09bde39ab52250160a67e88577e0559ad77e9085de6e9051a2c4353f8f8"
 dependencies = [
- "indexmap 2.14.2",
- "serde_core",
+ "indexmap 2.2.6",
+ "serde",
  "serde_spanned",
  "toml_datetime",
  "toml_parser",
  "toml_writer",
- "winnow 1.0.4",
+ "winnow 0.7.11",
 ]
 
 [[package]]
 name = "toml_datetime"
-version = "1.1.2+spec-1.1.0"
+version = "0.7.5+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b86d767906c6c42421dcba507eb9d203e779497710a47782a224bb871653053"
+checksum = "92e1cfed4a3038bc5a127e35a2d360f145e1f4b971b551a2ba5fd7aedf7e1347"
 dependencies = [
  "serde_core",
 ]
@@ -3765,12 +3758,12 @@ dependencies = [
  "glob",
  "goblin",
  "heck 0.5.0",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "once_cell",
  "serde",
  "tempfile",
  "textwrap",
- "toml 1.1.8+spec-1.1.0",
+ "toml 0.9.0",
  "uniffi_internal_macros",
  "uniffi_meta",
  "uniffi_pipeline",
@@ -3808,7 +3801,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f4bad017164375d99450d70495014810d15a84ba9da6ed14b9628b1424223ba"
 dependencies = [
  "anyhow",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "proc-macro2",
  "quote",
  "syn 2.0.104",
@@ -3827,7 +3820,7 @@ dependencies = [
  "quote",
  "serde",
  "syn 2.0.104",
- "toml 1.1.8+spec-1.1.0",
+ "toml 0.9.0",
  "uniffi_meta",
 ]
 
@@ -3851,7 +3844,7 @@ checksum = "d00f5c044b4a3dca0b1226c92ddaeea626f337470e22180dd182160c87a06b0b"
 dependencies = [
  "anyhow",
  "heck 0.5.0",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "tempfile",
  "uniffi_internal_macros",
 ]
@@ -4081,7 +4074,7 @@ dependencies = [
  "ahash",
  "bitflags 2.5.0",
  "hashbrown 0.14.5",
- "indexmap 2.14.2",
+ "indexmap 2.2.6",
  "semver",
  "serde",
 ]
@@ -4463,9 +4456,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winnow"
-version = "0.7.15"
+version = "0.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+checksum = "74c7b26e3480b707944fc872477815d29a8e429d2f93a1ce000f5fa84a15cbcd"
 dependencies = [
  "memchr",
 ]
