@@ -7,6 +7,7 @@
 import io.kotest.assertions.throwables.*
 import io.kotest.matchers.*
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.coroutines.test.runTest
 import proc_macro.*
@@ -232,6 +233,21 @@ class ProcMacroTest {
         val traitImpl2 = obj.getTraitWithForeign(null)
         traitImpl2.name() shouldBe "RustTraitImpl"
         obj.getTraitWithForeign(traitImpl2).name() shouldBe "RustTraitImpl"
+    }
+
+    class KtForeignOnlyTrait : ForeignOnlyTrait {
+        override fun concatStrings(a: String, b: String) = "$a$b"
+    }
+
+    @Test
+    fun testTraitKinds() {
+        val foreignOnlyTrait = KtForeignOnlyTrait()
+        concatStringsWithForeignOnlyTrait(foreignOnlyTrait, "foo", "bar") shouldBe "foobar"
+        roundtripForeignOnlyTrait(foreignOnlyTrait) shouldBeSameInstanceAs foreignOnlyTrait
+
+        val rustOnlyTrait = getRustOnlyTrait()
+        rustOnlyTrait.concatStrings("foo", "bar") shouldBe "foobar"
+        roundtripRustOnlyTrait(rustOnlyTrait).concatStrings("foo", "bar") shouldBe "foobar"
     }
 
     class KtTestCallbackInterface : TestCallbackInterface {

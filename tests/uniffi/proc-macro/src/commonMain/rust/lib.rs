@@ -135,6 +135,48 @@ impl TraitWithForeign for RustTraitImpl {
     }
 }
 
+// Rustine: the trait kinds that UniFFI 0.32 adds, for traits that only foreign code implements, and
+// for traits that only Rust implements, like `Trait`.
+#[uniffi::export(foreign)]
+pub trait ForeignOnlyTrait: Send + Sync {
+    fn concat_strings(&self, a: String, b: String) -> String;
+}
+
+#[uniffi::export]
+fn concat_strings_with_foreign_only_trait(
+    t: Arc<dyn ForeignOnlyTrait>,
+    a: String,
+    b: String,
+) -> String {
+    t.concat_strings(a, b)
+}
+
+#[uniffi::export]
+fn roundtrip_foreign_only_trait(t: Arc<dyn ForeignOnlyTrait>) -> Arc<dyn ForeignOnlyTrait> {
+    t
+}
+
+#[uniffi::export(rust)]
+pub trait RustOnlyTrait: Send + Sync {
+    fn concat_strings(&self, a: &str, b: &str) -> String;
+}
+
+impl RustOnlyTrait for TraitImpl {
+    fn concat_strings(&self, a: &str, b: &str) -> String {
+        format!("{a}{b}")
+    }
+}
+
+#[uniffi::export]
+fn get_rust_only_trait() -> Arc<dyn RustOnlyTrait> {
+    Arc::new(TraitImpl {})
+}
+
+#[uniffi::export]
+fn roundtrip_rust_only_trait(t: Arc<dyn RustOnlyTrait>) -> Arc<dyn RustOnlyTrait> {
+    t
+}
+
 // A public struct implementing a public trait.
 #[derive(uniffi::Object)]
 pub struct StructWithTrait {
