@@ -20,8 +20,9 @@ if ($IsWindows) {
     # Manually install nightly Rust for watchOS and tvOS.
     # To fix the nightly toolchain to a specific version, remove the pre-installed one.
     rustup uninstall nightly;
-    # Install 1.84.0-nightly (798fb83f7 2024-10-16).
-    $version = "nightly-2024-10-17";
+    # Install 1.90.0-nightly (a00149764 2025-07-14), a nightly of the Rust version in
+    # rust-toolchain.toml. UniFFI 0.32 and its dependencies require Rust 1.88 or higher.
+    $version = "nightly-2025-07-15";
     $osArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture;
     $rustTriplet = switch ($osArch) {
         "X64" { "x86_64-apple-darwin" }

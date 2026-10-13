@@ -1,4 +1,6 @@
-FROM rust:1.82.0-slim
+# Use the Rust version of rust-toolchain.toml, so the tests don't download another toolchain.
+# Stay on Debian bookworm, as trixie has no openjdk-17-jdk-headless package.
+FROM rust:1.90.0-slim-bookworm
 
 # Use Clippy to detect more warnings
 RUN rustup component add clippy
