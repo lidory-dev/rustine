@@ -47,10 +47,7 @@ internal fun RustBufferByValue.asByteBuffer(): ByteBuffer? {
 }
 
 // This is a helper for safely passing byte references into the rust code.
-// It's not actually used at the moment, because there aren't many things that you
-// can take a direct pointer to in the JVM, and if we're going to copy something
-// then we might as well copy it into a `RustBuffer`. But it's here for API
-// completeness.
+// `&[u8]` and `[ByRef] bytes` arguments are passed as `ForeignBytes`, see `uniffiWithForeignBytes`.
 
 @Structure.FieldOrder("len", "data")
 internal open class ForeignBytesStruct : Structure() {
@@ -61,3 +58,27 @@ internal open class ForeignBytesStruct : Structure() {
 }
 internal typealias ForeignBytes = ForeignBytesStruct
 internal typealias ForeignBytesByValue = ForeignBytesStruct.ByValue
+
+// Lower a `ByteArray` passed to a `&[u8]` or `[ByRef] bytes` argument, and make the call in
+// `block`. The `ForeignBytes` value borrows memory that is only valid while `block` runs.
+//
+// Upstream takes a direct `java.nio.ByteBuffer` and passes a pointer to its memory without
+// copying. The Kotlin Multiplatform API takes a `ByteArray` on every platform instead. JNA can't
+// pass a pointer to a JVM array inside a struct passed by value, so the bytes are copied to native
+// memory, which is freed when `block` returns.
+internal inline fun <R> ByteArray.uniffiWithForeignBytes(block: (ForeignBytesByValue) -> R): R {
+    val foreignBytes = ForeignBytesByValue()
+    if (isEmpty()) {
+        // Rust treats a null pointer with a length of 0 as an empty slice.
+        return block(foreignBytes)
+    }
+    val memory = com.sun.jna.Memory(size.toLong())
+    try {
+        memory.write(0, this, 0, size)
+        foreignBytes.len = size
+        foreignBytes.data = memory
+        return block(foreignBytes)
+    } finally {
+        memory.close()
+    }
+}

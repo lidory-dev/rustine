@@ -285,6 +285,8 @@ pub fn generate_bindings(
     config: &Config,
     ci: &ComponentInterface,
 ) -> Result<MultiplatformBindings> {
+    check_borrowed_bytes_arguments(ci)?;
+
     let common = CommonKotlinWrapper::new("common", Some(Visibility::Public), config.clone(), ci)
         .context("failed to create a common binding generator")?
         .render()
@@ -345,6 +347,58 @@ pub fn generate_bindings(
         stub,
         header,
     })
+}
+
+/// Fail for borrowed byte slices (`&[u8]` or `[ByRef] bytes`) that the bindings can't pass.
+///
+/// Such arguments cross the FFI as `ForeignBytes`, which borrows foreign memory for the duration
+/// of a call. Kotlin can pass them to synchronous calls into Rust only: a Rust future would
+/// outlive the borrow, and Kotlin implementations of callback interfaces and traits would have to
+/// receive them, which neither Kotlin nor the Rust scaffolding supports.
+fn check_borrowed_bytes_arguments(ci: &ComponentInterface) -> Result<()> {
+    fn borrowed_bytes_argument(callable: &impl Callable) -> Option<&Argument> {
+        callable
+            .arguments()
+            .into_iter()
+            .find(|arg| arg.is_borrowed_bytes())
+    }
+
+    fn check(callable: &impl Callable, name: &str, implemented_in_kotlin: bool) -> Result<()> {
+        let Some(arg) = borrowed_bytes_argument(callable) else {
+            return Ok(());
+        };
+        let reason = if callable.is_async() {
+            "async functions, methods and constructors"
+        } else if implemented_in_kotlin {
+            "methods of callback interfaces or traits that Kotlin can implement"
+        } else {
+            return Ok(());
+        };
+        bail!(
+            "`{name}` takes the borrowed byte slice `{}` (`&[u8]` or `[ByRef] bytes`), which is not \
+             supported in {reason}. Take a `Vec<u8>` (`bytes`) instead.",
+            arg.name(),
+        )
+    }
+
+    for func in ci.function_definitions() {
+        check(func, func.name(), false)?;
+    }
+    for obj in ci.object_definitions() {
+        for cons in obj.constructors() {
+            check(cons, &format!("{}::{}", obj.name(), cons.name()), false)?;
+        }
+        for meth in obj.methods() {
+            let name = format!("{}::{}", obj.name(), meth.name());
+            check(meth, &name, obj.has_callback_interface())?;
+        }
+    }
+    for cbi in ci.callback_interface_definitions() {
+        for meth in cbi.methods() {
+            check(meth, &format!("{}::{}", cbi.name(), meth.name()), true)?;
+        }
+    }
+    Ok(())
 }
 
 /// A struct to record a Kotlin import statement.
@@ -1040,6 +1094,44 @@ mod filters {
                 as_ct.as_codetype().ffi_converter_name()
             ))
         }
+    }
+
+    /// The name of the `ForeignBytes` value that `borrowed_bytes_scope_begin` creates for a
+    /// borrowed byte slice argument.
+    pub(super) fn borrowed_bytes_var_name(arg: &Argument) -> Result<String, askama::Error> {
+        Ok(format!(
+            "uniffiForeignBytes{}",
+            arg.name().to_upper_camel_case()
+        ))
+    }
+
+    /// Open a `uniffiWithForeignBytes` scope for each borrowed byte slice argument of a call.
+    pub(super) fn borrowed_bytes_scope_begin(
+        callable: impl Callable,
+    ) -> Result<String, askama::Error> {
+        let mut scopes = String::new();
+        for arg in callable.arguments() {
+            if arg.is_borrowed_bytes() {
+                scopes += &format!(
+                    "{}.uniffiWithForeignBytes {{ {} -> ",
+                    KotlinCodeOracle.var_name(arg.name()),
+                    borrowed_bytes_var_name(arg)?,
+                );
+            }
+        }
+        Ok(scopes)
+    }
+
+    /// Close the scopes opened by `borrowed_bytes_scope_begin`.
+    pub(super) fn borrowed_bytes_scope_end(
+        callable: impl Callable,
+    ) -> Result<String, askama::Error> {
+        let count = callable
+            .arguments()
+            .iter()
+            .filter(|arg| arg.is_borrowed_bytes())
+            .count();
+        Ok(" }".repeat(count))
     }
 
     pub(super) fn lift_fn(as_ct: &impl AsCodeType) -> Result<String, askama::Error> {

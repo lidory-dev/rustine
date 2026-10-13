@@ -58,3 +58,23 @@ internal val ForeignBytesByValue.len: Int
     get() = useContents { len }
 internal val ForeignBytesByValue.data: Pointer?
     get() = useContents { data }
+
+// Lower a `ByteArray` passed to a `&[u8]` or `[ByRef] bytes` argument, and make the call in
+// `block`. The `ForeignBytes` value points to the pinned array without copying, and is only valid
+// while `block` runs.
+internal inline fun <R> ByteArray.uniffiWithForeignBytes(block: (ForeignBytesByValue) -> R): R {
+    val length = size
+    if (length == 0) {
+        // Rust treats a null pointer with a length of 0 as an empty slice.
+        return block(cValue<{{ ci.namespace() }}.cinterop.ForeignBytes> {
+            this.len = 0
+            this.data = null
+        })
+    }
+    return usePinned { pinned ->
+        block(cValue<{{ ci.namespace() }}.cinterop.ForeignBytes> {
+            this.len = length
+            this.data = pinned.addressOf(0).reinterpret()
+        })
+    }
+}

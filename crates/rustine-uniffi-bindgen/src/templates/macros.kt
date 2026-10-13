@@ -23,7 +23,12 @@
                         {%- endmatch -%}
 {%- endmacro %}
 
+{#-
+// `&[u8]` and `[ByRef] bytes` arguments are lowered to a `ForeignBytes` value that is only valid
+// while `uniffiWithForeignBytes` runs, so the whole call happens inside it.
+-#}
 {%- macro to_raw_ffi_call(func, indent) -%}
+                        {{ func|borrowed_bytes_scope_begin }}
                         {%- match func.throws_type() -%}
                         {%- when Some(e) -%}
                         uniffiRustCallWithError({{ e|type_name(ci) }}ErrorHandler)
@@ -41,7 +46,7 @@
                                 {%- call arg_list_lowered(func, indent + 8) %}
 {{ " "|repeat(indent) }}        uniffiRustCallStatus,
 {{ " "|repeat(indent) }}    )
-{{ " "|repeat(indent) }}{{ '}' }}
+{{ " "|repeat(indent) }}{{ '}' }}{{ func|borrowed_bytes_scope_end }}
 {%- endmacro -%}
 
 {%- macro func_decl(func_decl, callable, indent, is_decl_override) %}
@@ -149,7 +154,11 @@
 
 {%- macro arg_list_lowered(func, indent) -%}
                         {%- for arg in func.arguments() %}
+                        {%- if arg.is_borrowed_bytes() %}
+{{ " "|repeat(indent) }}{{ arg|borrowed_bytes_var_name }},
+                        {%- else %}
 {{ " "|repeat(indent) }}{{ arg|lower_fn }}({{ arg.name()|var_name }}),
+                        {%- endif %}
                         {%- endfor -%}
 {%- endmacro -%}
 
