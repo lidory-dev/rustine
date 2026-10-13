@@ -35,18 +35,41 @@
                         {%- else -%}
                         uniffiRustCall
                         {%- endmatch %} { uniffiRustCallStatus ->
+                                {%- call lowered_arg_vals(func, indent + 4) %}
 {{ " "|repeat(indent) }}    UniffiLib.{{ func.ffi_func().name() }}(
-                                {%- match func.self_type() %}
-                                {%- when Some(Type::Object { .. }) %}
-{{ " "|repeat(indent) }}        it,
-                                {%- when Some(t) %}
-{{ " "|repeat(indent) }}        {{ t|lower_fn }}(this),
-                                {%- when None %}
-                                {%- endmatch -%}
+                                {%- call receiver_lowered(func, indent + 8) -%}
                                 {%- call arg_list_lowered(func, indent + 8) %}
 {{ " "|repeat(indent) }}        uniffiRustCallStatus,
 {{ " "|repeat(indent) }}    ){{ func.ffi_func()|ffi_direct_return_narrowing(module_name) }}
 {{ " "|repeat(indent) }}{{ '}' }}{{ func|borrowed_bytes_scope_end }}
+{%- endmacro -%}
+
+{#-
+// Upstream lowers the receiver of a method before its arguments, so the receiver leaked when
+// lowering an argument threw, e.g., for a destroyed object: the cloned handle of an object, or
+// the `RustBuffer` of a record, an enum, or an error. Methods lower their arguments into local
+// values with this macro first, and their receiver with `receiver_lowered` in the call. The
+// arguments lowered before the one that throws still leak, like in upstream.
+-#}
+{%- macro lowered_arg_vals(func, indent) -%}
+                        {%- if func.self_type().is_some() -%}
+                        {%- for arg in func.arguments() -%}
+                        {%- if !arg.is_borrowed_bytes() %}
+{{ " "|repeat(indent) }}val {{ arg|lowered_arg_var_name }} = {{ arg|lower_fn }}({{ arg.name()|var_name }})
+                        {%- endif -%}
+                        {%- endfor -%}
+                        {%- endif -%}
+{%- endmacro -%}
+
+{#- The receiver of a method. Objects clone their handle inside `callWithHandle()`. -#}
+{%- macro receiver_lowered(func, indent) -%}
+                        {%- match func.self_type() %}
+                        {%- when Some(Type::Object { .. }) %}
+{{ " "|repeat(indent) }}uniffiCloneHandleUnchecked(),
+                        {%- when Some(t) %}
+{{ " "|repeat(indent) }}{{ t|lower_fn }}(this),
+                        {%- when None %}
+                        {%- endmatch -%}
 {%- endmacro -%}
 
 {%- macro func_decl(func_decl, callable, indent, is_decl_override) %}
@@ -338,17 +361,13 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
                         uniffiRustCallAsync(
                             {%- match callable.self_type() %}
                             {%- when Some(Type::Object { .. }) %}
-{{ " "|repeat(indent) }}    callWithHandle { uniffiHandle ->
-{{ " "|repeat(indent) }}        UniffiLib.{{ callable.ffi_func().name() }}(
-{{ " "|repeat(indent) }}            uniffiHandle,
-                                    {%- call arg_list_lowered(callable, indent + 12) %}
-{{ " "|repeat(indent) }}        )
+{{ " "|repeat(indent) }}    callWithHandle {
+                                {%- call async_method_call(callable, indent + 8) %}
 {{ " "|repeat(indent) }}    },
-                            {%- when Some(t) %}
-{{ " "|repeat(indent) }}    UniffiLib.{{ callable.ffi_func().name() }}(
-{{ " "|repeat(indent) }}        {{ t|lower_fn }}(this),
-                                {%- call arg_list_lowered(callable, indent + 8) %}
-{{ " "|repeat(indent) }}    ),
+                            {%- when Some(_) %}
+{{ " "|repeat(indent) }}    run {
+                                {%- call async_method_call(callable, indent + 8) %}
+{{ " "|repeat(indent) }}    },
                             {%- when None %}
 {{ " "|repeat(indent) }}    UniffiLib.{{ callable.ffi_func().name() }}(
                                 {%- call arg_list_lowered(callable, indent + 8) %}
@@ -375,10 +394,24 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {{ " "|repeat(indent) }})
 {%- endmacro %}
 
+{#-
+// The call that creates the Rust future of an async method, in a block that holds the lowered
+// arguments, see `lowered_arg_vals`.
+-#}
+{%- macro async_method_call(callable, indent) -%}
+                        {%- call lowered_arg_vals(callable, indent) %}
+{{ " "|repeat(indent) }}UniffiLib.{{ callable.ffi_func().name() }}(
+                        {%- call receiver_lowered(callable, indent + 4) -%}
+                        {%- call arg_list_lowered(callable, indent + 4) %}
+{{ " "|repeat(indent) }})
+{%- endmacro -%}
+
 {%- macro arg_list_lowered(func, indent) -%}
                         {%- for arg in func.arguments() %}
                         {%- if arg.is_borrowed_bytes() %}
 {{ " "|repeat(indent) }}{{ arg|borrowed_bytes_var_name }},
+                        {%- elif func.self_type().is_some() %}
+{{ " "|repeat(indent) }}{{ arg|lowered_arg_var_name }},
                         {%- else %}
 {{ " "|repeat(indent) }}{{ arg|lower_fn }}({{ arg.name()|var_name }}),
                         {%- endif %}

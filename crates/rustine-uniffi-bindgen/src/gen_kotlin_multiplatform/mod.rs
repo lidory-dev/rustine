@@ -1475,6 +1475,12 @@ mod filters {
         ))
     }
 
+    /// The name of the local value that holds the lowered value of an argument of a method, see
+    /// `lowered_arg_vals` in `macros.kt`.
+    pub(super) fn lowered_arg_var_name(arg: &Argument) -> Result<String, askama::Error> {
+        Ok(format!("uniffiLowered{}", arg.name().to_upper_camel_case()))
+    }
+
     /// Open a `uniffiWithForeignBytes` scope for each borrowed byte slice argument of a call.
     pub(super) fn borrowed_bytes_scope_begin(
         callable: impl Callable,
@@ -2633,6 +2639,39 @@ mod tests {
         ] {
             // The field of the variant and the argument of the method.
             assert_eq!(common.matches(expected).count(), 2, "{expected}\n{common}");
+        }
+    }
+
+    /// Methods lower their receiver after their arguments, so that it doesn't leak when lowering
+    /// an argument throws, e.g., for a destroyed object.
+    #[test]
+    fn lowers_receivers_after_arguments() {
+        let bindings = generate_from_udl(
+            r#"
+            namespace rustine_test {};
+            interface Thing {
+                constructor();
+                void take(Thing other);
+                [Async] void take_async(Thing other);
+            };
+            "#,
+            &[],
+        )
+        .unwrap();
+        for platform in [bindings.jvm.unwrap(), bindings.native.unwrap()] {
+            let code = platform.split_whitespace().collect::<Vec<_>>().join(" ");
+            for expected in [
+                "callWithHandle { uniffiRustCall { uniffiRustCallStatus -> \
+                 val uniffiLoweredOther = FfiConverterTypeThing.lower(`other`) \
+                 UniffiLib.uniffi_rustine_test_fn_method_thing_take( \
+                 uniffiCloneHandleUnchecked(), uniffiLoweredOther, uniffiRustCallStatus, ) } }",
+                "uniffiRustCallAsync( callWithHandle { \
+                 val uniffiLoweredOther = FfiConverterTypeThing.lower(`other`) \
+                 UniffiLib.uniffi_rustine_test_fn_method_thing_take_async( \
+                 uniffiCloneHandleUnchecked(), uniffiLoweredOther, ) },",
+            ] {
+                assert!(code.contains(expected), "{expected}\n{platform}");
+            }
         }
     }
 

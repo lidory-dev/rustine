@@ -338,6 +338,34 @@ class CoverallTest {
         runGCWithDelay()
     }
 
+    // Rustine: a call that throws because an object can't be lowered leaves no references behind.
+    @Test
+    fun objectsThatCantBeLowered() {
+        if (!uniffiSupported) return
+
+        withCoverallLock {
+            val destroyed = Coveralls("test_destroyed")
+            destroyed.destroy()
+            Coveralls("test_objects_that_cant_be_lowered").use { coveralls ->
+                // The argument is lowered before the handle of `coveralls` is cloned for the call.
+                shouldThrow<IllegalStateException> {
+                    coveralls.takeOther(destroyed)
+                }.message shouldBe "Coveralls object has already been destroyed"
+                // The receiver is checked before the arguments are lowered.
+                shouldThrow<IllegalStateException> {
+                    destroyed.takeOther(coveralls)
+                }
+                shouldThrow<InternalException> {
+                    Coveralls(NoHandle).takeOther(coveralls)
+                }
+                // One ref held by the foreign-language code, one created for this method call.
+                coveralls.strongCount() shouldBe 2UL
+            }
+
+            getNumAlive() shouldBe 0UL
+        }
+    }
+
     @Test
     fun gc() = withCoverallLock {
         if (!uniffiSupported || !gcSupported) return

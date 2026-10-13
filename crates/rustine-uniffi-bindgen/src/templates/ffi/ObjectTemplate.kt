@@ -109,7 +109,10 @@
         synchronized { this.destroy() }
     }
 
-    internal inline fun <R> callWithHandle(block: (handle: Long) -> R): R {
+    // Upstream clones the handle and passes it to `block`, which then lowers the arguments of the
+    // call, so the clone leaked when lowering an argument threw, e.g., for a destroyed object.
+    // `block` clones it with `uniffiCloneHandleUnchecked()` after lowering them instead.
+    internal inline fun <R> callWithHandle(block: () -> R): R {
         // Check and increment the call counter, to keep the object alive.
         // This needs a compare-and-set retry loop in case of concurrent updates.
         do {
@@ -123,7 +126,11 @@
         } while (! this.callCounter.compareAndSet(c, c + 1L))
         // Now we can safely do the method call without the handle being freed concurrently.
         try {
-            return block(this.uniffiCloneHandleUnchecked())
+            // Check before `block` lowers the arguments, which would leak when cloning throws.
+            if (handle == 0L) {
+                throw InternalException("uniffiCloneHandle() called on NoHandle object")
+            }
+            return block()
         } finally {
             // This decrement always matches the increment we performed above.
             if (this.callCounter.decrementAndGet() == 0L) {
@@ -151,13 +158,11 @@
     /**
      * @suppress
      */
-    {{ visibility() }}fun uniffiCloneHandle(): Long = callWithHandle { it }
+    {{ visibility() }}fun uniffiCloneHandle(): Long = callWithHandle { uniffiCloneHandleUnchecked() }
 
-    // Only call this while the call counter keeps the Rust object alive.
+    // Only call this inside `callWithHandle()`, which keeps the Rust object alive and rejects
+    // `NoHandle` objects.
     private fun uniffiCloneHandleUnchecked(): Long {
-        if (handle == 0L) {
-            throw InternalException("uniffiCloneHandle() called on NoHandle object")
-        }
         return uniffiRustCall { status ->
             UniffiLib.{{ obj.ffi_object_clone().name() }}(handle, status)
         }
