@@ -746,6 +746,33 @@ impl KotlinCodeOracle {
         }
     }
 
+    /// FFI type name for the return type of a JNA function declaration.
+    ///
+    /// JNA direct mapping returns `u8` and `u16` values with the wrong signedness on some
+    /// platforms, such as Android ARM32 (mozilla/uniffi-rs#2897), so they are returned as `Int`
+    /// and narrowed at the call site. The upper bits of the `Int` are undefined on some ABIs, such
+    /// as aarch64 (mozilla/uniffi-rs#2935).
+    fn ffi_type_label_for_direct_return(
+        &self,
+        ffi_type: &FfiType,
+        ci: &ComponentInterface,
+    ) -> String {
+        match ffi_type {
+            FfiType::UInt8 | FfiType::UInt16 => "Int".to_string(),
+            _ => self.ffi_type_label_by_value(ffi_type, ci),
+        }
+    }
+
+    /// The conversion that narrows a value returned by a JNA function declared with
+    /// [`Self::ffi_type_label_for_direct_return`] back to its FFI type.
+    fn ffi_direct_return_narrowing(&self, ffi_type: Option<&FfiType>) -> &'static str {
+        match ffi_type {
+            Some(FfiType::UInt8) => ".toByte()",
+            Some(FfiType::UInt16) => ".toShort()",
+            _ => "",
+        }
+    }
+
     /// FFI type name to use inside structs
     ///
     /// The main requirement here is that all types must have default values or else the struct
@@ -1370,6 +1397,29 @@ mod filters {
         Ok(KotlinCodeOracle.ffi_type_label(type_, ci))
     }
 
+    pub fn ffi_type_name_for_direct_return(
+        type_: &FfiType,
+        ci: &ComponentInterface,
+    ) -> Result<String, askama::Error> {
+        Ok(KotlinCodeOracle.ffi_type_label_for_direct_return(type_, ci))
+    }
+
+    /// Narrow the result of a call to `func` on JVM and Android, where `UniffiLib` declares the
+    /// return type with `ffi_type_name_for_direct_return`.
+    pub fn ffi_direct_return_narrowing(
+        func: &FfiFunction,
+        module_name: &str,
+    ) -> Result<String, askama::Error> {
+        Ok(direct_return_narrowing(func.return_type(), module_name).to_string())
+    }
+
+    fn direct_return_narrowing(ffi_type: Option<&FfiType>, module_name: &str) -> &'static str {
+        match module_name {
+            "jvm" | "android" => KotlinCodeOracle.ffi_direct_return_narrowing(ffi_type),
+            _ => "",
+        }
+    }
+
     pub fn ffi_as_callback(
         type_: &FfiType,
         ci: &ComponentInterface,
@@ -1522,9 +1572,14 @@ mod filters {
     pub fn async_complete(
         callable: impl Callable,
         ci: &ComponentInterface,
+        module_name: &str,
     ) -> Result<String, askama::Error> {
         let ffi_func = callable.ffi_rust_future_complete(ci);
-        let call = format!("UniffiLib.{ffi_func}(future, continuation)");
+        let narrowing = direct_return_narrowing(
+            callable.return_type().map(FfiType::from).as_ref(),
+            module_name,
+        );
+        let call = format!("UniffiLib.{ffi_func}(future, continuation){narrowing}");
         // May need to convert the RustBuffer from our package to the RustBuffer of the external package.
         let call = match callable.return_type() {
             Some(return_type) => {

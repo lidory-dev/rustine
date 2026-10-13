@@ -45,7 +45,7 @@
                                 {%- endmatch -%}
                                 {%- call arg_list_lowered(func, indent + 8) %}
 {{ " "|repeat(indent) }}        uniffiRustCallStatus,
-{{ " "|repeat(indent) }}    )
+{{ " "|repeat(indent) }}    ){{ func.ffi_func()|ffi_direct_return_narrowing(module_name) }}
 {{ " "|repeat(indent) }}{{ '}' }}{{ func|borrowed_bytes_scope_end }}
 {%- endmacro -%}
 
@@ -132,7 +132,7 @@
 {{ " "|repeat(indent) }}    ),
                             {%- endmatch %}
 {{ " "|repeat(indent) }}    {{ callable|async_poll(ci) }},
-{{ " "|repeat(indent) }}    {{ callable|async_complete(ci) }},
+{{ " "|repeat(indent) }}    {{ callable|async_complete(ci, module_name) }},
 {{ " "|repeat(indent) }}    {{ callable|async_free(ci) }},
 {{ " "|repeat(indent) }}    {{ callable|async_cancel(ci) }},
 {{ " "|repeat(indent) }}    // lift function
