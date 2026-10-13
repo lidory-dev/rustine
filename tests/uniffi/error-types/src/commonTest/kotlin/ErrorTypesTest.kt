@@ -123,6 +123,11 @@ class ErrorTypesTest {
             )
         }
 
+        // A custom type over `TupleError`.
+        shouldThrow<TupleException.Value> {
+            oopsCustom(1u)
+        }.v1 shouldBe 1u.toUShort()
+
     }
 
     @Test

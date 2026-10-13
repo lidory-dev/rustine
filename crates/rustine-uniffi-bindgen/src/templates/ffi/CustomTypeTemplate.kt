@@ -46,3 +46,11 @@
 }
 
 {%- endmatch %}
+
+{%- if ci.is_name_used_as_error(name) %}
+
+{#- A custom type over an enum or an object can be thrown (#2658). Errors cross the FFI in a RustBuffer. #}
+{{ visibility() }}object {{ type_name }}ErrorHandler : UniffiRustCallStatusErrorHandler<{{ type_name }}> {
+    override fun lift(errorBuf: RustBufferByValue): {{ type_name }} = {{ ffi_converter_name }}.liftFromRustBuffer(errorBuf)
+}
+{%- endif %}

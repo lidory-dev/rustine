@@ -287,6 +287,7 @@ pub fn generate_bindings(
 ) -> Result<MultiplatformBindings> {
     check_borrowed_bytes_arguments(ci)?;
     check_value_type_members(ci)?;
+    check_custom_error_types(ci)?;
 
     let common = CommonKotlinWrapper::new("common", Some(Visibility::Public), config.clone(), ci)
         .context("failed to create a common binding generator")?
@@ -824,6 +825,32 @@ fn check_value_type_members(ci: &ComponentInterface) -> Result<()> {
                 "Kotlin bindings do not support exporting Eq/Ord/Hash for flat enum `{}`",
                 e.name()
             );
+        }
+    }
+    Ok(())
+}
+
+/// Fail for custom types that are thrown while their builtin type is not.
+///
+/// Since UniFFI 0.30, a custom type over an enum or an object can be thrown (#2658). Its Kotlin
+/// type is an alias of the class of the builtin type, which is only an exception when the builtin
+/// type is used as an error too. Upstream generates code that does not compile otherwise.
+fn check_custom_error_types(ci: &ComponentInterface) -> Result<()> {
+    for ty in ci.iter_local_types() {
+        let Type::Custom { name, builtin, .. } = ty else {
+            continue;
+        };
+        if !ci.is_name_used_as_error(name) {
+            continue;
+        }
+        if let Some(builtin_name) = builtin.name() {
+            if !ci.is_name_used_as_error(builtin_name) {
+                bail!(
+                    "The custom type `{name}` is used as an error, but its builtin type \
+                     `{builtin_name}` is not. Kotlin bindings need `{builtin_name}` to be used as \
+                     an error too, for example by a function that throws it."
+                );
+            }
         }
     }
     Ok(())
