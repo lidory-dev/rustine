@@ -47,7 +47,9 @@ members = [
     "examples/tokio-blake3-app",
     "examples/tokio-boring-app",
 ]
-resolver = "2"
+# Resolver 3 makes dependency resolution MSRV-aware: new dependencies are locked to versions
+# that support the toolchain pinned in rust-toolchain.toml.
+resolver = "3"
 
 # Used in tests/gradle/cargo-only
 [profile.my-opt-level-2-profile]
@@ -63,8 +65,10 @@ lazy_static = "1.4"
 once_cell = "1.18"
 thiserror = "1"
 tokio = "1"
-uniffi = "=0.29.5"
-uniffi_bindgen = "=0.29.5"
-uniffi_macros = "=0.29.5"
-uniffi_meta = "=0.29.5"
+uniffi = "=0.32.2"
+# The bindgen does not use cargo metadata. Disabling the default features here also keeps
+# cargo_metadata and its dependencies out of the bindgen, which `cargo install` builds.
+uniffi_bindgen = { version = "=0.32.2", default-features = false }
+uniffi_macros = "=0.32.2"
+uniffi_meta = "=0.32.2"
 url = "2.2"

@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fmt::Debug;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use askama::Template;
 use filters::header_escape_name;
 use heck::{ToLowerCamelCase, ToShoutySnakeCase, ToUpperCamelCase};
@@ -56,15 +56,18 @@ trait CodeType: Debug {
     /// with this type only.
     fn canonical_name(&self) -> String;
 
-    fn literal(
+    // default for named types is to assume a ctor exists.
+    fn default(
         &self,
-        literal: &Literal,
+        default: &DefaultValue,
         ci: &ComponentInterface,
         config: &Config,
     ) -> Result<String> {
-        let _ = literal;
         let _ = config;
-        bail!("Unimplemented for {}", self.type_label(ci))
+        match default {
+            DefaultValue::Default => Ok(format!("{}()", self.type_label(ci))),
+            DefaultValue::Literal(_) => bail!("Literals for named types are not supported"),
+        }
     }
 
     /// Name of the FfiConverter
@@ -259,7 +262,7 @@ impl Config {
             // with the namespace, which we hopefully have.  This is quite fragile, but it's
             // unreachable in library mode - all deps get an entry in `external_packages` with the
             // correct namespace.
-            None => format!("uniffi.{}", namespace.unwrap_or(module_path)),
+            None => format!("uniffi.{}", namespace.unwrap_or(crate_name)),
         }
     }
 
@@ -492,15 +495,16 @@ macro_rules! kotlin_wrapper {
                 let extern_module_init_fns = self
                     .ci
                     .iter_external_types()
-                    .filter_map(|ty| ty.module_path())
-                    .map(|module_path| {
-                        let namespace = ci.namespace_for_module_path(module_path).unwrap();
+                    .filter_map(|ty| ty.crate_name())
+                    .map(|crate_name| {
+                        let namespace = ci.namespace_for_module_path(crate_name).unwrap();
                         let package_name = self
                             .config
-                            .external_package_name(module_path, Some(namespace));
+                            .external_package_name(crate_name, Some(namespace));
                         format!("{package_name}.uniffiEnsureInitialized()")
                     })
-                    .collect::<HashSet<_>>();
+                    // Collect into a btree set to de-dup and order
+                    .collect::<BTreeSet<_>>();
 
                 init_fns.chain(extern_module_init_fns).collect()
             }
@@ -564,17 +568,28 @@ fn object_interface_name(ci: &ComponentInterface, obj: &Object) -> String {
 
 // *sigh* - same thing for a trait, which might be either Object or CallbackInterface.
 // (we should either fold it into object or kill it!)
-fn trait_interface_name(ci: &ComponentInterface, name: &str) -> Result<String> {
-    let (obj_name, has_callback_interface) = match ci.get_object_definition(name) {
-        Some(obj) => (obj.name(), obj.has_callback_interface()),
-        None => (
-            ci.get_callback_interface_definition(name)
-                .ok_or_else(|| anyhow!("no interface {}", name))?
-                .name(),
-            true,
-        ),
+fn trait_interface_name(ci: &ComponentInterface, trait_ty: &Type) -> Result<String> {
+    let Some(crate_name) = trait_ty.crate_name() else {
+        bail!("Invalid trait_type: {trait_ty:?}");
     };
-    let class_name = KotlinCodeOracle.class_name(ci, obj_name);
+    // The trait may be defined by another crate. Upstream bails when that crate's interface is
+    // unknown; fall back to `ci` and to the type metadata, which records whether the trait
+    // supports foreign implementations.
+    let ci_look = ci.find_component_interface(crate_name).unwrap_or(ci);
+
+    let (obj_name, has_callback_interface) = match trait_ty {
+        Type::Object { name, imp, .. } => (
+            name,
+            ci_look.get_object_definition(name).map_or_else(
+                || imp.has_callback_interface(),
+                |obj| obj.has_callback_interface(),
+            ),
+        ),
+        Type::CallbackInterface { name, .. } => (name, true),
+        _ => bail!("Invalid trait_type: {trait_ty:?}"),
+    };
+
+    let class_name = KotlinCodeOracle.class_name(ci_look, obj_name);
     if has_callback_interface {
         Ok(class_name)
     } else {
@@ -604,9 +619,11 @@ impl KotlinCodeOracle {
     fn class_name(&self, ci: &ComponentInterface, nm: &str) -> String {
         let name = nm.to_string().to_upper_camel_case();
         // fixup errors.
-        ci.is_name_used_as_error(nm)
-            .then(|| self.convert_error_suffix(&name))
-            .unwrap_or(name)
+        if ci.is_name_used_as_error(nm) {
+            self.convert_error_suffix(&name)
+        } else {
+            name
+        }
     }
 
     fn convert_error_suffix(&self, nm: &str) -> String {
@@ -694,8 +711,7 @@ impl KotlinCodeOracle {
             FfiType::UInt64 | FfiType::Int64 => "0.toLong()".to_owned(),
             FfiType::Float32 => "0.0f".to_owned(),
             FfiType::Float64 => "0.0".to_owned(),
-            // NOTE: NullPointer is the same as Pointer.NULL
-            FfiType::RustArcPtr(_) => "NullPointer".to_owned(),
+            FfiType::Handle => "0.toLong()".to_owned(),
             FfiType::RustBuffer(_) => "RustBufferHelper.allocValue()".to_owned(),
             FfiType::Callback(_) => "null".to_owned(),
             FfiType::RustCallStatus => "UniffiRustCallStatusHelper.allocValue()".to_owned(),
@@ -714,8 +730,8 @@ impl KotlinCodeOracle {
             | FfiType::Int64
             | FfiType::UInt64
             | FfiType::Float32
-            | FfiType::Float64 => format!("{}ByReference", self.ffi_type_label(ffi_type, ci)),
-            FfiType::RustArcPtr(_) => "PointerByReference".to_owned(),
+            | FfiType::Float64
+            | FfiType::Handle => format!("{}ByReference", self.ffi_type_label(ffi_type, ci)),
             // JNA structs default to ByReference
             FfiType::RustBuffer(_) | FfiType::Struct(_) => self.ffi_type_label(ffi_type, ci),
             _ => panic!("{ffi_type:?} by reference is not implemented"),
@@ -737,8 +753,8 @@ impl KotlinCodeOracle {
             | FfiType::Int64
             | FfiType::UInt64
             | FfiType::Float32
-            | FfiType::Float64 => format!("{}ByReference", self.ffi_type_label(ffi_type, ci)),
-            FfiType::RustArcPtr(_) => "PointerByReference".to_owned(),
+            | FfiType::Float64
+            | FfiType::Handle => format!("{}ByReference", self.ffi_type_label(ffi_type, ci)),
             // JNA structs default to ByReference
             FfiType::RustBuffer(_) | FfiType::Struct(_) => self.ffi_type_label(ffi_type, ci),
             _ => panic!("{ffi_type:?} by reference is not implemented"),
@@ -760,8 +776,8 @@ impl KotlinCodeOracle {
             | FfiType::Int64
             | FfiType::UInt64
             | FfiType::Float32
-            | FfiType::Float64 => format!("{} const *", self.ffi_type_label_header(ffi_type, ci)),
-            FfiType::RustArcPtr(_) => "void * const *".to_owned(),
+            | FfiType::Float64
+            | FfiType::Handle => format!("{} const *", self.ffi_type_label_header(ffi_type, ci)),
             // JNA structs default to ByReference
             FfiType::RustBuffer(_) | FfiType::Struct(_) => {
                 format!("{} const *", self.ffi_type_label_header(ffi_type, ci))
@@ -785,8 +801,8 @@ impl KotlinCodeOracle {
             | FfiType::Int64
             | FfiType::UInt64
             | FfiType::Float32
-            | FfiType::Float64 => format!("{} *", self.ffi_type_label_header(ffi_type, ci)),
-            FfiType::RustArcPtr(_) => "void **".to_owned(),
+            | FfiType::Float64
+            | FfiType::Handle => format!("{} *", self.ffi_type_label_header(ffi_type, ci)),
             // JNA structs default to ByReference
             FfiType::RustBuffer(_) | FfiType::Struct(_) => {
                 format!("{} *", self.ffi_type_label_header(ffi_type, ci))
@@ -807,9 +823,8 @@ impl KotlinCodeOracle {
             FfiType::Float32 => "Float".to_string(),
             FfiType::Float64 => "Double".to_string(),
             FfiType::Handle => "Long".to_string(),
-            FfiType::RustArcPtr(_) => "Pointer?".to_string(),
             FfiType::RustBuffer(maybe_external) => match maybe_external {
-                Some(external_meta) if external_meta.module_path != ci.crate_name() => {
+                Some(external_meta) if external_meta.crate_name() != ci.crate_name() => {
                     format!("RustBuffer{}", external_meta.name)
                 }
                 _ => "RustBuffer".to_string(),
@@ -836,9 +851,8 @@ impl KotlinCodeOracle {
             FfiType::Float32 => "float".to_string(),
             FfiType::Float64 => "double".to_string(),
             FfiType::Handle => "int64_t".to_string(),
-            FfiType::RustArcPtr(_) => "void *".to_string(),
             FfiType::RustBuffer(maybe_external) => match maybe_external {
-                Some(external_meta) if external_meta.module_path != ci.crate_name() => {
+                Some(external_meta) if external_meta.crate_name() != ci.crate_name() => {
                     format!("RustBuffer{}", external_meta.name)
                 }
                 _ => "RustBuffer".to_string(),
@@ -861,6 +875,9 @@ impl KotlinCodeOracle {
         }
         match as_ct.as_type() {
             Type::Custom { builtin, .. } => self.as_external_type(ci, &builtin),
+            // `Box<T>` is transparent at the FFI level, but it is not normalized away in field
+            // and argument types, so `ci.is_external()` does not see an external `T` through it.
+            Type::Box { inner_type } => self.as_external_type(ci, &inner_type),
             _ => None,
         }
     }
@@ -913,7 +930,11 @@ impl<T: AsType> AsCodeType for T {
                 key_type,
                 value_type,
             } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
-            Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
+            Type::Set { inner_type } => Box::new(compounds::SetCodeType::new(*inner_type)),
+            Type::Custom { name, builtin, .. } => {
+                Box::new(custom::CustomCodeType::new(name, builtin.as_codetype()))
+            }
+            Type::Box { inner_type } => inner_type.as_codetype(),
         }
     }
 }
@@ -927,12 +948,37 @@ pub enum DataClassFieldType {
 }
 
 mod filters {
-    pub use uniffi_bindgen::backend::filters::*;
-    use uniffi_bindgen::{backend::filters::to_askama_error, interface::ffi::ExternalFfiMetadata};
+    use uniffi_bindgen::interface::ffi::ExternalFfiMetadata;
     use uniffi_meta::LiteralMetadata;
     use variant::VariantCodeType;
 
     use super::*;
+
+    /// Convert `anyhow::Error`, `&str`, etc. to askama errors.
+    ///
+    /// UniFFI 0.30 removed `uniffi_bindgen::backend`. `uniffi_bindgen::to_askama_error` replaces
+    /// the old helper, but it returns an error of the askama version UniFFI uses, not ours.
+    pub(super) fn to_askama_error<T: ToString + ?Sized>(t: &T) -> askama::Error {
+        askama::Error::Custom(Box::new(BindingsTemplateError(t.to_string())))
+    }
+
+    // Need a struct to define an error that implements std::error::Error, which neither String nor
+    // anyhow::Error do.
+    #[derive(Debug)]
+    struct BindingsTemplateError(String);
+
+    impl std::fmt::Display for BindingsTemplateError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&self.0)
+        }
+    }
+
+    impl std::error::Error for BindingsTemplateError {}
+
+    /// Get the FFI type of a type. This used to come from `uniffi_bindgen::backend::filters`.
+    pub(super) fn ffi_type(type_: &impl AsType) -> Result<FfiType, askama::Error> {
+        Ok(type_.as_type().into())
+    }
 
     pub(super) fn type_name(
         as_ct: &impl AsCodeType,
@@ -992,14 +1038,6 @@ mod filters {
         Ok(format!("{}.lift", as_ct.as_codetype().ffi_converter_name()))
     }
 
-    pub(super) fn as_ffi_type(as_ct: &impl AsType) -> Result<FfiType, askama::Error> {
-        Ok(FfiType::from(as_ct.as_type()))
-    }
-
-    pub(super) fn need_non_null_assertion(type_: &FfiType) -> Result<bool, askama::Error> {
-        Ok(matches!(type_, FfiType::RustArcPtr(_)))
-    }
-
     pub(super) fn read_fn(
         as_ct: &impl AsType,
         ci: &ComponentInterface,
@@ -1014,15 +1052,15 @@ mod filters {
         }
     }
 
-    pub fn render_literal(
-        literal: &Literal,
+    pub fn render_default(
+        default: &DefaultValue,
         as_ct: &impl AsType,
         ci: &ComponentInterface,
         config: &Config,
     ) -> Result<String, askama::Error> {
         as_ct
             .as_codetype()
-            .literal(literal, ci, config)
+            .default(default, ci, config)
             .map_err(|e| to_askama_error(&e))
     }
 
@@ -1077,6 +1115,7 @@ mod filters {
         fn as_bytes_field_type_inner(type_: &Type) -> DataClassFieldType {
             match type_ {
                 Type::Bytes => DataClassFieldType::Bytes,
+                Type::Box { inner_type } => as_bytes_field_type_inner(inner_type),
                 Type::Optional { inner_type } => match as_bytes_field_type_inner(inner_type) {
                     DataClassFieldType::Bytes | DataClassFieldType::NullableBytes => {
                         DataClassFieldType::NullableBytes
@@ -1090,72 +1129,127 @@ mod filters {
         Ok(as_bytes_field_type_inner(&as_ct.as_type()))
     }
 
-    fn serializable_type(type_: &Type, ci: &ComponentInterface) -> Result<bool, askama::Error> {
+    // `in_progress` holds the records and enums being checked further up the stack. Since UniFFI
+    // 0.32, types can be recursive (through `Box`, `Vec`, `Option`, ...), and a reference back to
+    // a type in progress does not decide anything: the outer check covers its other fields.
+    fn serializable_type(
+        type_: &Type,
+        ci: &ComponentInterface,
+        in_progress: &mut HashSet<String>,
+    ) -> Result<bool, askama::Error> {
         Ok(match type_ {
             Type::Object { .. } | Type::CallbackInterface { .. } => false,
-            Type::Record { name, .. } => serializable_record(
+            Type::Record { name, .. } => serializable_record_inner(
                 ci.get_record_definition(name)
                     .ok_or_else(|| to_askama_error(&format!("could not find record '{name}'")))?,
                 ci,
+                in_progress,
             )?,
-            Type::Enum { name, .. } => serializable_enum(
+            Type::Enum { name, .. } => serializable_enum_inner(
                 ci.get_enum_definition(name)
                     .ok_or_else(|| to_askama_error(&format!("could not find enum '{name}'")))?,
                 ci,
+                in_progress,
             )?,
-            Type::Optional { inner_type } | Type::Sequence { inner_type } => {
-                serializable_type(inner_type, ci)?
-            }
+            Type::Optional { inner_type }
+            | Type::Sequence { inner_type }
+            | Type::Set { inner_type }
+            | Type::Box { inner_type } => serializable_type(inner_type, ci, in_progress)?,
             Type::Map {
                 key_type,
                 value_type,
-            } => serializable_type(key_type, ci)? && serializable_type(value_type, ci)?,
+            } => {
+                serializable_type(key_type, ci, in_progress)?
+                    && serializable_type(value_type, ci, in_progress)?
+            }
             // Assume a custom type using a serializable type is also serializable.
-            Type::Custom { builtin, .. } => serializable_type(builtin, ci)?,
+            Type::Custom { builtin, .. } => serializable_type(builtin, ci, in_progress)?,
             _ => true,
         })
+    }
+
+    /// Run `check` for the type named `name`, unless that type is already being checked.
+    fn check_serializable_once(
+        name: &str,
+        in_progress: &mut HashSet<String>,
+        check: impl FnOnce(&mut HashSet<String>) -> Result<bool, askama::Error>,
+    ) -> Result<bool, askama::Error> {
+        if !in_progress.insert(name.to_string()) {
+            return Ok(true);
+        }
+        let result = check(in_progress);
+        in_progress.remove(name);
+        result
     }
 
     pub fn serializable_record(
         record: &Record,
         ci: &ComponentInterface,
     ) -> Result<bool, askama::Error> {
-        for field in record.fields() {
-            if !serializable_type(&field.as_type(), ci)? {
-                return Ok(false);
+        serializable_record_inner(record, ci, &mut HashSet::new())
+    }
+
+    fn serializable_record_inner(
+        record: &Record,
+        ci: &ComponentInterface,
+        in_progress: &mut HashSet<String>,
+    ) -> Result<bool, askama::Error> {
+        check_serializable_once(record.name(), in_progress, |in_progress| {
+            for field in record.fields() {
+                if !serializable_type(&field.as_type(), ci, in_progress)? {
+                    return Ok(false);
+                }
             }
-        }
-        Ok(true)
+            Ok(true)
+        })
     }
 
     pub fn serializable_enum(enum_: &Enum, ci: &ComponentInterface) -> Result<bool, askama::Error> {
+        serializable_enum_inner(enum_, ci, &mut HashSet::new())
+    }
+
+    fn serializable_enum_inner(
+        enum_: &Enum,
+        ci: &ComponentInterface,
+        in_progress: &mut HashSet<String>,
+    ) -> Result<bool, askama::Error> {
         if ci.is_name_used_as_error(enum_.name()) {
             return Ok(false);
         }
 
-        if enum_.is_flat() {
-            let Some(variant_discr_type) = enum_.variant_discr_type() else {
-                return Ok(true);
-            };
-            return serializable_type(variant_discr_type, ci);
-        }
-
-        // Unlike records or enum variants, if any of the variants are serializable, the
-        // enum can be marked as serializable.
-        for variant in enum_.variants() {
-            if serializable_enum_variant(variant, ci)? {
-                return Ok(true);
+        check_serializable_once(enum_.name(), in_progress, |in_progress| {
+            if enum_.is_flat() {
+                let Some(variant_discr_type) = enum_.variant_discr_type() else {
+                    return Ok(true);
+                };
+                return serializable_type(variant_discr_type, ci, in_progress);
             }
-        }
-        Ok(false)
+
+            // Unlike records or enum variants, if any of the variants are serializable, the
+            // enum can be marked as serializable.
+            for variant in enum_.variants() {
+                if serializable_enum_variant_inner(variant, ci, in_progress)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        })
     }
 
     pub fn serializable_enum_variant(
         variant: &Variant,
         ci: &ComponentInterface,
     ) -> Result<bool, askama::Error> {
+        serializable_enum_variant_inner(variant, ci, &mut HashSet::new())
+    }
+
+    fn serializable_enum_variant_inner(
+        variant: &Variant,
+        ci: &ComponentInterface,
+        in_progress: &mut HashSet<String>,
+    ) -> Result<bool, askama::Error> {
         for field in variant.fields() {
-            if !serializable_type(&field.as_type(), ci)? {
+            if !serializable_type(&field.as_type(), ci, in_progress)? {
                 return Ok(false);
             }
         }
@@ -1225,7 +1319,7 @@ mod filters {
         let FfiType::RustBuffer(Some(metadata)) = type_ else {
             return Ok(String::new());
         };
-        if metadata.module_path == ci.crate_name() {
+        if metadata.crate_name() == ci.crate_name() {
             return Ok(String::new());
         }
         Ok(format!(".as{}()", metadata.name))
@@ -1239,7 +1333,7 @@ mod filters {
         let FfiType::RustBuffer(Some(metadata)) = type_ else {
             return Ok(String::new());
         };
-        if metadata.module_path == ci.crate_name() {
+        if metadata.crate_name() == ci.crate_name() {
             return Ok(String::new());
         }
         Ok(format!(".from{}ToLocal()", metadata.name))
@@ -1331,12 +1425,14 @@ mod filters {
     ) -> Result<String, askama::Error> {
         let ffi_func = callable.ffi_rust_future_complete(ci);
         let call = format!("UniffiLib.{ffi_func}(future, continuation)");
-        // May need to convert the RustBuffer from our package to the RustBuffer of the external package
+        // May need to convert the RustBuffer from our package to the RustBuffer of the external package.
         let call = match callable.return_type() {
-            Some(return_type) if ci.is_external(return_type) => {
-                let ffi_type = FfiType::from(return_type);
-                match ffi_type {
-                    FfiType::RustBuffer(Some(ExternalFfiMetadata { name, .. })) => {
+            Some(return_type) => {
+                match FfiType::from(return_type) {
+                    FfiType::RustBuffer(Some(external_meta))
+                        if external_meta.crate_name() != ci.crate_name() =>
+                    {
+                        let ExternalFfiMetadata { name, .. } = external_meta;
                         let suffix = KotlinCodeOracle.class_name(ci, &name);
                         format!("{call}.let {{ RustBuffer{suffix}ByValue(it.capacity, it.len, it.data) }}")
                     }

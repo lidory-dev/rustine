@@ -52,7 +52,11 @@
     {{ visibility() }}data class {{ variant_type_name }}(
         {%- for field in variant.fields() -%}
         {%- call kt::docstring(field, 8) %}
-        val {% call kt::field_name(field, loop.index) %}: {{ field|type_name(ci) }},
+        val {% call kt::field_name(field, loop.index) %}: {{ field|type_name(ci) -}}
+        {%- match field.default_value() %}
+        {%- when Some with(default) %} = {{ default|render_default(field, ci, config) }}
+        {%- else %}
+        {%- endmatch %},
         {%- endfor %}
     ) : {{ type_name }}() {
         {%- if should_generate_equals_hash_code -%}
