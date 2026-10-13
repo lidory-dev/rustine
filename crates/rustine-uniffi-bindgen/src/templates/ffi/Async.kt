@@ -14,8 +14,10 @@ internal suspend fun<T, F, E: kotlin.Exception> uniffiRustCallAsync(
     liftFunc: (F) -> T,
     errorHandler: UniffiRustCallStatusErrorHandler<E>
 ): T {
-    return withContext(Dispatchers.IO) {
-        try {
+    // Free the future outside `withContext`: its block never runs when the coroutine is cancelled
+    // before it starts. `withContext` returns only after its block finished polling.
+    try {
+        return withContext(Dispatchers.IO) {
             do {
                 val pollResult = suspendCancellableCoroutine<Byte> { continuation ->
                     val handle = uniffiContinuationHandleMap.insert(continuation)
@@ -30,12 +32,12 @@ internal suspend fun<T, F, E: kotlin.Exception> uniffiRustCallAsync(
                 }
             } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY);
 
-            return@withContext liftFunc(
+            liftFunc(
                 uniffiRustCallWithError(errorHandler) { status -> completeFunc(rustFuture, status) }
             )
-        } finally {
-            freeFunc(rustFuture)
         }
+    } finally {
+        freeFunc(rustFuture)
     }
 }
 

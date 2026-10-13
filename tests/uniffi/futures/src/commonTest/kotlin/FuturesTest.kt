@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -25,6 +26,8 @@ import kotlin.test.assertFails
 import kotlin.time.measureTime
 
 expect fun uniffiForeignFutureHandleMapSize(): Int
+
+expect fun asyncParserHandleMapSize(): Int
 
 class FuturesTest {
     @BeforeTest
@@ -228,6 +231,22 @@ class FuturesTest {
 
         // Test that all handles were cleaned up
         uniffiForeignFutureHandleMapSize() shouldBe 0
+    }
+
+    // Rustine: a call from a cancelled coroutine frees its Rust future, which releases the
+    // arguments that the future captured, such as the handles of Kotlin trait implementations.
+    @Test
+    fun testCancelledCallsFreeTheirFutures() = runTest {
+        val traitObj = KotlinAsyncParser()
+        val handlesBefore = asyncParserHandleMapSize()
+        repeat(10) {
+            launch {
+                coroutineContext.job.cancel()
+                delayUsingTrait(traitObj, 0)
+            }.join()
+        }
+        asyncParserHandleMapSize() shouldBe handlesBefore
+        traitObj.completedDelays shouldBe 0
     }
 
     @Test

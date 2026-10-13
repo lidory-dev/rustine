@@ -9,3 +9,7 @@ import futures.*
 actual fun uniffiForeignFutureHandleMapSize(): Int {
     return uniffiForeignFutureHandleMap.size
 }
+
+actual fun asyncParserHandleMapSize(): Int {
+    return FfiConverterTypeAsyncParser.handleMap.size
+}
