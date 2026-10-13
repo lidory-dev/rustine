@@ -573,23 +573,31 @@ fn trait_interface_name(ci: &ComponentInterface, trait_ty: &Type) -> Result<Stri
         bail!("Invalid trait_type: {trait_ty:?}");
     };
     // The trait may be defined by another crate. Upstream bails when that crate's interface is
-    // unknown; fall back to `ci` and to the type metadata, which records whether the trait
-    // supports foreign implementations.
-    let ci_look = ci.find_component_interface(crate_name).unwrap_or(ci);
+    // unknown; fall back to the type metadata instead, which records whether the trait supports
+    // foreign implementations. Do not look the trait up in `ci` then, where a type of the same
+    // name would belong to another crate.
+    let ci_look = ci
+        .find_component_interface(crate_name)
+        .or((crate_name == ci.crate_name()).then_some(ci));
 
     let (obj_name, has_callback_interface) = match trait_ty {
         Type::Object { name, imp, .. } => (
             name,
-            ci_look.get_object_definition(name).map_or_else(
-                || imp.has_callback_interface(),
-                |obj| obj.has_callback_interface(),
-            ),
+            ci_look
+                .and_then(|ci_look| ci_look.get_object_definition(name))
+                .map_or_else(
+                    || imp.has_callback_interface(),
+                    |obj| obj.has_callback_interface(),
+                ),
         ),
         Type::CallbackInterface { name, .. } => (name, true),
         _ => bail!("Invalid trait_type: {trait_ty:?}"),
     };
 
-    let class_name = KotlinCodeOracle.class_name(ci_look, obj_name);
+    let class_name = match ci_look {
+        Some(ci_look) => KotlinCodeOracle.class_name(ci_look, obj_name),
+        None => obj_name.to_upper_camel_case(),
+    };
     if has_callback_interface {
         Ok(class_name)
     } else {
