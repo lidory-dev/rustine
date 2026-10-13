@@ -29,7 +29,8 @@ struct Cli {
     /// Path to the optional uniffi config file.
     /// If not provided, uniffi-bindgen will try to guess it from the UDL's file location.
     /// When `--library` is passed, its `exclude`, `rename` and `mutable_records` keys only apply
-    /// to the crate selected with `--crate`, or to the only crate of the library.
+    /// to the crate selected with `--crate`, or to the only crate of the library. Non-empty values
+    /// for a library of several crates without `--crate` are an error; use `--crate-configs`.
     #[clap(long, short)]
     config: Option<Utf8PathBuf>,
 

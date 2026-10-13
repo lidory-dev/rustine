@@ -47,7 +47,9 @@ The `--config <path>` option takes a file with the same settings as `uniffi.toml
 of every crate. Unlike the `--config` option of `uniffi-bindgen` in UniFFI 0.32, it is not a global
 config file. In library mode, its `exclude`, `rename`, and `mutable_records` settings only apply to
 the crate selected with `--crate`, or to the only crate of the library, as they name the items of a
-single crate. Use `--crate-configs <crate-name>=<path>` to give each crate its own config.
+single crate. When the library contains several crates and `--crate` is not given, a non-empty
+`exclude`, `rename`, or `mutable_records` in `--config` is an error. Use
+`--crate-configs <crate-name>=<path>` to give each crate its own config.
 
 If you want to use the bindgen in your own Cargo build script, please read the
 ["Generating foreign-language bindings" part](https://mozilla.github.io/uniffi-rs/0.32/tutorial/foreign_language_bindings.html)
