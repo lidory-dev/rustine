@@ -13,6 +13,7 @@ import io.kotest.matchers.types.shouldBeTypeOf
 import sub_lib.*
 import uniffi_one.*
 import io.ktor.http.Url
+import kotlinx.coroutines.runBlocking
 
 class ExtTypesTest {
     @Test
@@ -54,6 +55,10 @@ class ExtTypesTest {
         //getImportedGuid("guid") shouldBe "guid"
         getImportedOuid("ouid") shouldBe "ouid"
         getImportedHandleU8(null) shouldBe 3u.toUByte()
+        runBlocking {
+            getNestedExternalOuidAsync(null) shouldBe "nested-external-ouid"
+            getLocalExternalGuidAsync() shouldBe "local-external-guid"
+        }
 
         val uot = UniffiOneType("hello")
         getUniffiOneType(uot) shouldBe uot
@@ -90,5 +95,15 @@ class ExtTypesTest {
 
         ct.ecd.sval shouldBe "ecd"
         getExternalCrateInterface("foo").value() shouldBe "foo"
+
+        // An error of another crate, which is only used as a field and an argument here
+        // (mozilla/uniffi-rs#2641).
+        val notToThrow = NotToThrowException.Variant(1UL)
+        ContainsExternalException.ExternalException(notToThrow).v1 shouldBe notToThrow
+        ContainsExternalError2(notToThrow).error shouldBe notToThrow
+        takesExternalError(notToThrow)
+
+        getBindingRenamedType("external_rename_test").value shouldBe "external_rename_test"
+        getBindingRenamedType(null).value shouldBe "test_renamed_type"
     }
 }

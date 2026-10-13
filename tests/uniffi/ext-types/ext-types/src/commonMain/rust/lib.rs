@@ -12,11 +12,11 @@ use external_crate::{
 };
 use kmm_ext_types_custom::{ANestedGuid, Guid, HandleU8, Ouid};
 use kmm_uniffi_one::{
-    UniffiOneEnum, UniffiOneError, UniffiOneErrorInterface, UniffiOneInterface,
+    BindingRenamedType, UniffiOneEnum, UniffiOneError, UniffiOneErrorInterface, UniffiOneInterface,
     UniffiOneProcMacroType, UniffiOneTLA, UniffiOneTrait, UniffiOneType, UniffiOneUDLTrait,
 };
 use std::sync::Arc;
-use sub_lib::SubLibType;
+use sub_lib::{NotToThrowError, SubLibType};
 use url::Url;
 
 // Remote types require a macro call in the Rust source
@@ -151,6 +151,36 @@ fn get_nested_external_ouid(ouid: Option<NestedExternalOuid>) -> NestedExternalO
     ouid.unwrap_or_else(|| NestedExternalOuid(Ouid("nested-external-ouid".to_string())))
 }
 
+#[uniffi::export]
+async fn get_nested_external_ouid_async(ouid: Option<NestedExternalOuid>) -> NestedExternalOuid {
+    get_nested_external_ouid(ouid)
+}
+
+pub struct LocalExternalGuid {
+    pub value: String,
+}
+
+impl From<Guid> for LocalExternalGuid {
+    fn from(value: Guid) -> Self {
+        Self { value: value.0 }
+    }
+}
+
+impl From<LocalExternalGuid> for Guid {
+    fn from(value: LocalExternalGuid) -> Self {
+        Guid(value.value)
+    }
+}
+
+uniffi::custom_type!(LocalExternalGuid, Guid, { remote });
+
+#[uniffi::export]
+async fn get_local_external_guid_async() -> LocalExternalGuid {
+    LocalExternalGuid {
+        value: "local-external-guid".to_string(),
+    }
+}
+
 // A struct
 fn get_uniffi_one_type(t: UniffiOneType) -> UniffiOneType {
     t
@@ -234,6 +264,27 @@ fn get_uniffi_one_udl_trait(
     t: Option<Arc<dyn UniffiOneUDLTrait>>,
 ) -> Option<Arc<dyn UniffiOneUDLTrait>> {
     t
+}
+
+#[derive(uniffi::Error)]
+pub enum ContainsExternalError {
+    ExternalError(NotToThrowError),
+}
+
+#[derive(uniffi::Record)]
+pub struct ContainsExternalError2 {
+    error: NotToThrowError,
+}
+
+#[uniffi::export]
+fn takes_external_error(_error: NotToThrowError) {}
+
+// Using a type in an external crate which is renamed via toml in that crate.
+#[uniffi::export]
+fn get_binding_renamed_type(value: Option<String>) -> BindingRenamedType {
+    BindingRenamedType {
+        value: value.unwrap_or_else(|| "test_renamed_type".to_string()),
+    }
 }
 
 uniffi::include_scaffolding!("ext-types");

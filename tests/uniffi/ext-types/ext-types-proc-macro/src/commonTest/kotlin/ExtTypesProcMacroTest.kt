@@ -72,5 +72,7 @@ class ExtTypesProcMacroTest {
 
         val g = getGuidProcmacro(null)
         g shouldBe getGuidProcmacro(g)
+
+        RecordContainingInterface().destroy() // #2441
     }
 }
