@@ -4,12 +4,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use std::{collections::HashMap, fs::File, io::Write, process::Command};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::File,
+    io::Write,
+    process::Command,
+};
 
 use anyhow::{bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs_err as fs;
-use uniffi_bindgen::interface::apply_exclusions;
+use uniffi_bindgen::interface::{apply_exclusions, Method};
 use uniffi_bindgen::{Component, ComponentInterface};
 
 mod gen_kotlin_multiplatform;
@@ -99,6 +104,9 @@ impl KotlinBindingGenerator {
     ) -> Result<()> {
         // Remove excluded items, before anything looks at them, then rename items. Like upstream,
         // this happens before the FFI functions are derived.
+        for c in &*components {
+            check_exclusions(&c.ci, &c.config.exclude)?;
+        }
         for c in &mut *components {
             apply_exclusions(&mut c.ci, &c.config.exclude);
         }
@@ -176,6 +184,42 @@ impl KotlinBindingGenerator {
         }
         Ok(())
     }
+}
+
+/// Fail for `exclude` entries that would make the bindings inconsistent with the Rust library.
+///
+/// Rust calls the Kotlin implementations of a callback interface, or of a trait that Kotlin can
+/// implement, through a table with a slot for each method. The bindings derive that table from the
+/// methods they keep, so leaving one out would shift the slots of the methods after it, and Rust
+/// would call the wrong functions. Upstream has the same flaw.
+fn check_exclusions(ci: &ComponentInterface, exclude: &[String]) -> Result<()> {
+    let excluded: HashSet<&str> = exclude.iter().map(String::as_str).collect();
+    let check_methods = |name: &str, methods: Vec<&Method>| -> Result<()> {
+        // Leaving out the whole interface also leaves out its table.
+        if excluded.contains(name) {
+            return Ok(());
+        }
+        for meth in methods {
+            let key = format!("{name}.{}", meth.name());
+            if excluded.contains(key.as_str()) {
+                bail!(
+                    "Can't exclude `{key}`. Excluding the methods of callback interfaces and \
+                     traits that Kotlin can implement is not supported, as Rust calls their Kotlin \
+                     implementations through a table holding every method."
+                );
+            }
+        }
+        Ok(())
+    };
+    for cbi in ci.callback_interface_definitions() {
+        check_methods(cbi.name(), cbi.methods())?;
+    }
+    for obj in ci.object_definitions() {
+        if obj.has_callback_interface() {
+            check_methods(obj.name(), obj.methods())?;
+        }
+    }
+    Ok(())
 }
 
 /// The keys that `exclude` matches for the constructors of the objects, such as `"MyObject.new"`,
@@ -411,5 +455,66 @@ mod tests {
             "Async primary constructors not supported but AsyncObject has one. Add \
              \"AsyncObject.new\" to the `exclude` list in the uniffi.toml of the `dep` crate."
         );
+    }
+
+    #[test]
+    fn excluding_methods_of_foreign_traits_is_rejected() {
+        let udl = r#"
+            namespace rustine_test {};
+            callback interface Callback {
+                void first();
+                void second();
+            };
+            [Trait, WithForeign]
+            interface ForeignTrait {
+                void first();
+                void second();
+            };
+            [Trait]
+            interface RustTrait {
+                void first();
+                void second();
+            };
+            interface Plain {
+                void first();
+                void second();
+            };
+        "#;
+        for key in ["Callback.first", "ForeignTrait.first"] {
+            let err = components_from_udl(udl, &format!("exclude = [\"{key}\"]"))
+                .err()
+                .expect("excluding the method must be rejected");
+            assert_eq!(
+                err.to_string(),
+                format!(
+                    "Can't exclude `{key}`. Excluding the methods of callback interfaces and \
+                     traits that Kotlin can implement is not supported, as Rust calls their \
+                     Kotlin implementations through a table holding every method."
+                )
+            );
+        }
+
+        // The methods of objects and traits that only Rust implements can be excluded, and so
+        // can callback interfaces and traits as a whole.
+        let components = components_from_udl(
+            udl,
+            r#"
+            exclude = [
+                "RustTrait.first", "Plain.first",
+                "Callback", "Callback.first", "ForeignTrait", "ForeignTrait.first",
+            ]
+            "#,
+        )
+        .unwrap();
+        let ci = &components[0].ci;
+        assert!(ci.callback_interface_definitions().is_empty());
+        for name in ["RustTrait", "Plain"] {
+            let methods = ci.get_object_definition(name).unwrap().methods();
+            assert_eq!(
+                methods.iter().map(|meth| meth.name()).collect::<Vec<_>>(),
+                ["second"]
+            );
+        }
+        assert!(ci.get_object_definition("ForeignTrait").is_none());
     }
 }
