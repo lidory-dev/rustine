@@ -2635,4 +2635,50 @@ mod tests {
             assert_eq!(common.matches(expected).count(), 2, "{expected}\n{common}");
         }
     }
+
+    /// The stubs use the external types and the custom types that common code imports.
+    #[test]
+    fn stubs_import_the_types_they_use() {
+        let udl = r#"
+            namespace rustine_test {
+                Thing get_thing(Url url);
+            };
+            [External="other_crate"]
+            typedef dictionary Thing;
+            [Custom]
+            typedef string Url;
+        "#;
+        let mut ci = ci_from_udl(udl, &[], vec![]).unwrap();
+        let namespace = |crate_name: &str, name: &str| uniffi_meta::NamespaceMetadata {
+            crate_name: crate_name.to_string(),
+            name: name.to_string(),
+        };
+        ci.set_crate_to_namespace_map(
+            [
+                (
+                    "rustine_test".to_string(),
+                    namespace("rustine_test", "rustine_test"),
+                ),
+                ("other_crate".to_string(), namespace("other_crate", "other")),
+            ]
+            .into(),
+        );
+        let bindings = generate(
+            ci,
+            r#"
+            [external_packages]
+            other_crate = "other.pkg"
+            [custom_types.Url]
+            imports = ["io.ktor.http.Url"]
+            lift = "Url({})"
+            lower = "{}.toString()"
+            "#,
+        )
+        .unwrap();
+        let stub = bindings.stub.unwrap();
+        for import in ["import other.pkg.Thing\n", "import io.ktor.http.Url\n"] {
+            assert!(bindings.common.contains(import), "{import}");
+            assert!(stub.contains(import), "{import}\n{stub}");
+        }
+    }
 }

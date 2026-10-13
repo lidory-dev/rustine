@@ -4,6 +4,10 @@
 
 package {{ config.package_name() }}
 
+{%- for req in self.imports() %}
+{{ req.render() }}
+{%- endfor %}
+
 // Public interface members begin here.
 {{ type_helper_code }}
 

@@ -32,6 +32,26 @@
 {%- let trait_impls = self::enum_trait_impls(ci, e) %}
 {%- call kt::value_method_helper_stubs(e.methods(), trait_impls, type_name) %}
 
+{#- The stubs use the types that common code imports, so they import them too. #}
+{%- when Type::Custom { name, module_path, builtin } %}
+{%- match config.custom_types.get(name.as_str()) %}
+{%- when Some(custom_type_config) %}
+{%- match custom_type_config.imports %}
+{%- when Some(imports) %}
+{%- for import_name in imports %}
+{{- self.add_import(import_name) }}
+{%- endfor %}
 {%- else %}
 {%- endmatch %}
+{%- else %}
+{%- endmatch %}
+
+{%- else %}
+{%- endmatch %}
+{%- endfor %}
+
+{%- for type_ in ci.iter_external_types() %}
+{%- let name = type_.name().unwrap() %}
+{%- let module_path = type_.module_path().unwrap() %}
+{%- include "common/ExternalTypeTemplate.kt" %}
 {%- endfor %}
