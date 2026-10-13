@@ -1,0 +1,44 @@
+package_name = "bindgen_tests"
+
+#
+# Custom type configuration
+#
+[custom_types.CustomType2]
+# Use `Map` as our custom type wrapper, since we can use it without having to import any types
+type_name = "Map<String, ULong>"
+lift = "mapOf(\"value\" to {})"
+lower = "{}[\"value\"]!!"
+
+#
+# Rename configuration
+#
+[rename]
+# Rename a function and its args.
+binding_function_to_rename = "ktFunction"
+"binding_function_to_rename.record" = "ktRecord"
+
+# Rename a record and its items.
+BindingRecordToRename = "KtRecord"
+"BindingRecordToRename.item" = "ktItem"
+
+# Enum
+BindingEnumToRename = "KtEnum"
+"BindingEnumToRename.VariantA" = "KtVariantA"
+"BindingEnumToRename.Record" = "KtRecord"
+
+BindingEnumWithFieldsToRename = "KtEnumWithFields"
+"BindingEnumWithFieldsToRename.VariantA" = "KtVariantA"
+"BindingEnumWithFieldsToRename.VariantA.binding_int" = "kt_int"
+
+# New error name still gets passed through normal Error->Exception processing.
+BindingErrorToRename = "KtError"
+"BindingErrorToRename.Simple" = "KtSimple"
+
+BindingTraitToRename = "KtTrait"
+"BindingTraitToRename.trait_method" = "ktTraitMethod"
+
+BindingObjectToRename = "KtObject"
+# Note "kt_method" vs "ktTraitMethod" above - equiv as we always do the case-change thing.
+# Is this good or bad? :) Either way, is what actually happens
+"BindingObjectToRename.method" = "kt_method"
+"BindingObjectToRename.method.arg" = "ktArg"

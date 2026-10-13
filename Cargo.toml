@@ -11,6 +11,8 @@ members = [
     "tests/gradle/js-only",
     "tests/gradle/jvm-only",
 
+    "tests/uniffi/bindgen-tests",
+    "tests/uniffi/bindgen-tests/external-types",
     "tests/uniffi/callbacks",
     "tests/uniffi/chronological",
     "tests/uniffi/coverall",

@@ -1,0 +1,14 @@
+[package]
+name = "rustine-fixture-bindgen-tests-external-types"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "rustine_fixture_bindgen_tests_external_types"
+crate-type = ["lib", "cdylib", "staticlib"]
+path = "src/commonMain/rust/lib.rs"
+
+[dependencies]
+uniffi = { workspace = true }

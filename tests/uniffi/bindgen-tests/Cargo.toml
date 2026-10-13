@@ -1,0 +1,45 @@
+[package]
+name = "rustine-fixture-bindgen-tests"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "rustine_fixture_bindgen_tests"
+crate-type = ["cdylib", "staticlib"]
+path = "src/commonMain/rust/lib.rs"
+
+[dependencies]
+async-trait = "0.1"
+thiserror = { workspace = true }
+uniffi = { workspace = true }
+
+uniffi-bindgen-tests-external-types-source = { path = "external-types", package = "rustine-fixture-bindgen-tests-external-types" }
+
+# Like upstream, each module has a feature, so they can be enabled one by one while porting the
+# bindings.
+[features]
+default = ["simple_fns", "primitive_types", "records", "enums", "collections", "options", "interfaces",
+    "custom_types", "errors", "callback_interfaces", "futures", "trait_interfaces", "defaults",
+    "references", "external-types", "renames", "bytes", "recursive_types", "time", "rust_traits"]
+simple_fns = []
+primitive_types = []
+records = []
+enums = []
+collections = []
+options = []
+interfaces = []
+custom_types = []
+errors = []
+callback_interfaces = []
+futures = []
+trait_interfaces = []
+defaults = []
+references = []
+external-types = []
+renames = []
+bytes = []
+recursive_types = []
+time = []
+rust_traits = []

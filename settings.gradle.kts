@@ -40,6 +40,8 @@ if (ext.propertyIsTrue("rustine.projects.gradleTests")) {
 }
 
 if (ext.propertyIsTrue("rustine.projects.uniffiTests")) {
+    include(":tests:uniffi:bindgen-tests")
+    include(":tests:uniffi:bindgen-tests:external-types")
     include(":tests:uniffi:callbacks")
     include(":tests:uniffi:chronological")
     include(":tests:uniffi:coverall")

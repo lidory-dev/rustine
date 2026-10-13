@@ -1,0 +1,70 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Rustine: upstream's namespace is `uniffi_bindgen_tests`. The UniFFI tests use the name of their
+// Gradle project.
+uniffi::setup_scaffolding!("bindgen_tests");
+
+#[cfg(feature = "bytes")]
+pub mod bytes;
+
+#[cfg(feature = "callback_interfaces")]
+pub mod callback_interfaces;
+
+#[cfg(feature = "collections")]
+pub mod collections;
+
+#[cfg(feature = "custom_types")]
+pub mod custom_types;
+
+#[cfg(feature = "defaults")]
+pub mod defaults;
+
+#[cfg(feature = "enums")]
+pub mod enums;
+
+#[cfg(feature = "errors")]
+pub mod errors;
+
+#[cfg(feature = "external-types")]
+pub mod external_types;
+
+#[cfg(feature = "futures")]
+pub mod futures;
+
+#[cfg(feature = "interfaces")]
+pub mod interfaces;
+
+#[cfg(feature = "options")]
+pub mod options;
+
+#[cfg(feature = "primitive_types")]
+pub mod primitive_types;
+
+#[cfg(feature = "records")]
+pub mod records;
+
+#[cfg(feature = "recursive_types")]
+pub mod recursive_types;
+
+#[cfg(feature = "references")]
+pub mod references;
+
+#[cfg(feature = "renames")]
+pub mod renames;
+
+#[cfg(feature = "rust_traits")]
+pub mod rust_traits;
+
+#[cfg(feature = "simple_fns")]
+pub mod simple_fns;
+
+#[cfg(feature = "time")]
+pub mod time;
+
+#[cfg(feature = "trait_interfaces")]
+pub mod trait_interfaces;
+
+// Rustine: upstream's `test_util` module builds the library and runs the Kotlin scripts from
+// `cargo test`. Gradle does that here.
