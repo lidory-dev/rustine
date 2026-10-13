@@ -199,7 +199,10 @@ changes in Rustine 1.0.0, which moved from UniFFI 0.29.4 to UniFFI 0.32.2.
   tests. A fake object is never freed in Rust. Unlike in the Kotlin bindings of UniFFI, a fake object
   of a trait that Kotlin can implement can be passed to Rust, which calls its methods like those of
   a Kotlin implementation.
-- The `uniffiIsDestroyed` property tells whether `destroy()` or `close()` has been called.
+- The `uniffiIsDestroyed` property tells whether `destroy()` or `close()` has been called. Calling
+  the methods of a destroyed object, or passing it to Rust, e.g., as an argument or to `equals()`,
+  throws `IllegalStateException`. Unlike in the Kotlin bindings of UniFFI, Rust never uses a
+  destroyed object.
 - Objects exporting the `Ord` trait implement `Comparable` and `compareTo()`. Objects exporting
   `Debug` but not `Display` use `Debug` for `toString()`.
 
