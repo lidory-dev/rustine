@@ -118,6 +118,15 @@ impl BindgenPathsLayer for UdlCrateRootLayer {
     }
 }
 
+/// Whether `value` is an empty array or table.
+fn is_empty_toml_value(value: &toml::Value) -> bool {
+    match value {
+        toml::Value::Array(array) => array.is_empty(),
+        toml::Value::Table(table) => table.is_empty(),
+        _ => false,
+    }
+}
+
 fn load_toml_file(path: &Utf8Path) -> anyhow::Result<toml::value::Table> {
     let contents = fs::read_to_string(path).with_context(|| format!("read file: {:?}", path))?;
     toml::de::from_str(&contents).with_context(|| format!("parse toml: {:?}", path))
@@ -363,11 +372,14 @@ fn main() -> anyhow::Result<()> {
         config_override.retain(|key, _| !CRATE_ITEM_KEYS.contains(&key));
         config_override
     });
+    // Empty values name no items, like the ones in every config that the Gradle plugin merges.
     if main_crate.is_none() {
         if let Some(key) = config_override
             .iter()
-            .flat_map(|config_override| config_override.keys())
-            .find(|key| CRATE_ITEM_KEYS.contains(&key.as_str()))
+            .flatten()
+            .filter(|(key, _)| CRATE_ITEM_KEYS.contains(&key.as_str()))
+            .find(|(_, value)| !is_empty_toml_value(value))
+            .map(|(key, _)| key)
         {
             bail!(
                 "`{key}` in --config names the items of a single crate, but {source} contains \
