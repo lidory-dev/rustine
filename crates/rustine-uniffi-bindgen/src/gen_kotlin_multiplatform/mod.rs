@@ -7,7 +7,7 @@
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Debug;
 
 use anyhow::{bail, Context, Result};
@@ -467,6 +467,8 @@ macro_rules! kotlin_type_renderer {
             ci: &'a ComponentInterface,
             // Track imports added with the `add_import()` macro
             imports: RefCell<BTreeSet<ImportRequirement>>,
+            // Track the type aliases used by `aliased_default()`, by the type they stand for
+            default_type_aliases: RefCell<BTreeMap<String, String>>,
         }
 
         #[allow(dead_code)]
@@ -483,6 +485,7 @@ macro_rules! kotlin_type_renderer {
                     config,
                     ci,
                     imports: RefCell::new(BTreeSet::new()),
+                    default_type_aliases: RefCell::new(BTreeMap::new()),
                 }
             }
 
@@ -516,6 +519,33 @@ macro_rules! kotlin_type_renderer {
                         as_name: as_name.to_owned(),
                     });
                 ""
+            }
+
+            // Render a default value in a member of a class, see `filters::aliased_default()`.
+            fn aliased_default(
+                &self,
+                default: &DefaultValue,
+                as_type: &impl AsType,
+            ) -> Result<String> {
+                filters::aliased_default(
+                    default,
+                    &as_type.as_type(),
+                    self.ci,
+                    self.config,
+                    &self.default_type_aliases,
+                )
+            }
+
+            // The type aliases used by `aliased_default()`, as `(alias, type)` pairs.
+            fn default_type_aliases(&self) -> Vec<(String, String)> {
+                let mut aliases: Vec<_> = self
+                    .default_type_aliases
+                    .borrow()
+                    .iter()
+                    .map(|(type_name, alias)| (alias.clone(), type_name.clone()))
+                    .collect();
+                aliases.sort();
+                aliases
             }
 
             fn visibility(&self) -> &str {
@@ -1550,43 +1580,38 @@ mod filters {
             .map_err(|e| to_askama_error(&e))
     }
 
-    /// Like [render_default], with the types defined by crates qualified by their package, for the
-    /// default values in a sealed class, where a variant can shadow the type of the value, as in
-    /// `enum Value { Amount { amount: Amount } }`.
-    pub fn qualified_default(
-        default: &DefaultValue,
-        as_type: &impl AsType,
-        ci: &ComponentInterface,
-        config: &Config,
-    ) -> Result<String, askama::Error> {
-        qualified_default_for_type(default, &as_type.as_type(), ci, config)
-            .map_err(|e| to_askama_error(&e))
-    }
-
-    fn qualified_default_for_type(
+    /// Like [render_default], for the default values in the members of classes, which can't name
+    /// the types of the values directly. In a sealed class, a variant shadows the type of the same
+    /// name, as in `enum Value { Amount { amount: Amount } }`, and in any class, a field or an
+    /// argument shadows the package of a fully qualified name when it is named like its first
+    /// segment, as `uniffi` in `uniffi.example.Amount()`. So records, objects, and enums are named
+    /// through private type aliases, which `Types.kt` declares, e.g., `UniffiDefaultAmount()`.
+    /// `aliases` maps the fully qualified names of the types to their aliases.
+    pub(super) fn aliased_default(
         default: &DefaultValue,
         ty: &Type,
         ci: &ComponentInterface,
         config: &Config,
+        aliases: &RefCell<BTreeMap<String, String>>,
     ) -> Result<String> {
         match (ty, default) {
             (Type::Record { .. } | Type::Object { .. }, DefaultValue::Default) => {
-                Ok(format!("{}()", fully_qualified_type_label(ty, ci, config)?))
+                Ok(format!("{}()", type_alias(ty, ci, config, aliases)?))
             }
             (Type::Enum { .. }, DefaultValue::Literal(Literal::Enum(variant, _))) => Ok(format!(
                 "{}.{}",
-                fully_qualified_type_label(ty, ci, config)?,
+                type_alias(ty, ci, config, aliases)?,
                 KotlinCodeOracle.enum_variant_name(variant, config)
             )),
             (Type::Optional { inner_type }, DefaultValue::Literal(Literal::Some { inner })) => {
-                qualified_default_for_type(inner, inner_type, ci, config)
+                aliased_default(inner, inner_type, ci, config, aliases)
             }
             (Type::Box { inner_type }, _) => {
-                qualified_default_for_type(default, inner_type, ci, config)
+                aliased_default(default, inner_type, ci, config, aliases)
             }
             // Like `CustomCodeType::default`.
             (Type::Custom { name, builtin, .. }, _) => {
-                let builtin_default = qualified_default_for_type(default, builtin, ci, config)
+                let builtin_default = aliased_default(default, builtin, ci, config, aliases)
                     .map_err(|_| {
                         anyhow::anyhow!(
                             "Unsupported default value for {}",
@@ -1600,6 +1625,24 @@ mod filters {
             }
             _ => KotlinCodeOracle.find(ty).default(default, ci, config),
         }
+    }
+
+    /// The alias of a type used by [aliased_default], named after the type. Types of different
+    /// packages with the same name would get the same alias, but they already clash in the
+    /// imports of the file.
+    fn type_alias(
+        ty: &Type,
+        ci: &ComponentInterface,
+        config: &Config,
+        aliases: &RefCell<BTreeMap<String, String>>,
+    ) -> Result<String> {
+        let type_name = fully_qualified_type_label(ty, ci, config)?;
+        let alias = format!("UniffiDefault{}", KotlinCodeOracle.find(ty).type_label(ci));
+        Ok(aliases
+            .borrow_mut()
+            .entry(type_name)
+            .or_insert(alias)
+            .clone())
     }
 
     // Get the idiomatic Kotlin rendering of an integer.
@@ -2551,9 +2594,10 @@ mod tests {
             .contains("internal actual fun SealedEnum."));
     }
 
-    /// Inside a sealed class, a variant shadows the type of a default value of the same name.
+    /// Inside a sealed class, a variant shadows the type of a default value of the same name, and
+    /// a field or an argument can shadow the package of a fully qualified name.
     #[test]
-    fn qualifies_default_values_in_sealed_classes() {
+    fn aliases_the_types_of_default_values_in_sealed_classes() {
         let module_path = "rustine_test".to_string();
         let amount = Type::Record {
             module_path: module_path.clone(),
@@ -2634,11 +2678,17 @@ mod tests {
         let bindings = generate(ci_from_udl(udl, &[], extra).unwrap(), "").unwrap();
         let common = &bindings.common;
         for expected in [
-            "`amount`: rustine_test.Amount = rustine_test.Amount()",
-            "`color`: rustine_test.Color = rustine_test.Color.RED",
+            "`amount`: rustine_test.Amount = UniffiDefaultAmount()",
+            "`color`: rustine_test.Color = UniffiDefaultColor.RED",
         ] {
             // The field of the variant and the argument of the method.
             assert_eq!(common.matches(expected).count(), 2, "{expected}\n{common}");
+        }
+        for expected in [
+            "\nprivate typealias UniffiDefaultAmount = rustine_test.Amount\n",
+            "\nprivate typealias UniffiDefaultColor = rustine_test.Color\n",
+        ] {
+            assert_eq!(common.matches(expected).count(), 1, "{expected}\n{common}");
         }
     }
 

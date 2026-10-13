@@ -131,3 +131,13 @@
 {%- let module_path = type_.module_path().unwrap() %}
 {% include "ExternalTypeTemplate.kt" %}
 {%- endfor %}
+
+{#- After the templates above, which add the aliases. #}
+{%- for (alias, target) in self.default_type_aliases() %}
+{%- if loop.first %}
+
+// The types of default values that the members of classes can't name directly, see
+// `aliased_default()` in the bindgen.
+{%- endif %}
+private typealias {{ alias }} = {{ target }}
+{%- endfor %}

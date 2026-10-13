@@ -64,7 +64,7 @@
         {%- call kt::docstring(field, 8) %}
         val {% call kt::field_name(field, loop.index) %}: {{ field|qualified_type_name(ci, config) -}}
         {%- match field.default_value() %}
-        {%- when Some with(default) %} = {{ default|qualified_default(field, ci, config) }}
+        {%- when Some with(default) %} = {{ self.aliased_default(default, field)? }}
         {%- else %}
         {%- endmatch %},
         {%- endfor %}

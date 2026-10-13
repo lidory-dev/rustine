@@ -7,7 +7,9 @@
 import coverall.Coveralls
 import coverall.EnumWithBytesAndEq
 import coverall.EnumWithMethods
+import coverall.FieldNamedLikeThePackage
 import coverall.FlatEnumWithMethods
+import coverall.Increment
 import coverall.InternalException
 import coverall.MethodsException
 import coverall.NotConstructible
@@ -16,6 +18,7 @@ import coverall.NotConstructibleException
 import coverall.OrderedObject
 import coverall.RecordWithBytesAndEq
 import coverall.RecordWithMethods
+import coverall.VariantFieldNamedLikeThePackage
 import coverall.newNotConstructible
 import coverall.newNotConstructible2
 import coverall.throwMethodsError
@@ -72,6 +75,14 @@ class AdditionalCoverallTest {
             shouldThrow<MethodsException.Code> {
                 throwMethodsError(42)
             }.code() shouldBe 42
+        }
+    }
+
+    @Test
+    fun testDefaultValuesNextToFieldsNamedLikeThePackage() {
+        VariantFieldNamedLikeThePackage.Value(coverall = 1).increment shouldBe Increment(1)
+        if (uniffiSupported) {
+            FieldNamedLikeThePackage(coverall = 1).incremented() shouldBe 2
         }
     }
 

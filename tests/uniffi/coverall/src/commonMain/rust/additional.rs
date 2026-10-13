@@ -174,3 +174,34 @@ impl OrderedObject {
         Arc::new(Self { value })
     }
 }
+
+// Fields named `coverall`, like the package of the bindings, shadow the package in the default
+// values of the members of the classes, so the bindings can't name the types of these values with
+// their fully qualified names there.
+#[derive(uniffi::Record)]
+struct Increment {
+    #[uniffi(default = 1)]
+    value: i32,
+}
+
+#[derive(uniffi::Record)]
+struct FieldNamedLikeThePackage {
+    coverall: i32,
+}
+
+#[uniffi::export]
+impl FieldNamedLikeThePackage {
+    #[uniffi::method(default(increment))]
+    fn incremented(&self, increment: Increment) -> i32 {
+        self.coverall + increment.value
+    }
+}
+
+#[derive(uniffi::Enum)]
+enum VariantFieldNamedLikeThePackage {
+    Value {
+        coverall: i32,
+        #[uniffi(default)]
+        increment: Increment,
+    },
+}
