@@ -141,4 +141,11 @@ class EnumPayloadClashTest {
             expectBooleanFlat(Value.String("a"))
         }.message shouldBe "unexpected string"
     }
+
+    @Test
+    fun testDefaultValuesNamedLikeVariants() {
+        LimitOrUnlimited.Limit().limit shouldBe Limit(10UL)
+        LimitOrUnlimited.Unlimited.limitOr() shouldBe Limit(10UL)
+        LimitOrUnlimited.Limit(Limit(1UL)).limitOr(Limit(2UL)) shouldBe Limit(1UL)
+    }
 }

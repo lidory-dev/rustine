@@ -404,12 +404,12 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- endfor %}
 {%- endmacro %}
 
-{#- Like `arg_list(func, true)`, with fully qualified types. -#}
+{#- Like `arg_list(func, true)`, with fully qualified types and default values. -#}
 {% macro qualified_arg_list(func) %}
 {%- for arg in func.arguments() -%}
         {{ arg.name()|var_name }}: {{ arg|qualified_type_name(ci, config) }}
 {%-         match arg.default_value() %}
-{%-             when Some with(default) %} = {{ default|render_default(arg, ci, config) }}
+{%-             when Some with(default) %} = {{ default|qualified_default(arg, ci, config) }}
 {%-             else %}
 {%-         endmatch %}
 {%-     if !loop.last %}, {% endif -%}

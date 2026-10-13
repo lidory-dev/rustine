@@ -1544,6 +1544,58 @@ mod filters {
             .map_err(|e| to_askama_error(&e))
     }
 
+    /// Like [render_default], with the types defined by crates qualified by their package, for the
+    /// default values in a sealed class, where a variant can shadow the type of the value, as in
+    /// `enum Value { Amount { amount: Amount } }`.
+    pub fn qualified_default(
+        default: &DefaultValue,
+        as_type: &impl AsType,
+        ci: &ComponentInterface,
+        config: &Config,
+    ) -> Result<String, askama::Error> {
+        qualified_default_for_type(default, &as_type.as_type(), ci, config)
+            .map_err(|e| to_askama_error(&e))
+    }
+
+    fn qualified_default_for_type(
+        default: &DefaultValue,
+        ty: &Type,
+        ci: &ComponentInterface,
+        config: &Config,
+    ) -> Result<String> {
+        match (ty, default) {
+            (Type::Record { .. } | Type::Object { .. }, DefaultValue::Default) => {
+                Ok(format!("{}()", fully_qualified_type_label(ty, ci, config)?))
+            }
+            (Type::Enum { .. }, DefaultValue::Literal(Literal::Enum(variant, _))) => Ok(format!(
+                "{}.{}",
+                fully_qualified_type_label(ty, ci, config)?,
+                KotlinCodeOracle.enum_variant_name(variant, config)
+            )),
+            (Type::Optional { inner_type }, DefaultValue::Literal(Literal::Some { inner })) => {
+                qualified_default_for_type(inner, inner_type, ci, config)
+            }
+            (Type::Box { inner_type }, _) => {
+                qualified_default_for_type(default, inner_type, ci, config)
+            }
+            // Like `CustomCodeType::default`.
+            (Type::Custom { name, builtin, .. }, _) => {
+                let builtin_default = qualified_default_for_type(default, builtin, ci, config)
+                    .map_err(|_| {
+                        anyhow::anyhow!(
+                            "Unsupported default value for {}",
+                            KotlinCodeOracle.find(ty).type_label(ci)
+                        )
+                    })?;
+                Ok(match config.custom_types.get(name) {
+                    Some(custom_type_config) => custom_type_config.lift(&builtin_default),
+                    None => builtin_default,
+                })
+            }
+            _ => KotlinCodeOracle.find(ty).default(default, ci, config),
+        }
+    }
+
     // Get the idiomatic Kotlin rendering of an integer.
     fn int_literal(t: &Option<Type>, base10: String) -> Result<String, askama::Error> {
         if let Some(t) = t {
@@ -1996,8 +2048,9 @@ mod filters {
 mod tests {
     use super::*;
     use uniffi_meta::{
-        CustomTypeMetadata, EnumShape, FnMetadata, Metadata, MethodMetadata, ObjectImpl,
-        ObjectTraitImplMetadata, TraitKind,
+        CustomTypeMetadata, DefaultValueMetadata, EnumMetadata, EnumShape, FieldMetadata,
+        FnMetadata, FnParamMetadata, LiteralMetadata, Metadata, MethodMetadata, ObjectImpl,
+        ObjectTraitImplMetadata, TraitKind, VariantMetadata,
     };
 
     const TEST_CONFIG: &str = r#"
@@ -2490,5 +2543,96 @@ mod tests {
             .stub
             .unwrap()
             .contains("internal actual fun SealedEnum."));
+    }
+
+    /// Inside a sealed class, a variant shadows the type of a default value of the same name.
+    #[test]
+    fn qualifies_default_values_in_sealed_classes() {
+        let module_path = "rustine_test".to_string();
+        let amount = Type::Record {
+            module_path: module_path.clone(),
+            name: "Amount".to_string(),
+        };
+        let color = Type::Enum {
+            module_path: module_path.clone(),
+            name: "Color".to_string(),
+        };
+        let field = |name: &str, ty: &Type, default| FieldMetadata {
+            name: name.to_string(),
+            orig_name: None,
+            ty: ty.clone(),
+            default: Some(default),
+            docstring: None,
+        };
+        let variant = |name: &str, fields| VariantMetadata {
+            name: name.to_string(),
+            orig_name: None,
+            discr: None,
+            fields,
+            docstring: None,
+        };
+        let red =
+            || DefaultValueMetadata::Literal(LiteralMetadata::Enum("Red".into(), color.clone()));
+        let extra = vec![
+            Metadata::Enum(EnumMetadata {
+                module_path: module_path.clone(),
+                name: "Value".to_string(),
+                orig_name: None,
+                shape: EnumShape::Enum,
+                variants: vec![
+                    variant(
+                        "Amount",
+                        vec![field("amount", &amount, DefaultValueMetadata::Default)],
+                    ),
+                    variant("Color", vec![field("color", &color, red())]),
+                ],
+                discr_type: None,
+                non_exhaustive: false,
+                remote: false,
+                docstring: None,
+            }),
+            Metadata::Method(MethodMetadata {
+                module_path: module_path.clone(),
+                self_name: "Value".to_string(),
+                name: "replace".to_string(),
+                orig_name: None,
+                is_async: false,
+                inputs: vec![
+                    FnParamMetadata {
+                        name: "amount".to_string(),
+                        ty: amount.clone(),
+                        by_ref: false,
+                        optional: false,
+                        default: Some(DefaultValueMetadata::Default),
+                    },
+                    FnParamMetadata {
+                        name: "color".to_string(),
+                        ty: color.clone(),
+                        by_ref: false,
+                        optional: false,
+                        default: Some(red()),
+                    },
+                ],
+                return_type: None,
+                throws: None,
+                takes_self_by_arc: false,
+                checksum: Some(0),
+                docstring: None,
+            }),
+        ];
+        let udl = r#"
+            namespace rustine_test {};
+            dictionary Amount { u64 value = 0; };
+            enum Color { "Red", "Green" };
+        "#;
+        let bindings = generate(ci_from_udl(udl, &[], extra).unwrap(), "").unwrap();
+        let common = &bindings.common;
+        for expected in [
+            "`amount`: rustine_test.Amount = rustine_test.Amount()",
+            "`color`: rustine_test.Color = rustine_test.Color.RED",
+        ] {
+            // The field of the variant and the argument of the method.
+            assert_eq!(common.matches(expected).count(), 2, "{expected}\n{common}");
+        }
     }
 }

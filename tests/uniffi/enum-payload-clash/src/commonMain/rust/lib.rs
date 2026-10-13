@@ -205,4 +205,31 @@ pub fn expect_boolean_flat(value: Value) -> Result<bool, FlatValueKindError> {
     }
 }
 
+// Rustine: variants can shadow the types of default values too.
+#[derive(Clone, Debug, PartialEq, Eq, uniffi::Record)]
+pub struct Limit {
+    #[uniffi(default = 10)]
+    pub value: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, uniffi::Enum)]
+pub enum LimitOrUnlimited {
+    Limit {
+        #[uniffi(default)]
+        limit: Limit,
+    },
+    Unlimited,
+}
+
+#[uniffi::export]
+impl LimitOrUnlimited {
+    #[uniffi::method(default(fallback))]
+    fn limit_or(&self, fallback: Limit) -> Limit {
+        match self {
+            Self::Limit { limit } => limit.clone(),
+            Self::Unlimited => fallback,
+        }
+    }
+}
+
 uniffi::setup_scaffolding!("enum_payload_clash");
