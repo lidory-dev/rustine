@@ -65,6 +65,7 @@ Rustine is a hard fork of [Gobley](https://github.com/gobley/gobley) 0.3.7, and 
 - Prevented "Expression is unused" warnings in the generated code ([mozilla/uniffi-rs#2949](https://github.com/mozilla/uniffi-rs/pull/2949)).
 - Made the UniFFI plugin keep the `into_custom` and `from_custom` aliases of custom types in `uniffi.toml`. Before, the conversions of such custom types were empty in library mode.
 - Made the bindgen accept crate roots without a `uniffi.toml` file in library mode.
+- Made `buildUniffiBindings` remove the bindings of earlier runs before generating them. Before, bindings whose namespace or package name changed, e.g., the `gobley_*` bindings of a project renamed to `rustine_*`, were compiled together with the new ones.
 
 ### Dependencies
 

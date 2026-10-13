@@ -103,6 +103,12 @@ abstract class BuildUniffiBindingsTask : CargoPackageTask() {
 
     @TaskAction
     fun buildBindings() {
+        // Remove the bindings of earlier runs. Their file names follow the namespaces and the
+        // package names, so bindings that no longer exist would be compiled with the new ones.
+        if (outputDirectory.isPresent) {
+            outputDirectory.get().asFile.deleteRecursively()
+        }
+
         @OptIn(InternalRustineGradleApi::class)
         command(bindgen) {
             workingDirectory(root)
