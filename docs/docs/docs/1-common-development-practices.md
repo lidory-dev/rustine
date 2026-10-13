@@ -65,8 +65,17 @@ using the `rust-version` field in the `[package]` section. For example:
 
 ```toml
 [package]
-rust-version = "1.82"
+rust-version = "1.90"
 ```
+
+UniFFI 0.32, which Rustine 1.0.0 uses, requires Rust 1.88 or higher.
+
+With `resolver = "3"`, which is the default in the 2024 edition, Cargo picks dependency versions
+that support the `rust-version` of your package, or the version of your Rust toolchain when it is
+not set. With older resolvers, Cargo may pick dependency versions that need a newer Rust version.
+For example, in a package using the 2021 edition, `uniffi = "0.32.2"` makes Cargo pick
+`cargo-platform` 0.3.3, which needs Rust 1.91. In this case, set `resolver = "3"` in the `[package]`
+section of your package, or in the `[workspace]` section of your workspace.
 
 While the `rust-version` field defines the required MSRV to compile your crate, it does not enforce
 the use of that specific version. You (or CI systems) can still use newer versions of Rust to build
@@ -78,16 +87,15 @@ You can set a specific Rust version for your entire system using `rustup`, but t
 problematic if you have other Rust projects on your system that rely on different Rust versions.
 
 ```
-> rustup target add 1.81
-> rustup default 1.81
+> rustup default 1.90.0
 > rustc --version --verbose
-rustc 1.81.0 (eeb90cda1 2024-09-04)
+rustc 1.90.0 (1159e78c4 2025-09-14)
 binary: rustc
-commit-hash: eeb90cda1969383f56a2637cbd3037bdf598841c
-commit-date: 2024-09-04
+commit-hash: 1159e78c4747b02ef996e55082b704c09b970588
+commit-date: 2025-09-14
 host: aarch64-apple-darwin
-release: 1.81.0
-LLVM version: 18.1.7
+release: 1.90.0
+LLVM version: 20.1.8
 ```
 
 The most environment-agnostic and project-specific way to fix the Rust version is by creating a
@@ -99,7 +107,7 @@ to [the official documentation](https://rust-lang.github.io/rustup/overrides.htm
 
 ```toml
 [toolchain]
-channel = "1.82" # A specific version, "stable", "nighlty", etc.
+channel = "1.90" # A specific version, "stable", "nightly", etc.
 ```
 
 You can also set the toolchain directory via the `toolchainDirectory` property in the `rust {}`

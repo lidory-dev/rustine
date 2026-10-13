@@ -61,7 +61,7 @@ kotlin {
 ```kotlin
 import rustine.gradle.rust.dsl.*
 
-println(rustVersion.get()) // e.g. 1.81.0
+println(rustVersion.get()) // e.g. 1.90.0
 ```
 
 ## Use the Rust plugin to configure multi-project builds properly
@@ -71,7 +71,7 @@ Gradle's [isolated project](https://docs.gradle.org/8.13/userguide/isolated_proj
 feature, Rustine
 uses [Gradle configurations](https://docs.gradle.org/8.13/userguide/declaring_configurations.html)
 to propagate dynamic libraries built with Cargo for JVM targets and UniFFI configurations
-for [external types](https://mozilla.github.io/uniffi-rs/0.29/types/remote_ext_types.html). When a project
+for [external types](https://mozilla.github.io/uniffi-rs/0.32/types/remote_ext_types.html). When a project
 that uses the Cargo or the UniFFI plugins are referenced by another project, the Rust plugin should
 be also applied to that project. If you don't apply the Rust plugin, you might encounter a runtime
 error during Android local unit tests. Simply apply the Rust plugin to resolve these issues.

@@ -30,6 +30,8 @@ Currently, Android, Kotlin/JVM, and Kotlin/Native are supported. WASM is not sup
   using the built-in Kotlin support of AGP, or Kotlin Multiplatform modules using
   `com.android.kotlin.multiplatform.library`. Kotlin 2.4.0 or higher is recommended. Projects still
   using AGP 8 should use [Gobley](https://github.com/gobley/gobley) 0.3.7 or older.
+- Rust 1.88 or higher. Rust crates must depend on the UniFFI version targeted by the bindgen
+  (`uniffi = "0.32.2"` for Rustine 1.0.0).
 
 ## Getting started
 

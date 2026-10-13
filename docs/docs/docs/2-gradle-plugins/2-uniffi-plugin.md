@@ -36,6 +36,10 @@ uniffi {
 }
 ```
 
+The `uniffi` dependency of your crate must have the UniFFI version that the bindgen of your Rustine
+version targets, which is UniFFI 0.32.2 for Rustine 1.0.0. The UniFFI plugin installs the bindgen of
+the same version as the plugin. See [Versioning](../3-bindgen.md#versioning).
+
 If you want to generate bindings from a UDL file as well, you can specify the path using the
 `generateFromUdl {}` block.
 
@@ -64,6 +68,10 @@ When you use Kotlin targets not supported by the UniFFI plugin like `js()`, `was
 successfully for all platforms. However, all generated functions except for `RustObject(NoHandle)`
 constructors will throw `kotlin.NotImplementedError`. We are trying to support as many platforms as
 possible. If you need to target WASM/JS, please use these stubs until WASM/JS support is released.
+For `js()` targets, the Cargo plugin still builds the Rust library for `wasm32-unknown-unknown`,
+where the futures of async functions and methods must be `Send` since UniFFI 0.32. Futures that are
+not `Send`, like the `JsFuture` of `wasm-bindgen-futures`, need the `wasm-unstable-single-threaded`
+feature of `uniffi`.
 
 ## Using the UniFFI plugin in Android modules
 
@@ -101,9 +109,22 @@ uniffi {
             lower = "{}.toString()"
         }
         usePascalCaseEnumClass = true
+        // Leave items out of the bindings, e.g., async primary constructors.
+        exclude.add("MyObject.new")
+        // Rename items, using their names in Rust or UDL as keys.
+        rename.put("MyRecord", "KtRecord")
+        rename.put("MyRecord.field", "kotlinField")
+        // Keep `var` properties in some records, using their names in the bindings.
+        generateImmutableRecords = true
+        mutableRecords.add("KtRecord")
     }
 }
 ```
+
+The values in `uniffi.toml` take precedence over the ones set in the Gradle DSL. The items of
+`exclude` and `mutableRecords` are added to the ones in `uniffi.toml`, and the entries of `rename`
+are added to the `rename` table of `uniffi.toml`, whose entries take precedence. When a custom type
+is renamed, pass its new name to `customType()`.
 
 For details about each bindgen setting properties,
 see [Bindgen configuration](../3-bindgen.md#bindgen-configuration).

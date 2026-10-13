@@ -23,7 +23,7 @@ build iOS apps.
 
 To develop in Rust, you need:
 
-1. A [Rust toolchain](https://www.rust-lang.org/tools/install).
+1. A [Rust toolchain](https://www.rust-lang.org/tools/install), version 1.88 or higher.
 2. An IDE for Rust. Several options are available:
     - [Visual Studio Code](https://code.visualstudio.com/) with [
       `rust-analyzer`](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
@@ -111,7 +111,7 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
 
    [dependencies]
    # We need to add this.
-   uniffi = "0.29.4"
+   uniffi = "0.32.2"
 
    # This as well.
    [lib]
@@ -122,8 +122,10 @@ Let's add a Cargo package to the Kotlin Multiplatform project.
 
    Let's see what each part of the modification does:
 
-    - `uniffi = "0.29.4"` downloads UniFFI, the library used to generate the Kotlin code (the "
-      bindings") that calls the Rust library.
+    - `uniffi = "0.32.2"` downloads UniFFI, the library used to generate the Kotlin code (the "
+      bindings") that calls the Rust library. The version must be the one targeted by the
+      bindgen of your Rustine version, which is UniFFI 0.32.2 for Rustine 1.0.0. See
+      [Versioning](../docs/3-bindgen.md#versioning).
     - `crate-type = ["cdylib", "staticlib"]` will make Cargo generate a `.a` (static library) file
       and a `.so`/`.dylib` (dynamic library) file that can be used by Rustine. Rustine uses the static
       library file when building for iOS, and the dynamic library file for Android.

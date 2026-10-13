@@ -26,7 +26,9 @@ read [The Rust plugin](./3-rust-plugin.md).
 
 ## Requirements
 
-The plugins require Gradle 8.11 or higher and JDK 17 or higher. To use the plugins in Android
+The plugins require Gradle 8.11 or higher and JDK 17 or higher. The Rust crates require Rust 1.88
+or higher, and must depend on the UniFFI version targeted by the bindgen, which is UniFFI 0.32.2 for
+Rustine 1.0.0 (see [Versioning](../3-bindgen.md#versioning)). To use the plugins in Android
 projects, you need:
 
 - Android Gradle Plugin (AGP) 9.1 or higher. AGP 8 is not supported anymore. If your project still

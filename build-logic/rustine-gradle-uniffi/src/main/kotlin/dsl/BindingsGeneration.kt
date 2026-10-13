@@ -61,7 +61,8 @@ sealed class BindingsGeneration(internal val project: Project) {
     internal abstract val customTypes: MapProperty<String, CustomType>
 
     /**
-     * Defines a new custom type. See [the documentation](https://mozilla.github.io/uniffi-rs/0.29/types/custom_types.html#custom-types-in-the-bindings-code).
+     * Defines a new custom type. See [the documentation](https://mozilla.github.io/uniffi-rs/0.32/types/custom_types.html#custom-types-in-the-bindings-code).
+     * When the custom type is renamed with [rename], [name] is its new name.
      */
     fun customType(name: String, configure: Action<CustomType> = Action { }) {
         customTypes.put(

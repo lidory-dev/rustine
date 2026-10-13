@@ -380,21 +380,22 @@ cargo {
 ## LLVM version compatibility on Apple Platforms
 
 If you suspect that a linker error is due to an LLVM version incompatibility, consider downgrading
-the Rust version. To determine the LLVM version used by your current Rust toolchain, use
-`rustc --version --verbose`. For example,
+the Rust version. Note that UniFFI 0.32, which Rustine 1.0.0 uses, requires Rust 1.88 or higher, so
+you can't downgrade below Rust 1.88. To determine the LLVM version used by your current Rust
+toolchain, use `rustc --version --verbose`. For example,
 
 ```
 > rustc --version --verbose
-rustc 1.82.0 (f6e511eec 2024-10-15)
+rustc 1.90.0 (1159e78c4 2025-09-14)
 binary: rustc
-commit-hash: f6e511eec7342f59a25f7c0534f1dbea00d01b14
-commit-date: 2024-10-15
+commit-hash: 1159e78c4747b02ef996e55082b704c09b970588
+commit-date: 2025-09-14
 host: aarch64-apple-darwin
-release: 1.82.0
-LLVM version: 19.1.1
+release: 1.90.0
+LLVM version: 20.1.8
 ```
 
-You can see that Rust 1.82 uses LLVM 19. To check the LLVM version used by Xcode, use
+You can see that Rust 1.90 uses LLVM 20. To check the LLVM version used by Xcode, use
 `/usr/bin/gcc --version` (Yeah, Apple puts Clang in that path.)
 
 ```
@@ -409,10 +410,10 @@ InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault
 ```
 
 You can see Xcode 16.2 uses LLVM 16. So, the linker in Apple LLVM 16 tried to link object files that
-target LLVM 19, which may be the reason for the linker error.
+target LLVM 20, which may be the reason for the linker error.
 
 To see which Rust version uses which LLVM version, see the Rust
-compiler [CHANGELOG](https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1820-2024-10-17).
+compiler [CHANGELOG](https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1870-2025-05-15).
 You can see LLVM version upgrade notes in `Internal Changes` sections.
 
 For instructions on how to set a specific Rust version for your project, please refer to [Fix the

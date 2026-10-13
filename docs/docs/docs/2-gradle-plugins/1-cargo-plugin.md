@@ -219,7 +219,7 @@ cargo {
 ```
 
 `embedRustLibrary` is also used when you
-use [the external types feature](https://mozilla.github.io/uniffi-rs/udl/ext_types.html)
+use [the external types feature](https://mozilla.github.io/uniffi-rs/0.32/types/remote_ext_types.html)
 in your project. Rust statically links all the crates unless you specify the library crate's kind as
 `dylib`. So, the final Kotlin library does not have to include shared libraries built from every
 crate. Suppose you have two crates, `foo`, and `bar`, where `foo` exposes the external types and
@@ -657,6 +657,10 @@ First, download the source code of the standard library using the following comm
 ```
 rustup component add rust-src --toolchain nightly
 ```
+
+UniFFI 0.32 requires Rust 1.88, so the nightly toolchain must be at least as recent as Rust 1.88.
+Run `rustup update nightly` to update it. Rustine tests the tvOS and watchOS targets with
+`nightly-2025-07-15` (1.90.0-nightly), a nightly of the Rust version it is built with.
 
 To get the tier of a `RustTarget`, you can use the `fun RustTarget.tier(version: String): Int`
 function. We can instruct Cargo to build the standard library for tier 3 targets only with it.

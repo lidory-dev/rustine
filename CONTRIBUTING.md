@@ -34,7 +34,10 @@ as well.
 
 To build this project locally, you'll need:
 
-- Rust
+- Rust. `rustup` installs the version in `rust-toolchain.toml` (currently 1.90.0). The tvOS and
+  watchOS examples on macOS also need a nightly toolchain recent enough for Rust 1.88 with the
+  `rust-src` component (see
+  [`.github/workflows/pr-build-test/dependencies.ps1`](.github/workflows/pr-build-test/dependencies.ps1)).
 - Zig 0.13 (for Linux cross-compilation)
 - MinGW (GCC 13)
 - OpenJDK 17 or higher (Gradle is provided by the Gradle wrapper, which uses Gradle 9.3.1)
@@ -157,8 +160,12 @@ to make the UniFFI plugin reference your modified version.
 ```kotlin
 uniffi {
     // ...
-    bindgenFromPath("<path-to-our-bindgen>")
+    bindgenFromPath(layout.projectDirectory.dir("<path-to-our-bindgen>"))
     // or
     bindgenFromGitTag("https://github.com/your-username/rustine", "v0.1.0")
 }
 ```
+
+With `bindgenFromPath()`, the `installUniffiBindgen` task reinstalls the bindgen when its sources,
+or the manifests, lockfiles, toolchain files, or Cargo configurations in its directory and in the
+parent directories, change. The installed bindgen is not stored in the Gradle build cache.
