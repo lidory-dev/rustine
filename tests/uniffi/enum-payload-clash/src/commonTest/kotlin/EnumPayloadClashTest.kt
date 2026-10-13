@@ -6,6 +6,7 @@
 
 import enum_payload_clash.*
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -102,5 +103,42 @@ class EnumPayloadClashTest {
         shouldThrow<AmountOverflow.Overflow> {
             AmountChange.AmountOverflow.applyTo(Amount(1UL))
         }
+    }
+
+    @Test
+    fun testVariantsNamedLikeTheTypesOfTraitMembers() {
+        val string = Value.String("a")
+        string.toString() shouldBe "String(a)"
+        Value.Any.toString() shouldBe "Any"
+        roundtripValue(string) shouldBe string
+        (Value.Int(1) == Value.Int(1)).shouldBeTrue()
+        (Value.Int(1) != Value.Int(2)).shouldBeTrue()
+        Value.Boolean(true).hashCode() shouldBe roundtripValue(Value.Boolean(true)).hashCode()
+        (Value.String("z") < Value.Int(0)).shouldBeTrue()
+        (Value.Boolean(false) < Value.Any).shouldBeTrue()
+    }
+
+    @Test
+    fun testByteArrayVariantsNamedLikeKotlinTypes() {
+        val blob = Blob.Int(byteArrayOf(1, 2))
+        roundtripBlob(blob) shouldBe blob
+        blob.hashCode() shouldBe Blob.Int(byteArrayOf(1, 2)).hashCode()
+        (Blob.Boolean(byteArrayOf(1)) == Blob.Boolean(byteArrayOf(1))).shouldBeTrue()
+        (Blob.Any(byteArrayOf(1)) != Blob.Any(byteArrayOf(2))).shouldBeTrue()
+    }
+
+    @Test
+    fun testErrorVariantsNamedLikeString() {
+        expectBoolean(Value.Boolean(true)) shouldBe true
+        shouldThrow<ValueKindException.String> {
+            expectBoolean(Value.String("a"))
+        }.message shouldBe "value=a"
+        shouldThrow<ValueKindException.Any> {
+            expectBoolean(Value.Int(1))
+        }
+        expectBooleanFlat(Value.Boolean(false)) shouldBe false
+        shouldThrow<FlatValueKindException.String> {
+            expectBooleanFlat(Value.String("a"))
+        }.message shouldBe "unexpected string"
     }
 }

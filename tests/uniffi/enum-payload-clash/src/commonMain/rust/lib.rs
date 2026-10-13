@@ -129,4 +129,80 @@ impl AmountChange {
     }
 }
 
+// Rustine: variants can shadow the Kotlin types in the signatures of the members that implement
+// uniffi traits.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, uniffi::Enum)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
+pub enum Value {
+    String { value: String },
+    Int { value: i32 },
+    Boolean { value: bool },
+    Any,
+}
+
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::String { value } => write!(f, "String({value})"),
+            Self::Int { value } => write!(f, "Int({value})"),
+            Self::Boolean { value } => write!(f, "Boolean({value})"),
+            Self::Any => write!(f, "Any"),
+        }
+    }
+}
+
+#[uniffi::export]
+pub fn roundtrip_value(value: Value) -> Value {
+    value
+}
+
+// Rustine: and of the `equals()` and `hashCode()` of variants with byte array fields.
+#[derive(Clone, Debug, PartialEq, Eq, uniffi::Enum)]
+pub enum Blob {
+    Int { bytes: Vec<u8> },
+    Boolean { bytes: Vec<u8> },
+    Any { bytes: Vec<u8> },
+}
+
+#[uniffi::export]
+pub fn roundtrip_blob(blob: Blob) -> Blob {
+    blob
+}
+
+// Rustine: the variants of errors can shadow `String`, the type of their messages.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum ValueKindError {
+    #[error("unexpected string: {value}")]
+    String { value: String },
+    #[error("unexpected value")]
+    Any,
+}
+
+#[uniffi::export]
+pub fn expect_boolean(value: Value) -> Result<bool, ValueKindError> {
+    match value {
+        Value::Boolean { value } => Ok(value),
+        Value::String { value } => Err(ValueKindError::String { value }),
+        _ => Err(ValueKindError::Any),
+    }
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi(flat_error)]
+pub enum FlatValueKindError {
+    #[error("unexpected string")]
+    String,
+    #[error("unexpected value")]
+    Any,
+}
+
+#[uniffi::export]
+pub fn expect_boolean_flat(value: Value) -> Result<bool, FlatValueKindError> {
+    match value {
+        Value::Boolean { value } => Ok(value),
+        Value::String { .. } => Err(FlatValueKindError::String),
+        _ => Err(FlatValueKindError::Any),
+    }
+}
+
 uniffi::setup_scaffolding!("enum_payload_clash");

@@ -2414,7 +2414,7 @@ mod tests {
         assert!(bindings.common.contains("public enum class FlatEnum {"));
         assert!(bindings
             .common
-            .contains("    override fun toString(): String {"));
+            .contains("    override fun toString(): kotlin.String {"));
 
         let err = generate_from_udl(
             r#"
@@ -2475,10 +2475,10 @@ mod tests {
         let common = &bindings.common;
         assert!(common.contains("public sealed class SealedEnum: Comparable<SealedEnum>"));
         for member in [
-            "final override fun toString(): String {",
-            "final override fun equals(other: Any?): Boolean {",
-            "final override fun hashCode(): Int {",
-            "final override fun compareTo(other: SealedEnum): Int {",
+            "final override fun toString(): kotlin.String {",
+            "final override fun equals(other: kotlin.Any?): kotlin.Boolean {",
+            "final override fun hashCode(): kotlin.Int {",
+            "final override fun compareTo(other: SealedEnum): kotlin.Int {",
         ] {
             assert_eq!(common.matches(member).count(), 1, "{member}");
         }

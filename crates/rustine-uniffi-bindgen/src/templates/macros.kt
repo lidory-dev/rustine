@@ -198,20 +198,21 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {#-
 // The members of a record, enum or error that implement its uniffi traits with the helpers.
 // `modifier` is `final override` on a sealed class, which keeps its data class and data object
-// subclasses from generating their own.
+// subclasses from generating their own. The Kotlin types are fully qualified, as the variants of a
+// sealed class can shadow them, e.g., `enum Value { String(String) }`.
 -#}
 {%- macro value_trait_impls(trait_impls, type_name, modifier, indent) %}
 {%- if let Some(fmt) = trait_impls.to_string() %}
 
 {{ " "|repeat(indent) }}// The local Rust `Display`/`Debug` implementation.
-{{ " "|repeat(indent) }}{{ modifier }} fun toString(): String {
+{{ " "|repeat(indent) }}{{ modifier }} fun toString(): kotlin.String {
 {{ " "|repeat(indent) }}    return this.{{ fmt|value_method_helper }}()
 {{ " "|repeat(indent) }}{{ '}' }}
 {%- endif %}
 {%- if let Some(eq) = trait_impls.equals() %}
 
 {{ " "|repeat(indent) }}// The local Rust `Eq` implementation - only `eq` is used.
-{{ " "|repeat(indent) }}{{ modifier }} fun equals(other: Any?): Boolean {
+{{ " "|repeat(indent) }}{{ modifier }} fun equals(other: kotlin.Any?): kotlin.Boolean {
 {{ " "|repeat(indent) }}    if (other !is {{ type_name }}) return false
 {{ " "|repeat(indent) }}    return this.{{ eq|value_method_helper }}(other)
 {{ " "|repeat(indent) }}{{ '}' }}
@@ -219,14 +220,14 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- if let Some(hash) = trait_impls.hash_code() %}
 
 {{ " "|repeat(indent) }}// The local Rust `Hash` implementation
-{{ " "|repeat(indent) }}{{ modifier }} fun hashCode(): Int {
+{{ " "|repeat(indent) }}{{ modifier }} fun hashCode(): kotlin.Int {
 {{ " "|repeat(indent) }}    return this.{{ hash|value_method_helper }}().toInt()
 {{ " "|repeat(indent) }}{{ '}' }}
 {%- endif %}
 {%- if let Some(cmp) = trait_impls.compare_to() %}
 
 {{ " "|repeat(indent) }}// The local Rust `Ord` implementation
-{{ " "|repeat(indent) }}{{ modifier }} fun compareTo(other: {{ type_name }}): Int {
+{{ " "|repeat(indent) }}{{ modifier }} fun compareTo(other: {{ type_name }}): kotlin.Int {
 {{ " "|repeat(indent) }}    return this.{{ cmp|value_method_helper }}(other).toInt()
 {{ " "|repeat(indent) }}{{ '}' }}
 {%- endif %}
@@ -237,16 +238,16 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 -#}
 {%- macro object_trait_impl_decls(trait_impls, impl_class_name) %}
 {%- if trait_impls.to_string().is_some() %}
-    override fun toString(): String
+    override fun toString(): kotlin.String
 {%- endif %}
 {%- if trait_impls.equals().is_some() %}
-    override fun equals(other: Any?): Boolean
+    override fun equals(other: kotlin.Any?): kotlin.Boolean
 {%- endif %}
 {%- if trait_impls.hash_code().is_some() %}
-    override fun hashCode(): Int
+    override fun hashCode(): kotlin.Int
 {%- endif %}
 {%- if trait_impls.compare_to().is_some() %}
-    override fun compareTo(other: {{ impl_class_name }}): Int
+    override fun compareTo(other: {{ impl_class_name }}): kotlin.Int
 {%- endif %}
 {%- endmacro %}
 
@@ -261,14 +262,14 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- if let Some(fmt) = trait_impls.to_string() %}
 
     // The local Rust `Display`/`Debug` implementation.
-    {{ decl_prefix }}override fun toString(): String {
+    {{ decl_prefix }}override fun toString(): kotlin.String {
         return {{ fmt.return_type().unwrap()|lift_fn }}({% call to_ffi_call(fmt, 8) %})
     }
 {%- endif %}
 {%- if let Some(eq) = trait_impls.equals() %}
 
     // The local Rust `Eq` implementation - only `eq` is used.
-    {{ decl_prefix }}override fun equals(other: Any?): Boolean {
+    {{ decl_prefix }}override fun equals(other: kotlin.Any?): kotlin.Boolean {
         if (this === other) return true
         if (other !is {{ impl_class_name }}) return false
         return {{ eq.return_type().unwrap()|lift_fn }}({% call to_ffi_call(eq, 8) %})
@@ -277,14 +278,14 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- if let Some(hash) = trait_impls.hash_code() %}
 
     // The local Rust `Hash` implementation
-    {{ decl_prefix }}override fun hashCode(): Int {
+    {{ decl_prefix }}override fun hashCode(): kotlin.Int {
         return {{ hash.return_type().unwrap()|lift_fn }}({%- call to_ffi_call(hash, 8) %}).toInt()
     }
 {%- endif %}
 {%- if let Some(cmp) = trait_impls.compare_to() %}
 
     // The local Rust `Ord` implementation
-    {{ decl_prefix }}override fun compareTo(other: {{ impl_class_name }}): Int {
+    {{ decl_prefix }}override fun compareTo(other: {{ impl_class_name }}): kotlin.Int {
         return {{ cmp.return_type().unwrap()|lift_fn }}({%- call to_ffi_call(cmp, 8) %}).toInt()
     }
 {%- endif %}
@@ -294,25 +295,25 @@ fun {{ receiver }}.{{ callable|value_method_helper }}(
 {%- macro object_trait_impl_stubs(trait_impls, impl_class_name) %}
 {%- if trait_impls.to_string().is_some() %}
 
-    actual override fun toString(): String {
+    actual override fun toString(): kotlin.String {
         TODO()
     }
 {%- endif %}
 {%- if trait_impls.equals().is_some() %}
 
-    actual override fun equals(other: Any?): Boolean {
+    actual override fun equals(other: kotlin.Any?): kotlin.Boolean {
         TODO()
     }
 {%- endif %}
 {%- if trait_impls.hash_code().is_some() %}
 
-    actual override fun hashCode(): Int {
+    actual override fun hashCode(): kotlin.Int {
         TODO()
     }
 {%- endif %}
 {%- if trait_impls.compare_to().is_some() %}
 
-    actual override fun compareTo(other: {{ impl_class_name }}): Int {
+    actual override fun compareTo(other: {{ impl_class_name }}): kotlin.Int {
         TODO()
     }
 {%- endif %}
@@ -479,11 +480,12 @@ v{{- field_num -}}
 
 {#-
 // Macro for generating equals() and hashCode() of data classes with ByteArray fields, which
-// Kotlin compares by reference. Either can be left out when a uniffi trait implements it.
+// Kotlin compares by reference. Either can be left out when a uniffi trait implements it. The
+// Kotlin types are fully qualified, as the variants of a sealed class can shadow them.
 -#}
 {%- macro generate_equals_hash_code(data_class, type_name, indent, gen_equals, gen_hash_code) %}
 {%- if gen_equals %}
-{{ " "|repeat(indent) }}override fun equals(other: Any?): Boolean {
+{{ " "|repeat(indent) }}override fun equals(other: kotlin.Any?): kotlin.Boolean {
 {{ " "|repeat(indent) }}    if (this === other) return true
 {{ " "|repeat(indent) }}    if (other == null || this::class != other::class) return false
 
@@ -525,7 +527,7 @@ v{{- field_num -}}
 {{ " "|repeat(indent) }}{{ '}' }}
 {%- endif %}
 {%- if gen_hash_code %}
-{{ " "|repeat(indent) }}override fun hashCode(): Int {
+{{ " "|repeat(indent) }}override fun hashCode(): kotlin.Int {
                             {%- for field in data_class.fields() -%}
                             {%-     if loop.first -%}
                             {%-         if data_class.fields().len() == 1 %}
