@@ -82,7 +82,14 @@
                         {%- match callable.return_type() -%}
                         {%-     when Some(return_type) %}: {{ return_type|type_name(ci) -}}
                         {%-     else -%}
-                        {%- endmatch %} {
+                        {%- endmatch %} {% call func_body(callable, indent) %}
+{% endmacro %}
+
+{#-
+// The body of a function that calls `callable` into Rust, starting with the opening brace.
+-#}
+{%- macro func_body(callable, indent) -%}
+{
                             {%- if callable.is_async() %}
 {{ " "|repeat(indent) }}    return {% call call_async(callable, indent + 4) -%}
                             {%- else -%}
@@ -94,7 +101,83 @@
                             {%- endmatch %}
                             {%- endif %}
 {{ " "|repeat(indent) }}{{ '}' }}
-{% endmacro %}
+{%- endmacro %}
+
+{#-
+// Methods of records, enums and errors.
+//
+// These types are plain classes in common code, but the FFI calls exist only in the platform
+// code. Their members call an internal extension function for each method instead, which common
+// code declares as `expect` and the platform code defines (see the `value_method_helper` filter).
+-#}
+
+{#- The public member of the class, which calls the helper. -#}
+{%- macro value_method_decl(callable, indent) %}
+                        {%- call docstring(callable, indent) -%}
+                        {%- match callable.throws_type() -%}
+                        {%-     when Some(throwable) %}
+{{ " "|repeat(indent) }}@Throws({{ throwable|type_name(ci) }}::class {%- if callable.is_async() -%}, kotlin.coroutines.cancellation.CancellationException::class{%- endif -%})
+                        {%-     else -%}
+                        {%- endmatch %}
+{{ " "|repeat(indent) }}{{ visibility() }}{% if callable.is_async() -%}suspend {% endif -%}
+                        fun {{ callable.name()|fn_name }}(
+                            {%- call arg_list(callable, true) -%}
+                        )
+                        {%- match callable.return_type() -%}
+                        {%-     when Some(return_type) %}: {{ return_type|type_name(ci) }} {
+{{ " "|repeat(indent) }}    return this.{{ callable|value_method_helper }}({% call arg_names(callable) %})
+                        {%-     else %} {
+{{ " "|repeat(indent) }}    this.{{ callable|value_method_helper }}({% call arg_names(callable) %})
+                        {%- endmatch %}
+{{ " "|repeat(indent) }}{{ '}' }}
+{%- endmacro %}
+
+{#- The signature of the helper of `callable`, a method of `receiver`. -#}
+{%- macro value_method_helper_signature(func_decl, callable, receiver) -%}
+internal {% if func_decl.len() != 0 -%}{{ func_decl }} {% endif -%}
+{%- if callable.is_async() -%}suspend {% endif -%}
+fun {{ receiver }}.{{ callable|value_method_helper }}(
+    {%- call arg_list(callable, false) -%}
+)
+{%- match callable.return_type() -%}
+{%-     when Some(return_type) %}: {{ return_type|type_name(ci) -}}
+{%-     else -%}
+{%- endmatch -%}
+{%- endmacro %}
+
+{#- The `expect` declarations of the helpers in common code. -#}
+{%- macro value_method_helper_expects(methods, receiver) %}
+{%- if config.kotlin_multiplatform && !methods.is_empty() %}
+
+{% for meth in methods -%}
+{% call value_method_helper_signature("expect", meth, receiver) %}
+{% endfor -%}
+{%- endif %}
+{%- endmacro %}
+
+{#- The definitions of the helpers in the platform code. -#}
+{%- macro value_method_helper_actuals(methods, receiver) %}
+{%- let helper_decl -%}
+{%- if config.kotlin_multiplatform -%}
+{%-     let helper_decl = "actual" -%}
+{%- else -%}
+{%-     let helper_decl = "" -%}
+{%- endif -%}
+{%- for meth in methods %}
+
+{% call value_method_helper_signature(helper_decl, meth, receiver) %} {% call func_body(meth, 0) %}
+{%- endfor %}
+{%- endmacro %}
+
+{#- The definitions of the helpers in the stub code. -#}
+{%- macro value_method_helper_stubs(methods, receiver) %}
+{%- for meth in methods %}
+
+{% call value_method_helper_signature("actual", meth, receiver) %} {
+    TODO()
+}
+{%- endfor %}
+{%- endmacro %}
 
 {%- macro func_decl_with_stub(func_decl, callable, indent) %}
                         {%- call docstring(callable, indent) %}
@@ -178,6 +261,13 @@
 {%-         endmatch %}
 {%-     endif %}
 {%-     if !loop.last %}, {% endif -%}
+{%- endfor %}
+{%- endmacro %}
+
+{#- The argument names of `func`, to pass its arguments on to another function. -#}
+{%- macro arg_names(func) %}
+{%- for arg in func.arguments() -%}
+{{ arg.name()|var_name }}{% if !loop.last %}, {% endif -%}
 {%- endfor %}
 {%- endmacro %}
 

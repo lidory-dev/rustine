@@ -26,3 +26,4 @@
         {%- endfor %}
     }
 }
+{%- call kt::value_method_helper_actuals(rec.methods(), type_name) %}

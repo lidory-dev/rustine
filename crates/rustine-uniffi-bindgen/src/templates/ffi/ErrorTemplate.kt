@@ -62,3 +62,4 @@
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
+{%- call kt::value_method_helper_actuals(e.methods(), type_name) %}

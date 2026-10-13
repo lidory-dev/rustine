@@ -25,9 +25,19 @@
         {%- call kt::destroy_fields(rec, 8) %}
     }
     {%- endif %}
+    {%- for meth in rec.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
+    {%- endfor %}
     {{ visibility() }}companion object
 }
 {%- else -%}
 {%- call kt::docstring(rec, 0) %}
 {{ visibility() }}{% if config.use_data_objects() %}data {% endif %}object {{ type_name }}
+{%- if !rec.methods().is_empty() %} {
+    {%- for meth in rec.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
+    {%- endfor %}
+}
 {%- endif %}
+{%- endif %}
+{%- call kt::value_method_helper_expects(rec.methods(), type_name) %}

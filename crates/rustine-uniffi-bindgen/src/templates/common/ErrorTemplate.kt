@@ -37,5 +37,10 @@
         {%- endif %}
     }
     {% endfor %}
+    {%- for meth in e.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
+    {%- endfor %}
 }
 {%- endif %}
+{#- `check_value_type_members()` rejects methods on flat errors. #}
+{%- call kt::value_method_helper_expects(e.methods(), type_name) %}

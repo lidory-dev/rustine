@@ -286,6 +286,7 @@ pub fn generate_bindings(
     ci: &ComponentInterface,
 ) -> Result<MultiplatformBindings> {
     check_borrowed_bytes_arguments(ci)?;
+    check_value_type_members(ci)?;
 
     let common = CommonKotlinWrapper::new("common", Some(Visibility::Public), config.clone(), ci)
         .context("failed to create a common binding generator")?
@@ -396,6 +397,16 @@ fn check_borrowed_bytes_arguments(ci: &ComponentInterface) -> Result<()> {
     for cbi in ci.callback_interface_definitions() {
         for meth in cbi.methods() {
             check(meth, &format!("{}::{}", cbi.name(), meth.name()), true)?;
+        }
+    }
+    for rec in ci.record_definitions() {
+        for meth in rec.methods() {
+            check(meth, &format!("{}::{}", rec.name(), meth.name()), false)?;
+        }
+    }
+    for e in ci.enum_definitions() {
+        for meth in e.methods() {
+            check(meth, &format!("{}::{}", e.name(), meth.name()), false)?;
         }
     }
     Ok(())
@@ -667,6 +678,27 @@ fn object_impl_name(ci: &ComponentInterface, obj: &Object) -> String {
     } else {
         class_name
     }
+}
+
+/// Fail for methods of records, enums and errors that the bindings can't render.
+///
+/// Flat errors can't be lowered back to Rust, so they can't be the receiver of a method. Upstream
+/// drops their methods silently.
+fn check_value_type_members(ci: &ComponentInterface) -> Result<()> {
+    for e in ci.enum_definitions() {
+        if !e.is_flat() || !ci.is_name_used_as_error(e.name()) {
+            continue;
+        }
+        if let Some(meth) = e.methods().first() {
+            bail!(
+                "Kotlin bindings do not support methods on flat error `{}`, such as `{}`, since \
+                 flat errors can't be passed back to Rust",
+                e.name(),
+                meth.name(),
+            );
+        }
+    }
+    Ok(())
 }
 
 #[derive(Clone)]
@@ -1159,6 +1191,16 @@ mod filters {
             .filter(|arg| arg.is_borrowed_bytes())
             .count();
         Ok(" }".repeat(count))
+    }
+
+    /// The name of the internal extension function that calls a method of a record, enum or
+    /// error into Rust.
+    ///
+    /// These types are plain Kotlin classes in common code, but the FFI calls exist only in the
+    /// platform code. Their members call these helpers instead, which are `expect` functions in
+    /// common code. The name comes from the FFI function, so it is unique in the package.
+    pub(super) fn value_method_helper(meth: &Method) -> Result<String, askama::Error> {
+        Ok(meth.ffi_func().name().to_lower_camel_case())
     }
 
     pub(super) fn lift_fn(as_ct: &impl AsCodeType) -> Result<String, askama::Error> {

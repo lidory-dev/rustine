@@ -72,3 +72,4 @@
 }
 
 {%- endif %}
+{%- call kt::value_method_helper_actuals(e.methods(), type_name) %}

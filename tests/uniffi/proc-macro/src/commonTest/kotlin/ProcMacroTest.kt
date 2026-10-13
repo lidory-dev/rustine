@@ -8,6 +8,7 @@ import io.kotest.assertions.throwables.*
 import io.kotest.matchers.*
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.types.shouldBeTypeOf
+import kotlinx.coroutines.test.runTest
 import proc_macro.*
 import kotlin.test.*
 
@@ -18,6 +19,22 @@ class ProcMacroTest {
         val one = makeOne(123)
         one.inner shouldBe 123
         oneInnerByRef(one) shouldBe 123
+        one.getInnerValue() shouldBe 123
+    }
+
+    @Test
+    fun testRecordMethods() = runTest {
+        val one = One(41)
+        one.addToInner() shouldBe 42
+        one.addToInner(2) shouldBe 43
+        one.checkedInnerValue() shouldBe 41
+        shouldThrow<BasicException.InvalidInput> {
+            One(-1).checkedInnerValue()
+        }
+        one.getInnerValueAsync() shouldBe 41
+        one.parsesWithDocAttribute()
+
+        makeRecordWithoutFields().name() shouldBe "RecordWithoutFields"
     }
 
     @Test
@@ -46,6 +63,8 @@ class ProcMacroTest {
     @Test
     fun testEnumIdentity() {
         enumIdentity(MaybeBool.TRUE) shouldBe MaybeBool.TRUE
+        MaybeBool.TRUE.next() shouldBe MaybeBool.FALSE
+        enumIdentity(MaybeBool.TRUE).next() shouldBe MaybeBool.FALSE
     }
 
     @Test
@@ -71,9 +90,11 @@ class ProcMacroTest {
 
     @Test
     fun testAlwaysFails() {
-        shouldThrow<BasicException> {
+        val e = shouldThrow<BasicException> {
             alwaysFails()
         }
+        e.isUnexpected() shouldBe false
+        BasicException.UnexpectedException("reason").isUnexpected() shouldBe true
     }
 
     @Test
@@ -166,6 +187,9 @@ class ProcMacroTest {
         getMixedEnum(null) shouldBe MixedEnum.Int(1)
         getMixedEnum(MixedEnum.None) shouldBe MixedEnum.None
         getMixedEnum(MixedEnum.String("hello")) shouldBe MixedEnum.String("hello")
+        getMixedEnum(MixedEnum.None).isNotNone() shouldBe false
+        MixedEnum.None.isNotNone() shouldBe false
+        MixedEnum.Int(1).isNotNone() shouldBe true
 
         val e = getMixedEnum(null)
         e.shouldBeTypeOf<MixedEnum.Int>()

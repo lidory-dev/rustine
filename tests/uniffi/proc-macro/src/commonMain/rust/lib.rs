@@ -8,9 +8,60 @@ mod callback_interface;
 
 use callback_interface::TestCallbackInterface;
 
+// Test proc-macro definitions in a submodule (#2728)
+mod one {
+    #[derive(uniffi::Record)]
+    pub struct One {
+        pub inner: i32,
+    }
+
+    #[uniffi::export]
+    impl One {
+        fn get_inner_value(&self) -> i32 {
+            self.inner
+        }
+
+        #[doc(hidden)]
+        fn parses_with_doc_attribute(&self) {}
+    }
+}
+pub use one::*;
+
+// Rustine: more kinds of methods on records, which upstream doesn't test.
+#[uniffi::export]
+impl One {
+    #[uniffi::method(default(other = 1))]
+    fn add_to_inner(&self, other: i32) -> i32 {
+        self.inner + other
+    }
+
+    fn checked_inner_value(&self) -> Result<i32, BasicError> {
+        if self.inner < 0 {
+            Err(BasicError::InvalidInput)
+        } else {
+            Ok(self.inner)
+        }
+    }
+
+    async fn get_inner_value_async(&self) -> i32 {
+        self.inner
+    }
+}
+
+// Rustine: a record without fields is a Kotlin object, which can have methods too.
 #[derive(uniffi::Record)]
-pub struct One {
-    inner: i32,
+pub struct RecordWithoutFields {}
+
+#[uniffi::export]
+impl RecordWithoutFields {
+    fn name(&self) -> String {
+        "RecordWithoutFields".to_string()
+    }
+}
+
+#[uniffi::export]
+fn make_record_without_fields() -> RecordWithoutFields {
+    RecordWithoutFields {}
 }
 
 #[uniffi::export]
@@ -227,6 +278,17 @@ pub enum MaybeBool {
     Uncertain,
 }
 
+#[uniffi::export]
+impl MaybeBool {
+    fn next(&self) -> Self {
+        match self {
+            MaybeBool::True => MaybeBool::False,
+            MaybeBool::False => MaybeBool::Uncertain,
+            MaybeBool::Uncertain => MaybeBool::True,
+        }
+    }
+}
+
 #[derive(uniffi::Enum)]
 pub enum MixedEnum {
     None,
@@ -235,6 +297,13 @@ pub enum MixedEnum {
     Both(String, i64),
     All { s: String, i: i64 },
     Vec(Vec<String>),
+}
+
+#[uniffi::export]
+impl MixedEnum {
+    fn is_not_none(&self) -> bool {
+        !matches!(self, Self::None)
+    }
 }
 
 #[uniffi::export]
@@ -262,6 +331,13 @@ pub enum BasicError {
     OsError,
     #[error("UnexpectedError")]
     UnexpectedError { reason: String },
+}
+
+#[uniffi::export]
+impl BasicError {
+    fn is_unexpected(&self) -> bool {
+        matches!(self, Self::UnexpectedError { .. })
+    }
 }
 
 #[derive(uniffi::Error, Debug)]

@@ -22,6 +22,14 @@
 {%- when Type::Object { module_path, name, imp } %}
 {% include "ObjectTemplate.kt" %}
 
+{%- when Type::Record { name, module_path } %}
+{%- let rec = ci.get_record_definition(name).unwrap() %}
+{%- call kt::value_method_helper_stubs(rec.methods(), type_name) %}
+
+{%- when Type::Enum { name, module_path } %}
+{%- let e = ci.get_enum_definition(name).unwrap() %}
+{%- call kt::value_method_helper_stubs(e.methods(), type_name) %}
+
 {%- else %}
 {%- endmatch %}
 {%- endfor %}

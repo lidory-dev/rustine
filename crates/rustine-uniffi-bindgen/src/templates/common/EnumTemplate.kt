@@ -19,6 +19,9 @@
     {%- call kt::docstring(variant, 4) %}
     {{ variant|variant_name(config) }}{% if loop.last %};{% else %},{% endif %}
     {%- endfor %}
+    {%- for meth in e.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
+    {%- endfor %}
     {{ visibility() }}companion object
 }
 {% when Some(variant_discr_type) %}
@@ -27,6 +30,9 @@
     {% for variant in e.variants() -%}
     {%- call kt::docstring(variant, 4) %}
     {{ variant|variant_name(config) }}({{ e|variant_discr_literal(loop.index0) }}){% if loop.last %};{% else %},{% endif %}
+    {%- endfor %}
+    {%- for meth in e.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
     {%- endfor %}
     {{ visibility() }}companion object
 }
@@ -74,6 +80,10 @@
     }
     {%- endif %}
     {% endfor %}
+    {%- for meth in e.methods() %}
+{% call kt::value_method_decl(meth, 4) %}
+    {%- endfor %}
 }
 
 {% endif %}
+{%- call kt::value_method_helper_expects(e.methods(), type_name) %}

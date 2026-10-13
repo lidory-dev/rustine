@@ -62,3 +62,73 @@ enum EnumWithVariousVariants {
         val3: String,
     },
 }
+
+// Methods on records, enums and errors, which are plain classes in common Kotlin code. The stubs
+// for the JS and Wasm targets must define them too.
+#[derive(uniffi::Record)]
+struct RecordWithMethods {
+    value: i32,
+}
+
+#[uniffi::export]
+impl RecordWithMethods {
+    fn doubled(&self) -> i32 {
+        self.value * 2
+    }
+
+    async fn doubled_async(&self) -> i32 {
+        self.value * 2
+    }
+}
+
+#[derive(uniffi::Enum)]
+enum FlatEnumWithMethods {
+    First,
+    Second,
+}
+
+#[uniffi::export]
+impl FlatEnumWithMethods {
+    fn other(&self) -> FlatEnumWithMethods {
+        match self {
+            Self::First => Self::Second,
+            Self::Second => Self::First,
+        }
+    }
+}
+
+#[derive(uniffi::Enum)]
+enum EnumWithMethods {
+    Empty,
+    Value(i32),
+}
+
+#[uniffi::export]
+impl EnumWithMethods {
+    fn value_or(&self, default: i32) -> i32 {
+        match self {
+            Self::Empty => default,
+            Self::Value(value) => *value,
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+enum MethodsError {
+    #[error("code {code}")]
+    Code { code: i32 },
+}
+
+#[uniffi::export]
+impl MethodsError {
+    fn code(&self) -> i32 {
+        match self {
+            Self::Code { code } => *code,
+        }
+    }
+}
+
+#[uniffi::export]
+fn throw_methods_error(code: i32) -> Result<(), MethodsError> {
+    Err(MethodsError::Code { code })
+}
