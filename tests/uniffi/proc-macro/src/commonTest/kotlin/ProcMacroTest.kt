@@ -86,6 +86,13 @@ class ProcMacroTest {
     }
 
     @Test
+    fun testHashSet() {
+        makeHashSet("hello") shouldBe setOf("hello")
+        val hashSet: Set<String> = setOf("a", "b", "c")
+        returnHashSet(hashSet) shouldBe hashSet
+    }
+
+    @Test
     fun testJoin() {
         join(listOf("a", "b", "c"), ":") shouldBe "a:b:c"
     }
@@ -123,14 +130,51 @@ class ProcMacroTest {
         recordWithDefaults.vec shouldBe beEmpty<Boolean>()
         recordWithDefaults.optVec shouldBe null
         recordWithDefaults.optInteger shouldBe 42
+        recordWithDefaults.customInteger shouldBe 42
+        recordWithDefaults.booleanDefault shouldBe false
+        recordWithDefaults.stringDefault shouldBe ""
+        recordWithDefaults.optDefault shouldBe null
+        recordWithDefaults.sub.int32 shouldBe 0
 
         doubleWithDefault() shouldBe 42
+        sumWithDefault(2) shouldBe 2
+        sumWithDefault(2, 1) shouldBe 3
     }
-    
+
+    @Test
+    fun testRecordWithImplicitDefaults() {
+        val recordWithImplicitDefaults = RecordWithImplicitDefaults()
+        recordWithImplicitDefaults.boolean shouldBe false
+        recordWithImplicitDefaults.int8 shouldBe 0.toByte()
+        recordWithImplicitDefaults.int16 shouldBe 0.toShort()
+        recordWithImplicitDefaults.int32 shouldBe 0
+        recordWithImplicitDefaults.int64 shouldBe 0L
+        recordWithImplicitDefaults.uint8 shouldBe 0U.toUByte()
+        recordWithImplicitDefaults.uint16 shouldBe 0U.toUShort()
+        recordWithImplicitDefaults.uint32 shouldBe 0U
+        recordWithImplicitDefaults.uint64 shouldBe 0UL
+        recordWithImplicitDefaults.afloat shouldBe 0f
+        recordWithImplicitDefaults.adouble shouldBe 0.0
+        recordWithImplicitDefaults.vec shouldBe beEmpty<Boolean>()
+        recordWithImplicitDefaults.map shouldBe emptyMap<String, String>()
+        recordWithImplicitDefaults.set shouldBe emptySet<String>()
+        recordWithImplicitDefaults.someBytes.size shouldBe 0
+        recordWithImplicitDefaults.optInt32 shouldBe null
+        recordWithImplicitDefaults.`object` shouldBe Object()
+        recordWithImplicitDefaults.customInteger shouldBe 0
+    }
+
     @Test
     fun testObjectWithDefaults() {
         val objWithDefaults = ObjectWithDefaults()
         objWithDefaults.addToNum() shouldBe 42
+        objWithDefaults.addToImplicitNum() shouldBe 30
+        objWithDefaults.addToImplicitNum(1) shouldBe 31
+    }
+
+    @Test
+    fun testReprU8() {
+        ReprU8.entries.map { it.value } shouldBe listOf<UByte>(1u, 3u, 4u)
     }
 
     @Test
