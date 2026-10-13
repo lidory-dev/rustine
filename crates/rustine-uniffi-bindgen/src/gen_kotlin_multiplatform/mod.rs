@@ -135,6 +135,14 @@ pub struct Config {
     /// `"MyObject.new"`.
     #[serde(default)]
     pub(super) exclude: Vec<String>,
+    /// New names for the items of the crate, keyed by their UniFFI names, such as `"MyRecord"`,
+    /// `"MyRecord.field"`, `"MyEnum.Variant"`, `"my_function.arg"` or `"MyObject.method"`.
+    #[serde(default)]
+    pub(super) rename: toml::Table,
+    /// Records whose fields stay `var` when `generate_immutable_records` is `true`, by their names
+    /// in the bindings, after `rename`.
+    #[serde(default)]
+    mutable_records: HashSet<String>,
 }
 
 // TODO: Make this public in 0.4.0
@@ -197,6 +205,11 @@ impl Config {
     /// Whether to generate immutable records (`val` instead of `var`)
     pub fn generate_immutable_records(&self) -> bool {
         self.generate_immutable_records.unwrap_or(false)
+    }
+
+    /// Whether the fields of the record named `name` are `val` instead of `var`.
+    pub fn is_record_immutable(&self, name: &str) -> bool {
+        self.generate_immutable_records() && !self.mutable_records.contains(name)
     }
 
     fn kotlin_version_is_at_least(&self, major: usize, minor: usize, patch: usize) -> bool {

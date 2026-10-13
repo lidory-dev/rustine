@@ -11,7 +11,7 @@
 {{ visibility() }}data class {{ type_name }} (
     {%- for field in rec.fields() %}
     {%- call kt::docstring(field, 4) %}
-    {% if config.generate_immutable_records() %}val{% else %}var{% endif %} {{ field.name()|var_name }}: {{ field|type_name(ci) -}}
+    {% if config.is_record_immutable(rec.name()) %}val{% else %}var{% endif %} {{ field.name()|var_name }}: {{ field|type_name(ci) -}}
     {%- match field.default_value() %}
         {%- when Some with(default) %} = {{ default|render_default(field, ci, config) }}
         {%- else %}

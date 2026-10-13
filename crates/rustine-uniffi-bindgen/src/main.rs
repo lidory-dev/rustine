@@ -28,6 +28,8 @@ struct Cli {
 
     /// Path to the optional uniffi config file.
     /// If not provided, uniffi-bindgen will try to guess it from the UDL's file location.
+    /// When `--library` is passed, its `exclude`, `rename` and `mutable_records` keys only apply
+    /// to the crate selected with `--crate`, or to the only crate of the library.
     #[clap(long, short)]
     config: Option<Utf8PathBuf>,
 
@@ -73,6 +75,10 @@ where
         .ok_or_else(|| anyhow::Error::msg(format!("invalid key=value format: '{s}'")))?;
     Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
+
+/// The keys of the flat config that name the items of a single crate. In library mode, `--config`
+/// only sets them for the main crate.
+const CRATE_ITEM_KEYS: &[&str] = &["exclude", "rename", "mutable_records"];
 
 /// Finds crate roots, configs and UDL files from the command line options.
 ///
@@ -283,7 +289,9 @@ fn main() -> anyhow::Result<()> {
     });
     let loader = BindgenLoader::new(paths, GlobalConfig::default());
 
-    let (metadata, settings) = match udl_crate_name {
+    // `main_crate` is the crate that the keys of `--config` naming the items of a single crate
+    // apply to (see `CRATE_ITEM_KEYS`).
+    let (metadata, settings, main_crate) = match udl_crate_name {
         None => {
             if lib_file.is_some() {
                 bail!("--lib-file is not compatible with --library.");
@@ -299,13 +307,18 @@ fn main() -> anyhow::Result<()> {
                     bail!("Crate {crate_name} not found in {source}");
                 }
             }
+            // The crate selected with `--crate`, or the only crate of the library.
+            let main_crate = crate_name.clone().or_else(|| match metadata.len() {
+                1 => metadata.keys().next().cloned(),
+                _ => None,
+            });
             let settings = GenerationSettings {
                 out_dir,
                 try_format_code,
                 cdylib: calc_cdylib_name(&source).map(ToOwned::to_owned),
                 crate_filter: crate_name,
             };
-            (metadata, settings)
+            (metadata, settings, main_crate)
         }
         Some(udl_crate_name) => {
             let metadata = load_udl_metadata(&source, &udl_crate_name, lib_file.as_deref())?;
@@ -330,7 +343,7 @@ fn main() -> anyhow::Result<()> {
                     .map(ToOwned::to_owned),
                 crate_filter: None,
             };
-            (metadata, settings)
+            (metadata, settings, Some(udl_crate_name))
         }
     };
 
@@ -338,17 +351,29 @@ fn main() -> anyhow::Result<()> {
 
     // The `--config` file is a flat Rustine config. It is merged over the config of every crate.
     // Like UniFFI's deprecated entry points did, ignore it when it does not exist.
-    let mut config_override = config
+    let config_override = config
         .as_deref()
         .filter(|path| path.exists())
         .map(load_toml_file)
         .transpose()?;
-    // `exclude` names the items of a single crate, so it only comes from the config of that crate
-    // when a library holds several of them. The Gradle plugin passes the config of the crate it
-    // generates bindings for with `--crate-configs` too.
-    if library_mode {
-        if let Some(config_override) = &mut config_override {
-            config_override.remove("exclude");
+    // The keys naming the items of a single crate are only merged over the config of the main
+    // crate. Other crates of a library take them from their own config, which the Gradle plugin
+    // passes with `--crate-configs`, so that they don't rename or exclude items of the wrong crate.
+    let other_crates_override = config_override.clone().map(|mut config_override| {
+        config_override.retain(|key, _| !CRATE_ITEM_KEYS.contains(&key));
+        config_override
+    });
+    if main_crate.is_none() {
+        if let Some(key) = config_override
+            .iter()
+            .flat_map(|config_override| config_override.keys())
+            .find(|key| CRATE_ITEM_KEYS.contains(&key.as_str()))
+        {
+            bail!(
+                "`{key}` in --config names the items of a single crate, but {source} contains \
+                 several crates. Pass --crate to choose the crate, or set `{key}` in the config \
+                 of the crate with --crate-configs."
+            );
         }
     }
     let binding_generator = KotlinBindingGenerator;
@@ -364,7 +389,12 @@ fn main() -> anyhow::Result<()> {
         let toml::Value::Table(mut table) = toml else {
             bail!("the config of {} is not a table", ci.crate_name());
         };
-        if let Some(config_override) = &config_override {
+        let config_override = if main_crate.as_deref() == Some(ci.crate_name()) {
+            &config_override
+        } else {
+            &other_crates_override
+        };
+        if let Some(config_override) = config_override {
             uniffi_bindgen::merge_toml(&mut table, config_override.clone())
                 .context("override config")?;
         }

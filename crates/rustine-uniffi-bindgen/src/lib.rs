@@ -14,6 +14,7 @@ use uniffi_bindgen::{Component, ComponentInterface};
 
 mod gen_kotlin_multiplatform;
 use gen_kotlin_multiplatform::{generate_bindings, Config};
+mod renames;
 
 /// Settings for [KotlinBindingGenerator::generate].
 #[derive(Debug, Default)]
@@ -51,7 +52,7 @@ impl KotlinBindingGenerator {
         mut components: Vec<Component<Config>>,
         settings: &GenerationSettings,
     ) -> Result<()> {
-        self.update_component_configs(settings, &mut components);
+        self.update_component_configs(settings, &mut components)?;
 
         // Check after the exclusions, so that excluding an async primary constructor works.
         check_async_primary_constructors(&components)?;
@@ -89,11 +90,13 @@ impl KotlinBindingGenerator {
         &self,
         settings: &GenerationSettings,
         components: &mut [Component<Config>],
-    ) {
-        // Remove excluded items, before anything looks at them.
+    ) -> Result<()> {
+        // Remove excluded items, before anything looks at them, then rename items. Like upstream,
+        // this happens before the FFI functions are derived.
         for c in &mut *components {
             apply_exclusions(&mut c.ci, &c.config.exclude);
         }
+        renames::apply_renames(components)?;
         for c in &mut *components {
             c.config
                 .package_name
@@ -122,6 +125,7 @@ impl KotlinBindingGenerator {
                 }
             }
         }
+        Ok(())
     }
 
     fn write_bindings(
@@ -236,7 +240,8 @@ mod tests {
             .unwrap();
         let mut components = vec![Component { ci, config }];
         KotlinBindingGenerator
-            .update_component_configs(&GenerationSettings::default(), &mut components);
+            .update_component_configs(&GenerationSettings::default(), &mut components)
+            .unwrap();
         components
     }
 
