@@ -723,7 +723,7 @@ impl TraitImpls {
     }
 
     /// Keep `toString()` only, for types whose Kotlin class can't override the others.
-    fn to_string_only(self) -> Self {
+    fn only_to_string(self) -> Self {
         Self {
             to_string: self.to_string,
             ..Self::default()
@@ -773,7 +773,7 @@ fn record_trait_impls(rec: &Record) -> TraitImpls {
     if rec.has_fields() {
         trait_impls
     } else {
-        trait_impls.to_string_only()
+        trait_impls.only_to_string()
     }
 }
 
@@ -786,7 +786,7 @@ fn enum_trait_impls(ci: &ComponentInterface, e: &Enum) -> TraitImpls {
     let trait_impls = TraitImpls::new(e.uniffi_trait_methods());
     match (e.is_flat(), ci.is_name_used_as_error(e.name())) {
         (false, _) => trait_impls,
-        (true, false) => trait_impls.to_string_only(),
+        (true, false) => trait_impls.only_to_string(),
         (true, true) => TraitImpls::default(),
     }
 }
