@@ -20,8 +20,11 @@ import coverall.OtherError
 import coverall.Patch
 import coverall.Repair
 import coverall.RootException
+import coverall.StringUtilObject
 import coverall.ThreadsafeCounter
 import coverall.ancestorNames
+import coverall.asyncBool
+import coverall.concatWithStringUtil
 import coverall.createNoneDict
 import coverall.createSomeDict
 import coverall.getComplexError
@@ -516,6 +519,22 @@ class CoverallTest {
             traits[0].concat("cow", "boy") shouldBe "cowboy"
             traits[1].concat("cow", "boy") shouldBe "cowboy"
         }
+
+        concatWithStringUtil(getStringUtilTraits()[0], "cow", "boy") shouldBe "cowboy"
+
+        // `StringUtilObject` implements the `StringUtil` trait, but it isn't a `StringUtil`, the
+        // class of the trait's Rust implementations, so passing it to `concatWithStringUtil`
+        // doesn't compile. Upstream tests that languages without static types fail without
+        // crashing (mozilla/uniffi-rs#2649).
+        StringUtilObject("--").use { stringUtil ->
+            stringUtil.concat("cow", "boy") shouldBe "cow--boy"
+        }
+    }
+
+    @Test
+    fun asyncFunction() = runTest {
+        asyncBool(true) shouldBe true
+        asyncBool(false) shouldBe false
     }
 
     // This tests that the UniFFI-generated scaffolding doesn't introduce any unexpected locking.
