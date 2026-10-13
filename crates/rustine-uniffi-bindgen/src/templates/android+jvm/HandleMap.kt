@@ -1,16 +1,30 @@
 
+// Initial value and increment amount for handles.
+// These ensure that Kotlin-generated handles always have the lowest bit set.
+private const val UNIFFI_HANDLEMAP_INITIAL = 1L
+private const val UNIFFI_HANDLEMAP_DELTA = 2L
+
+// Map handles to objects
+//
+// This is used to pass an opaque 64-bit handle representing a foreign object to the Rust code.
 internal class UniffiHandleMap<T: Any> {
     private val map = java.util.concurrent.ConcurrentHashMap<Long, T>()
-    private val counter: kotlinx.atomicfu.AtomicLong = kotlinx.atomicfu.atomic(1L)
+    private val counter: kotlinx.atomicfu.AtomicLong = kotlinx.atomicfu.atomic(UNIFFI_HANDLEMAP_INITIAL)
 
     internal val size: Int
         get() = map.size
 
     // Insert a new object into the handle map and get a handle for it
     internal fun insert(obj: T): Long {
-        val handle = counter.getAndAdd(1)
+        val handle = counter.getAndAdd(UNIFFI_HANDLEMAP_DELTA)
         map[handle] = obj
         return handle
+    }
+
+    // Clone a handle, creating a new one
+    internal fun clone(handle: Long): Long {
+        val obj = map[handle] ?: throw InternalException("UniffiHandleMap.clone: Invalid handle")
+        return insert(obj)
     }
 
     // Get an object from the handle map

@@ -13,13 +13,14 @@
 {%- endmacro %}
 
 {%- macro to_ffi_call(func, indent) -%}
-                        {%- if func.self_type().is_some() -%}
-                        callWithPointer {
+                        {%- match func.self_type() -%}
+                        {%- when Some(Type::Object { .. }) -%}
+                        callWithHandle {
 {{ " "|repeat(indent) }}    {% call to_raw_ffi_call(func, indent + 4) %}
 {{ " "|repeat(indent) }}{{ '}' }}
                         {%- else -%}
                         {%- call to_raw_ffi_call(func, indent) -%}
-                        {%- endif -%}
+                        {%- endmatch -%}
 {%- endmacro %}
 
 {%- macro to_raw_ffi_call(func, indent) -%}
@@ -30,9 +31,13 @@
                         uniffiRustCall
                         {%- endmatch %} { uniffiRustCallStatus ->
 {{ " "|repeat(indent) }}    UniffiLib.{{ func.ffi_func().name() }}(
-                                {%- if func.self_type().is_some() %}
+                                {%- match func.self_type() %}
+                                {%- when Some(Type::Object { .. }) %}
 {{ " "|repeat(indent) }}        it,
-                                {%- endif -%}
+                                {%- when Some(t) %}
+{{ " "|repeat(indent) }}        {{ t|lower_fn }}(this),
+                                {%- when None %}
+                                {%- endmatch -%}
                                 {%- call arg_list_lowered(func, indent + 8) %}
 {{ " "|repeat(indent) }}        uniffiRustCallStatus,
 {{ " "|repeat(indent) }}    )
@@ -49,7 +54,7 @@
 {{ " "|repeat(indent) }}{{ visibility() }}{% if func_decl.len() != 0 -%}{{ func_decl }} {% endif -%}
                         {%- if callable.is_async() -%}suspend {% endif -%}
                         fun {{ callable.name()|fn_name }}(
-                            {%- call arg_list(callable, is_decl_override || !callable.self_type().is_some()) -%}
+                            {%- call arg_list(callable, is_decl_override || callable.self_type().is_none()) -%}
                         )
                         {%- match callable.return_type() -%}
                         {%-     when Some(return_type) %}: {{ return_type|type_name(ci) -}}
@@ -103,18 +108,24 @@
 
 {%- macro call_async(callable, indent) -%}
                         uniffiRustCallAsync(
-                            {%- if callable.self_type().is_some() %}
-{{ " "|repeat(indent) }}    callWithPointer { thisPtr ->
+                            {%- match callable.self_type() %}
+                            {%- when Some(Type::Object { .. }) %}
+{{ " "|repeat(indent) }}    callWithHandle { uniffiHandle ->
 {{ " "|repeat(indent) }}        UniffiLib.{{ callable.ffi_func().name() }}(
-{{ " "|repeat(indent) }}            thisPtr,
+{{ " "|repeat(indent) }}            uniffiHandle,
                                     {%- call arg_list_lowered(callable, indent + 12) %}
 {{ " "|repeat(indent) }}        )
 {{ " "|repeat(indent) }}    },
-                            {%- else %}
+                            {%- when Some(t) %}
+{{ " "|repeat(indent) }}    UniffiLib.{{ callable.ffi_func().name() }}(
+{{ " "|repeat(indent) }}        {{ t|lower_fn }}(this),
+                                {%- call arg_list_lowered(callable, indent + 8) %}
+{{ " "|repeat(indent) }}    ),
+                            {%- when None %}
 {{ " "|repeat(indent) }}    UniffiLib.{{ callable.ffi_func().name() }}(
                                 {%- call arg_list_lowered(callable, indent + 8) %}
 {{ " "|repeat(indent) }}    ),
-                            {%- endif %}
+                            {%- endmatch %}
 {{ " "|repeat(indent) }}    {{ callable|async_poll(ci) }},
 {{ " "|repeat(indent) }}    {{ callable|async_complete(ci) }},
 {{ " "|repeat(indent) }}    {{ callable|async_free(ci) }},

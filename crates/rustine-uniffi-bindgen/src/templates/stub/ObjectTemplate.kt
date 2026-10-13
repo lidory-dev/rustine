@@ -22,7 +22,7 @@
      * attempt to actually use an object constructed this way will fail as there is no
      * connected Rust object.
      */
-    {{ visibility() }}actual constructor(noPointer: NoPointer)
+    {{ visibility() }}actual constructor(noHandle: NoHandle)
 
     {%- match obj.primary_constructor() %}
     {%- when Some(cons) %}

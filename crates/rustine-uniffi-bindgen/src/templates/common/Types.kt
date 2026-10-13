@@ -70,8 +70,19 @@
     }
 }
 
-/** Used to instantiate an interface without an actual pointer, for fakes in tests, mostly. */
-{{ visibility() }}object NoPointer
+/**
+ * Placeholder object used to signal that we're constructing an interface with a FFI handle.
+ *
+ * This is the first argument for interface constructors that input a raw handle. It exists so
+ * that we can avoid signature conflicts when an interface has a regular constructor that inputs a
+ * Long.
+ *
+ * @suppress
+ */
+{{ visibility() }}object UniffiWithHandle
+
+/** Used to instantiate an interface without an actual handle, for fakes in tests, mostly. */
+{{ visibility() }}object NoHandle
 
 {%- for type_ in ci.iter_local_types() %}
 {%- let type_name = type_|type_name(ci) %}

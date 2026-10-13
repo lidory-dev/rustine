@@ -61,7 +61,7 @@ uniffi {
 
 When you use Kotlin targets not supported by the UniFFI plugin like `js()`, `wasmJs()`, or
 `wasmWasi()`, the UniFFI plugin generates stubs. This ensures that the Kotlin code is compiled
-successfully for all platforms. However, all generated functions except for `RustObject(NoPointer)`
+successfully for all platforms. However, all generated functions except for `RustObject(NoHandle)`
 constructors will throw `kotlin.NotImplementedError`. We are trying to support as many platforms as
 possible. If you need to target WASM/JS, please use these stubs until WASM/JS support is released.
 

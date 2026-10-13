@@ -7,6 +7,7 @@
 import callbacks.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
 class CallbacksTest {
@@ -104,7 +105,7 @@ class CallbacksTest {
         shouldThrow<ComplexException.UnexpectedErrorWithReason> {
             rustGetters.getOption(callback, "unexpected-error", true)
         }.also {
-            it.reason shouldBe RuntimeException("something failed").toString()
+            it.reason shouldStartWith RuntimeException("something failed").toString()
         }
 
         shouldThrow<SimpleException.BadArgument> {

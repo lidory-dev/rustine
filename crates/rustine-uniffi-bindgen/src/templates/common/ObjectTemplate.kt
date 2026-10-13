@@ -33,7 +33,7 @@
     {%- when None %}
     @Suppress("ConvertSecondaryConstructorToPrimary")
     {%- endmatch %}
-    {{ visibility() }}constructor(noPointer: NoPointer)
+    {{ visibility() }}constructor(noHandle: NoHandle)
 
     {% match obj.primary_constructor() -%}
     {%- when Some(cons) -%}

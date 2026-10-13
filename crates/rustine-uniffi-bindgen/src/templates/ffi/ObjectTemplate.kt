@@ -31,9 +31,13 @@
 {%- endfor %} {
 {%- endif %}
 
-    {{ visibility() }}constructor(pointer: Pointer) {
-        this.pointer = pointer
-        this.cleanable = UniffiLib.CLEANER.register(this, UniffiPointerDestroyer(pointer))
+    /**
+     * @suppress
+     */
+    @Suppress("UNUSED_PARAMETER")
+    {{ visibility() }}constructor(withHandle: UniffiWithHandle, handle: Long) {
+        this.handle = handle
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiHandleDestroyer(handle))
     }
 
     /**
@@ -41,9 +45,10 @@
      * attempt to actually use an object constructed this way will fail as there is no
      * connected Rust object.
      */
-    {{ visibility() }}{% call emit_actual %}constructor(noPointer: NoPointer) {
-        this.pointer = null
-        this.cleanable = UniffiLib.CLEANER.register(this, UniffiPointerDestroyer(null))
+    @Suppress("UNUSED_PARAMETER")
+    {{ visibility() }}{% call emit_actual %}constructor(noHandle: NoHandle) {
+        this.handle = 0L
+        this.cleanable = null
     }
 
     {%- match obj.primary_constructor() %}
@@ -53,14 +58,15 @@
     {%-     else %}
     {%- call kt::docstring(cons, 4) %}
     {{ visibility() }}{% call emit_actual %}constructor({% call kt::arg_list(cons, false) -%}) : this(
-        {% call kt::to_ffi_call(cons, 8) %}
+        UniffiWithHandle,
+        {% call kt::to_ffi_call(cons, 8) %},
     )
     {%-     endif %}
     {%- when None %}
     {%- endmatch %}
 
-    protected val pointer: Pointer?
-    protected val cleanable: UniffiCleaner.Cleanable
+    protected val handle: Long
+    protected val cleanable: UniffiCleaner.Cleanable?
 
     private val wasDestroyed: kotlinx.atomicfu.AtomicBoolean = kotlinx.atomicfu.atomic(false)
     private val callCounter: kotlinx.atomicfu.AtomicLong = kotlinx.atomicfu.atomic(1L)
@@ -82,7 +88,7 @@
         if (this.wasDestroyed.compareAndSet(false, true)) {
             // This decrement always matches the initial count of 1 given at creation time.
             if (this.callCounter.decrementAndGet() == 0L) {
-                cleanable.clean()
+                cleanable?.clean()
             }
         }
     }
@@ -91,7 +97,7 @@
         synchronized { this.destroy() }
     }
 
-    internal inline fun <R> callWithPointer(block: (ptr: Pointer) -> R): R {
+    internal inline fun <R> callWithHandle(block: (handle: Long) -> R): R {
         // Check and increment the call counter, to keep the object alive.
         // This needs a compare-and-set retry loop in case of concurrent updates.
         do {
@@ -103,34 +109,49 @@
                 throw IllegalStateException("${this::class::simpleName} call counter would overflow")
             }
         } while (! this.callCounter.compareAndSet(c, c + 1L))
-        // Now we can safely do the method call without the pointer being freed concurrently.
+        // Now we can safely do the method call without the handle being freed concurrently.
         try {
-            return block(this.uniffiClonePointer())
+            return block(this.uniffiCloneHandle())
         } finally {
             // This decrement always matches the increment we performed above.
             if (this.callCounter.decrementAndGet() == 0L) {
-                cleanable.clean()
+                cleanable?.clean()
             }
         }
     }
 
     // Use a static inner class instead of a closure so as not to accidentally
     // capture `this` as part of the cleanable's action.
-    private class UniffiPointerDestroyer(private val pointer: Pointer?) : Disposable {
+    private class UniffiHandleDestroyer(private val handle: Long) : Disposable {
         override fun destroy() {
-            pointer?.let { ptr ->
-                uniffiRustCall { status ->
-                    UniffiLib.{{ obj.ffi_object_free().name() }}(ptr, status)
-                }
+            if (handle == 0L) {
+                // Fake object created with `NoHandle`, don't try to free.
+                return
+            }
+            uniffiRustCall { status ->
+                UniffiLib.{{ obj.ffi_object_free().name() }}(handle, status)
             }
         }
     }
 
-    {{ visibility() }}fun uniffiClonePointer(): Pointer {
+    /**
+     * @suppress
+     */
+    {{ visibility() }}fun uniffiCloneHandle(): Long {
+        if (handle == 0L) {
+            throw InternalException("uniffiCloneHandle() called on NoHandle object")
+        }
         return uniffiRustCall { status ->
-            UniffiLib.{{ obj.ffi_object_clone().name() }}(pointer!!, status)
-        }!!
+            UniffiLib.{{ obj.ffi_object_clone().name() }}(handle, status)
+        }
     }
+    {%- if obj.has_callback_interface() %}
+
+    // Whether a Rust object backs this instance. Fake objects created with `NoHandle` are lowered
+    // like Kotlin implementations of the interface instead.
+    internal val uniffiHasRustHandle: Boolean
+        get() = handle != 0L
+    {%- endif %}
 
     {% for meth in obj.methods() -%}
     {%- call kt::func_decl_with_body(actual_override, meth, 4) -%}
@@ -190,34 +211,50 @@
 {%- endif -%}
 {%- endmacro %}
 
-{{ visibility() }}object {{ ffi_converter_name }}: FfiConverter<{%- call converter_type(obj) -%}, Pointer> {
+{{ visibility() }}object {{ ffi_converter_name }}: FfiConverter<{%- call converter_type(obj) -%}, Long> {
     {%- if obj.has_callback_interface() %}
     internal val handleMap = UniffiHandleMap<{%- call converter_type(obj) -%}>()
+
+    override fun lower(value: {% call converter_type(obj) %}): Long {
+        // Upstream checks `value is {{ impl_class_name }}` only. Fake objects created with `NoHandle`
+        // are lowered like Kotlin implementations instead, so they keep working.
+        return if (value is {{ impl_class_name }} && value.uniffiHasRustHandle) {
+            // Rust-implemented object. Clone the handle and return it.
+            value.uniffiCloneHandle()
+        } else {
+            // Kotlin object, generate a new vtable handle and return that.
+            handleMap.insert(value)
+        }
+    }
+
+    override fun lift(value: Long): {% call converter_type(obj) %} {
+        return if ((value and 1L) == 0L) {
+            // Rust-generated handle, construct a new class that uses the handle to implement the
+            // interface.
+            {{ impl_class_name }}(UniffiWithHandle, value)
+        } else {
+            // Kotlin-generated handle, get the object from the handle map.
+            handleMap.remove(value)
+        }
+    }
+    {%- else %}
+
+    override fun lower(value: {% call converter_type(obj) %}): Long {
+        return value.uniffiCloneHandle()
+    }
+
+    override fun lift(value: Long): {% call converter_type(obj) %} {
+        return {{ impl_class_name }}(UniffiWithHandle, value)
+    }
     {%- endif %}
 
-    override fun lower(value: {% call converter_type(obj) %}): Pointer {
-        {%- if obj.has_callback_interface() %}
-        return handleMap.insert(value).toPointer()
-        {%- else %}
-        return value.uniffiClonePointer()
-        {%- endif %}
-    }
-
-    override fun lift(value: Pointer): {% call converter_type(obj) %} {
-        return {{ impl_class_name }}(value)
-    }
-
     override fun read(buf: ByteBuffer): {% call converter_type(obj) %} {
-        // The Rust code always writes pointers as 8 bytes, and will
-        // fail to compile if they don't fit.
-        return lift(buf.getLong().toPointer())
+        return lift(buf.getLong())
     }
 
     override fun allocationSize(value: {% call converter_type(obj) %}): ULong = 8UL
 
     override fun write(value: {% call converter_type(obj) %}, buf: ByteBuffer) {
-        // The Rust code always expects pointers written as 8 bytes,
-        // and will fail to compile if they don't fit.
-        buf.putLong(lower(value).toLong())
+        buf.putLong(lower(value))
     }
 }

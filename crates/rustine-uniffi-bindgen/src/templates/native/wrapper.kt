@@ -41,7 +41,6 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.plus
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readValue
-import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.usePinned
 import kotlin.experimental.ExperimentalNativeApi
 import kotlinx.cinterop.nativeHeap
