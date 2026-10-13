@@ -49,6 +49,7 @@ if (ext.propertyIsTrue("rustine.projects.uniffiTests")) {
     include(":tests:uniffi:docstring")
     include(":tests:uniffi:docstring-proc-macro")
     include(":tests:uniffi:dynamic-library-dependencies")
+    include(":tests:uniffi:enum-payload-clash")
     include(":tests:uniffi:enum-types")
     include(":tests:uniffi:error-types")
     include(":tests:uniffi:keywords")

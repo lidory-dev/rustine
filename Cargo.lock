@@ -2206,6 +2206,14 @@ name = "rustine-fixture-dynamic-library-dependencies-the-dependency"
 version = "0.1.0"
 
 [[package]]
+name = "rustine-fixture-enum-payload-clash"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.58",
+ "uniffi",
+]
+
+[[package]]
 name = "rustine-fixture-enum-types"
 version = "0.1.0"
 dependencies = [

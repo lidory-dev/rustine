@@ -31,14 +31,4 @@ class EnumTypesTest {
             // assert(a.v1.getRecord().name == "dog")
         }
     }
-
-    @Test
-    fun variantsShadowingTypes() {
-        val value = getAmountOrMax()
-        value.shouldBeInstanceOf<AmountOrMax.Amount>()
-        value.amount.value shouldBe 100UL
-        value.amount()?.value shouldBe 100UL
-        AmountOrMax.Max.amount() shouldBe null
-        AmountOrMax.List(listOf(Amount(1UL))).amounts[0].value shouldBe 1UL
-    }
 }

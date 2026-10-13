@@ -103,43 +103,6 @@ fn get_animal(a: Option<Animal>) -> Animal {
     a.unwrap_or(Animal::Dog)
 }
 
-// Variants named like the types of their fields, which they shadow inside the Kotlin sealed class
-// (mozilla/uniffi-rs#2698).
-#[derive(Clone, uniffi::Record)]
-pub struct Amount {
-    pub value: u64,
-}
-
-#[derive(uniffi::Enum)]
-pub enum AmountOrMax {
-    Amount {
-        amount: Amount,
-    },
-    Max,
-    // Rustine: a variant can shadow `List` too.
-    List {
-        amounts: Vec<Amount>,
-    },
-}
-
-// Rustine: the signatures of methods are qualified too.
-#[uniffi::export]
-impl AmountOrMax {
-    fn amount(&self) -> Option<Amount> {
-        match self {
-            Self::Amount { amount } => Some(amount.clone()),
-            _ => None,
-        }
-    }
-}
-
-#[uniffi::export]
-fn get_amount_or_max() -> AmountOrMax {
-    AmountOrMax::Amount {
-        amount: Amount { value: 100 },
-    }
-}
-
 uniffi::include_scaffolding!("enum-types");
 
 #[cfg(test)]

@@ -1,0 +1,14 @@
+[package]
+name = "rustine-fixture-enum-payload-clash"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "rustine_fixture_enum_payload_clash"
+crate-type = ["cdylib", "staticlib"]
+path = "src/commonMain/rust/lib.rs"
+
+[dependencies]
+thiserror = { workspace = true }
+uniffi = { workspace = true }
