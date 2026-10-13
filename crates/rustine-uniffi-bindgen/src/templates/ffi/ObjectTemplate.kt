@@ -81,6 +81,12 @@
     private val wasDestroyed: kotlinx.atomicfu.AtomicBoolean = kotlinx.atomicfu.atomic(false)
     private val callCounter: kotlinx.atomicfu.AtomicLong = kotlinx.atomicfu.atomic(1L)
 
+    /**
+     * Whether the current object has been destroyed and its reference is gone in the Rust side.
+     */
+    {{ visibility() }}{% call emit_actual %}val uniffiIsDestroyed: Boolean
+        get() = wasDestroyed.value
+
     private val lock = kotlinx.atomicfu.locks.ReentrantLock()
 
     private fun <T> synchronized(block: () -> T): T {

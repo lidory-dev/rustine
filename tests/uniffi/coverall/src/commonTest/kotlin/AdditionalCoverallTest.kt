@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+import coverall.Coveralls
 import coverall.EnumWithBytesAndEq
 import coverall.EnumWithMethods
 import coverall.FlatEnumWithMethods
@@ -47,6 +48,16 @@ class AdditionalCoverallTest {
             shouldThrow<NotConstructibleException> {
                 newNotConstructible2()
             }
+        }
+    }
+
+    @Test
+    fun testUniffiIsDestroyed() {
+        if (uniffiSupported) {
+            val coveralls = Coveralls("test_uniffi_is_destroyed")
+            coveralls.uniffiIsDestroyed shouldBe false
+            coveralls.destroy()
+            coveralls.uniffiIsDestroyed shouldBe true
         }
     }
 

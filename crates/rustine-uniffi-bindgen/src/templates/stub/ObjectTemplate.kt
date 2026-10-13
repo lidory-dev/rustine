@@ -41,6 +41,9 @@
     {%- when None %}
     {%- endmatch %}
 
+    {{ visibility() }}actual val uniffiIsDestroyed: Boolean
+        get() = TODO()
+
     actual override fun destroy() {
         TODO()
     }

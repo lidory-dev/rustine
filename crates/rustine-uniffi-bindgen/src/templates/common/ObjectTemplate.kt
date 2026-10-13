@@ -49,6 +49,11 @@
     {%- when None %}
     {%- endmatch %}
 
+    /**
+     * Whether the current object has been destroyed and its reference is gone in the Rust side.
+     */
+    {{ visibility() }}val uniffiIsDestroyed: Boolean
+
     override fun destroy()
     override fun close()
 
