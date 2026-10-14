@@ -1,0 +1,3 @@
+# The bindgen embeds its templates at compile time. Keep them LF on every platform, so the generated
+# bindings don't depend on the line endings of the checkout.
+crates/rustine-uniffi-bindgen/src/templates/** text eol=lf
