@@ -9,6 +9,13 @@ $PSNativeCommandUseErrorActionPreference = $true;
 
 ./.github/workflows/pr-build-test/environment.ps1;
 
+# The only release builds left are the `cargo install`s of the bindgen and the WASM transformer,
+# which took up to 11 minutes with optimizations. Build them without: the tests don't need fast
+# tools.
+${env:CARGO_PROFILE_RELEASE_OPT_LEVEL} = "0";
+${env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS} = "256";
+${env:CARGO_PROFILE_RELEASE_LTO} = "false";
+
 $testGroups = @($null, "extTypes", "futures");
 
 # The groups run one after another without stopping the Gradle daemon or cleaning in between, so
