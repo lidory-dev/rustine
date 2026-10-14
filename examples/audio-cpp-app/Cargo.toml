@@ -3,6 +3,10 @@ name = "rustine-example-audio-cpp-app"
 version = "0.1.0"
 edition = "2021"
 publish = false
+# Cargo walks all files of a package with a build script to fingerprint it, Gradle's build
+# directory included, which races with Gradle writing there and slows Cargo down. Only list
+# the files Cargo needs.
+include = ["/src", "/build.rs", "/Cargo.toml", "/uniffi.toml"]
 
 [lib]
 name = "rustine_example_audio_cpp_app"

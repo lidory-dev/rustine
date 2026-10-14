@@ -3,6 +3,9 @@ name = "rustine-fixture-dynamic-library-dependencies-the-dependency"
 version = "0.1.0"
 edition = "2021"
 publish = false
+# Only list the files Cargo needs, like the other fixtures (see ../Cargo.toml), so Cargo
+# never scans files that builds write next to it.
+include = ["/lib.rs", "/build.rs", "/Cargo.toml"]
 
 [lib]
 name = "rustine_fixture_dynamic_library_dependencies_the_dependency"
