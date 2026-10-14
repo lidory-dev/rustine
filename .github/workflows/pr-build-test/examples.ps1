@@ -19,67 +19,66 @@ $arguments = $knownTests | % {
     "-Prustine.projects.examples.${_}=$enable"
 };
 
+# Keep the build outputs and the Gradle daemon for the Xcode builds, which run Gradle again.
 try {
-    ./gradlew build `
-        $arguments `
-        "-Prustine.projects.gradleTests=false" `
-        "-Prustine.projects.uniffiTests=false" `
-        "-Prustine.projects.uniffiTests.extTypes=false" `
-        "-Prustine.projects.uniffiTests.futures=false";
-} finally {
-    ./.github/workflows/pr-build-test/copy-test-result.ps1;
-    ./gradlew --stop;
-    ./gradlew clean `
-        $arguments `
-        "-Prustine.projects.gradleTests=false" `
-        "-Prustine.projects.uniffiTests=false" `
-        "-Prustine.projects.uniffiTests.extTypes=false" `
-        "-Prustine.projects.uniffiTests.futures=false";
-    ./.github/workflows/pr-build-test/change-file-owner.ps1;
-}
+    try {
+        ./gradlew build `
+            $arguments `
+            "-Prustine.projects.skipReleaseCargoChecks=true" `
+            "-Prustine.projects.gradleTests=false" `
+            "-Prustine.projects.uniffiTests=false" `
+            "-Prustine.projects.uniffiTests.extTypes=false" `
+            "-Prustine.projects.uniffiTests.futures=false";
+    } finally {
+        ./.github/workflows/pr-build-test/copy-test-result.ps1;
+    }
 
-# Build Xcode projects
-if ($IsMacOS) {
-    ${env:RUSTINE_XCODE_CONFIGURE_OWN_GRADLE_PROJECT} = "true";
-    foreach ($testName in $TestNames) {
-        $xcodeSchemes = switch ($testName) {
-            "app" {
-                @(
-                    @{ Name = "ExamplesApp (iOS)"; Sdk = "iphoneos" },
-                    @{ Name = "ExamplesApp (iOS)"; Sdk = "iphonesimulator" },
-                    @{ Name = "ExamplesApp (macOS)"; Sdk = "macosx" },
-                    @{ Name = "ExamplesApp (tvOS)"; Sdk = "appletvos" },
-                    @{ Name = "ExamplesApp (tvOS)"; Sdk = "appletvsimulator" },
-                    @{ Name = "ExamplesApp (watchOS)"; Sdk = "watchos" },
-                    @{ Name = "ExamplesApp (watchOS)"; Sdk = "watchsimulator" }
-                )
+    # Build Xcode projects
+    if ($IsMacOS) {
+        ${env:RUSTINE_XCODE_CONFIGURE_OWN_GRADLE_PROJECT} = "true";
+        foreach ($testName in $TestNames) {
+            $xcodeSchemes = switch ($testName) {
+                "app" {
+                    @(
+                        @{ Name = "ExamplesApp (iOS)"; Sdk = "iphoneos" },
+                        @{ Name = "ExamplesApp (iOS)"; Sdk = "iphonesimulator" },
+                        @{ Name = "ExamplesApp (macOS)"; Sdk = "macosx" },
+                        @{ Name = "ExamplesApp (tvOS)"; Sdk = "appletvos" },
+                        @{ Name = "ExamplesApp (tvOS)"; Sdk = "appletvsimulator" },
+                        @{ Name = "ExamplesApp (watchOS)"; Sdk = "watchos" },
+                        @{ Name = "ExamplesApp (watchOS)"; Sdk = "watchsimulator" }
+                    )
+                }
+                "audioCppApp" {
+                    @(
+                        @{ Name = "AudioCppApp"; Sdk = "iphoneos" },
+                        @{ Name = "AudioCppApp"; Sdk = "iphonesimulator" }
+                    )
+                }
+                "tokioBlake3App" {
+                    @(
+                        @{ Name = "TokioBlake3App"; Sdk = "iphoneos" },
+                        @{ Name = "TokioBlake3App"; Sdk = "iphonesimulator" }
+                    )
+                }
+                "tokioBoringApp" {
+                    @(
+                        @{ Name = "TokioBoringApp"; Sdk = "iphoneos" },
+                        @{ Name = "TokioBoringApp"; Sdk = "iphonesimulator" }
+                    )
+                }
+                default { @() }
+            };
+            foreach ($xcodeScheme in $xcodeSchemes) {
+                xcodebuild `
+                    -sdk $xcodeScheme.Sdk `
+                    -workspace "examples/Examples.xcworkspace" `
+                    -scheme $xcodeScheme.Name `
+                    CODE_SIGNING_ALLOWED=NO;
             }
-            "audioCppApp" {
-                @(
-                    @{ Name = "AudioCppApp"; Sdk = "iphoneos" },
-                    @{ Name = "AudioCppApp"; Sdk = "iphonesimulator" }
-                )
-            }
-            "tokioBlake3App" {
-                @(
-                    @{ Name = "TokioBlake3App"; Sdk = "iphoneos" },
-                    @{ Name = "TokioBlake3App"; Sdk = "iphonesimulator" }
-                )
-            }
-            "tokioBoringApp" {
-                @(
-                    @{ Name = "TokioBoringApp"; Sdk = "iphoneos" },
-                    @{ Name = "TokioBoringApp"; Sdk = "iphonesimulator" }
-                )
-            }
-            default { @() }
-        };
-        foreach ($xcodeScheme in $xcodeSchemes) {
-            xcodebuild `
-                -sdk $xcodeScheme.Sdk `
-                -workspace "examples/Examples.xcworkspace" `
-                -scheme $xcodeScheme.Name `
-                CODE_SIGNING_ALLOWED=NO;
         }
     }
+} finally {
+    ./gradlew --stop;
+    ./.github/workflows/pr-build-test/change-file-owner.ps1;
 }
