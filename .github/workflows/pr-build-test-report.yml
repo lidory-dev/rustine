@@ -25,17 +25,30 @@ jobs:
           - gradle-plugin-tests
           - gradle-tests
           - uniffi-tests
-          - uniffi-tests-gir
-          - uniffi-tests-oc
           - uniffi-tests-gir-oc
+          - uniffi-tests-im
         environment:
           - windows
           - macos
           - macos-intel
           - linux
+        # Like in pr-build-test.yml, these tests only run on Windows.
+        exclude:
+          - test-name: uniffi-tests-gir-oc
+            environment: macos
+          - test-name: uniffi-tests-gir-oc
+            environment: macos-intel
+          - test-name: uniffi-tests-gir-oc
+            environment: linux
+          - test-name: uniffi-tests-im
+            environment: macos
+          - test-name: uniffi-tests-im
+            environment: macos-intel
+          - test-name: uniffi-tests-im
+            environment: linux
     steps:
       - name: Download test results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         id: download
         continue-on-error: true
         with:
@@ -43,7 +56,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Report test results
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: ${{ steps.download.outcome == 'success' }}
         with:
           check_name: 'JUnit test report (${{ matrix.test-name }}, ${{ matrix.environment }})'

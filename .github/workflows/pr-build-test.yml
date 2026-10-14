@@ -30,6 +30,14 @@ on:
         default: true
         type: boolean
 
+# A new push to a pull request cancels the run of its previous commit. The runs of the other events
+# don't cancel the run in progress, but a group keeps at most one pending run: a newer pending run of
+# the same event and branch replaces the older one. Each event has groups of its own, so a push to
+# main doesn't replace a pending scheduled run, the only one that tests macOS (Intel) and Linux.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   prepare-matrix:
     name: Prepare matrix
@@ -63,13 +71,13 @@ jobs:
             windows = "windows-latest";
             macos = "macos-latest";
             "macos-intel" = "macos-15-intel";
-            linux = "ubuntu-latest-x64-large-4";
+            linux = "ubuntu-latest";
           } | ConvertTo-Json -Compress;
           "platforms=$platformsJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append;
           "runners=$runnersJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append;
   build-and-test:
     name: Build and run unit tests
-    timeout-minutes: 360
+    timeout-minutes: 180
     needs: prepare-matrix
     if: ${{ (needs.prepare-matrix.outputs.platforms || '[]') != '[]' }}
     strategy:
@@ -85,37 +93,179 @@ jobs:
           - gradle-plugin-tests
           - gradle-tests
           - uniffi-tests
-          - uniffi-tests-gir
-          - uniffi-tests-oc
           - uniffi-tests-gir-oc
           - uniffi-tests-im
         platform: ${{ fromJSON(needs.prepare-matrix.outputs.platforms) }}
+        # The bindgen options uniffi-tests-gir-oc and uniffi-tests-im turn on change the generated JVM,
+        # common and native code, which the JVM, mingwX64 and Android host tests of Windows cover.
+        # uniffi-tests runs with the default options on every platform.
+        exclude:
+          - test-name: uniffi-tests-gir-oc
+            platform: macos
+          - test-name: uniffi-tests-gir-oc
+            platform: macos-intel
+          - test-name: uniffi-tests-gir-oc
+            platform: linux
+          - test-name: uniffi-tests-im
+            platform: macos
+          - test-name: uniffi-tests-im
+            platform: macos-intel
+          - test-name: uniffi-tests-im
+            platform: linux
     runs-on: ${{ fromJSON(needs.prepare-matrix.outputs.runners)[matrix.platform] }}
+    env:
+      # Retry the downloads of Cargo and rustup (the RustUpTargetAddTask Gradle task included) more
+      # than they do by default.
+      CARGO_NET_RETRY: 10
+      RUSTUP_MAX_RETRIES: 10
+      # Incremental compilation only speeds up the rebuilds of modified crates, which CI never does,
+      # and writes more to the target directories.
+      CARGO_INCREMENTAL: 0
+      # `brew update` downloads from GitHub and fails from time to time. Install with the formulae of
+      # the runner image instead.
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+      # Only the runs of the default branch (scheduled runs always are) save caches: the ones saved on
+      # other branches can only be used by the same branch, and would evict the ones of the default
+      # branch from the 10 GB of cache storage. Only the platforms of the pull request runs save
+      # them: GitHub removes the entries unused for 7 days, so the ones of the weekly macOS (Intel)
+      # and Linux runs would be gone by their next run, and would evict the others in the meantime.
+      SAVE_CACHES: ${{ (github.event_name == 'schedule' || github.ref_name == github.event.repository.default_branch) && (matrix.platform == 'windows' || matrix.platform == 'macos') }}
     steps:
       - name: Check out the main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Show space left before installing dependencies
         run: df -h
-      - name: Install Zig
-        shell: pwsh
-        run: ./.github/workflows/pr-build-test/dependencies-zig.ps1
-      - name: Install dependencies
-        shell: pwsh
-        run: ./.github/workflows/pr-build-test/dependencies.ps1
+      - name: Free disk space
+        if: ${{ runner.os == 'Linux' }}
+        # The standard Linux runners have much less free disk space than the other ones. Remove
+        # preinstalled SDKs the tests don't use.
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      # The caches are restored before installing dependencies, so on Windows, the restores use the
+      # zstd of the runner image rather than one of the MSYS2 directories dependencies.ps1 adds to
+      # PATH. A cache that fails to restore or save never fails the job.
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: "17"
-      - name: Set up the Android SDK
-        uses: android-actions/setup-android@v3
+      # This step fails if the Gradle wrapper isn't a genuine one. Cache errors only show warnings.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
         with:
-          packages: platform-tools
+          # By default, every job of the default branch saves an entry of its own for every commit,
+          # which would fill the cache storage and evict the other caches. Like ~/.konan, only
+          # uniffi-tests saves the Gradle user home. The restore keys of the action match the entries
+          # of every matrix job of the runner OS, so the other jobs restore the one of uniffi-tests.
+          cache-read-only: ${{ env.SAVE_CACHES != 'true' || matrix.test-name != 'uniffi-tests' }}
+          # cargo-tests doesn't run Gradle.
+          cache-disabled: ${{ matrix.test-name == 'cargo-tests' }}
+          # Don't save the local build cache: on a new runner, a task restored from it skips its side
+          # effects. For example, a cargo build restored from it leaves the build script outputs, where
+          # the Cargo plugin looks for dynamic libraries, missing from the target directory.
+          gradle-home-cache-excludes: |
+            caches/build-cache-1
+      - name: Get the Kotlin/Native cache key
+        id: konan-cache-key
+        if: ${{ matrix.test-name != 'cargo-tests' }}
+        continue-on-error: true
+        shell: pwsh
+        # ~/.konan, which contains the Kotlin/Native distributions, their dependencies and the caches
+        # of their libraries, only depends on the Kotlin version.
+        run: |
+          $kotlinVersionMatch = Select-String -Path "gradle/libs.versions.toml" -Pattern '^kotlin\s*=\s*"([^"]+)"' -CaseSensitive |
+            Select-Object -First 1;
+          $kotlinVersion = if ($null -ne $kotlinVersionMatch) {
+            $kotlinVersionMatch.Matches[0].Groups[1].Value
+          } else {
+            (Get-FileHash "gradle/libs.versions.toml").Hash
+          };
+          "key=konan-${{ runner.os }}-${{ runner.arch }}-$kotlinVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append;
+      - name: Restore Kotlin/Native
+        id: konan-cache
+        if: ${{ steps.konan-cache-key.outputs.key != '' }}
+        uses: actions/cache/restore@v5
+        continue-on-error: true
+        with:
+          path: ~/.konan
+          key: ${{ steps.konan-cache-key.outputs.key }}
+      # Only cache the registry and the Git dependencies. The target directories are many GB large and
+      # would evict the other caches. The key doesn't depend on the Rust toolchains (unlike the one of
+      # Swatinem/rust-cache), so an update of the Rust preinstalled on the runner images doesn't make
+      # every job miss the cache.
+      - name: Restore the Cargo registry
+        id: cargo-registry-cache
+        uses: actions/cache/restore@v5
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-registry-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock') }}
+          # The registry saved for another Cargo.lock still has most of the crates.
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-${{ runner.arch }}-
+      # The setup steps retry their downloads. Their timeouts stop the ones that hang instead.
+      - name: Install Zig
+        timeout-minutes: 20
+        shell: pwsh
+        run: ./.github/workflows/pr-build-test/dependencies-zig.ps1
+      - name: Install dependencies
+        timeout-minutes: 30
+        shell: pwsh
+        run: ./.github/workflows/pr-build-test/dependencies.ps1
+      - name: Download the Rust dependencies
+        timeout-minutes: 30
+        shell: pwsh
+        # Download every crate (of every target) before the build, so a network error fails here and
+        # is retried instead of failing a cargo build in the middle of the Gradle build, and so the
+        # saved Cargo registry has every crate whichever job saves it.
+        run: |
+          . ./.github/workflows/pr-build-test/retry.ps1;
+          Invoke-WithRetry "Downloading the Rust dependencies" {
+            cargo fetch;
+          };
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          # 16.0, the default of v3, preinstalled on the macOS runner images. v4 defaults to 22.0,
+          # which the action would download on every runner.
+          cmdline-tools-version: "12266719"
+          # Installed with retries by the next step.
+          packages: ""
       - name: Install additional required Android SDK packages and configure environment variables
+        timeout-minutes: 30
         shell: pwsh
         run: |
-          sdkmanager --install "build-tools;36.0.0" "cmake;3.22.1" "ndk;28.2.13676358"
+          . ./.github/workflows/pr-build-test/retry.ps1;
+          Invoke-WithRetry "Installing the Android SDK packages" {
+            sdkmanager --install "platform-tools" "build-tools;36.0.0" "cmake;3.22.1" "ndk;28.2.13676358";
+          };
           "ANDROID_HOME=${env:ANDROID_SDK_ROOT}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Configure Gradle for the runner
+        shell: pwsh
+        # The properties of the Gradle user home override the ones of the project's gradle.properties.
+        run: |
+          $gradleUserHome = if ($env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME } else { Join-Path $HOME ".gradle" };
+          New-Item -Type Directory -Path $gradleUserHome -Force | Out-Null;
+          # Compile Kotlin in the Gradle daemon instead of a separate Kotlin daemon, which gets the JVM
+          # arguments (the heap size included) of the Gradle daemon by default.
+          $properties = @("", "kotlin.compiler.execution.strategy=in-process");
+          # The arm64 macOS runners only have 3 CPU cores and 7 GB of memory, which the Gradle daemon
+          # (Kotlin/Native compiles and links in it), Cargo and the browser tests share. The hosted
+          # runner loses communication with GitHub when it runs out of memory.
+          if ($IsMacOS -and [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq "Arm64") {
+            $properties += "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8";
+            $properties += "org.gradle.workers.max=2";
+          } elseif ($IsMacOS) {
+            # The Intel macOS runners have 14 GB of memory. Keep the heap size of the project, with a
+            # larger metaspace. The daemon takes its JVM arguments from gradle.properties files or
+            # system properties, not from ORG_GRADLE_PROJECT_ variables (project properties only).
+            $properties += "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8";
+          }
+          $properties | Out-File -FilePath (Join-Path $gradleUserHome "gradle.properties") -Encoding utf8 -Append;
+          Get-Content (Join-Path $gradleUserHome "gradle.properties");
       - name: Show space left before running the test
         run: df -h
       - name: Run tests
@@ -125,9 +275,31 @@ jobs:
         if: always()
         run: df -h
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ matrix.test-name != 'cargo-tests' && (success() || failure()) }}
         with:
           name: junit-test-results-${{ matrix.test-name }}-${{ matrix.platform }}
           path: "./.github/workflows/pr-build-test/test-results/**/*est/TEST-*.xml"
           retention-days: 1
+      # A cache entry can't be updated, and each job only downloads the dependencies (and builds the
+      # library caches) of the Kotlin/Native targets it uses. Let uniffi-tests, which runs on every
+      # platform and uses Kotlin/Native the longest, save ~/.konan for every job.
+      - name: Save Kotlin/Native
+        if: ${{ matrix.test-name == 'uniffi-tests' && env.SAVE_CACHES == 'true' && steps.konan-cache-key.outputs.key != '' && steps.konan-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        continue-on-error: true
+        with:
+          path: ~/.konan
+          key: ${{ steps.konan-cache-key.outputs.key }}
+      # uniffi-tests saves the Cargo registry as well. Every job downloads the crates of every target
+      # (see "Download the Rust dependencies"), so its registry has the ones of every job.
+      - name: Save the Cargo registry
+        if: ${{ matrix.test-name == 'uniffi-tests' && env.SAVE_CACHES == 'true' && steps.cargo-registry-cache.outputs.cache-primary-key != '' && steps.cargo-registry-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ steps.cargo-registry-cache.outputs.cache-primary-key }}
