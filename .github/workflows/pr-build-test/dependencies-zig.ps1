@@ -3,6 +3,8 @@ using namespace System.Runtime.InteropServices;
 $ErrorActionPreference = "Stop";
 $PSNativeCommandUseErrorActionPreference = $true;
 
+. (Join-Path $PSScriptRoot "retry.ps1");
+
 $osArch = [RuntimeInformation]::OSArchitecture
 
 # Determine the host tag
@@ -60,7 +62,9 @@ New-Item -Type Directory -Path $zigHome -Force | Out-Null;
 try {
     Push-Location $zigHome;
     Write-Host "Downloading Zig...";
-    Invoke-WebRequest -Uri $zigBuildUrl -OutFile "$zigBuild.$zigArchiveFormat";
+    Invoke-WithRetry "Downloading Zig" {
+        Invoke-WebRequest -Uri $zigBuildUrl -OutFile "$zigBuild.$zigArchiveFormat";
+    };
     Write-Host "Unzipping Zig...";
     if ($zigArchiveFormat -eq "tar.xz") {
         tar -xf "$zigBuild.$zigArchiveFormat";
@@ -75,8 +79,10 @@ try {
 $actualZigVersion = & $zigBinary version;
 Write-Host "Zig installed: $actualZigVersion";
 
-# Keep the toolchain set in rust-toolchain.toml for test compilations.
-$rustToolchain = (& "rustup" "show" "active-toolchain").Split(' ')[0];
+# Keep the toolchain set in rust-toolchain.toml for test compilations. rustup may download it here.
+$rustToolchain = Invoke-WithRetry "Getting the active Rust toolchain" {
+    (& "rustup" "show" "active-toolchain").Split(' ')[0]
+};
 
 # Prepare compilation test file
 $compilationTestDirectory = Join-Path $zigHome "test-compilation";
@@ -123,7 +129,9 @@ try {
 
             # Install the Rust target and Compile a Rust program linked using the shell script
             Write-Host "Installting a Rust target $rustTarget...";
-            & "rustup" "target" "add" $rustTarget "--toolchain" $rustToolchain;
+            Invoke-WithRetry "Installing the $rustTarget Rust target" {
+                & "rustup" "target" "add" $rustTarget "--toolchain" $rustToolchain;
+            };
             $rustTargetInstalled = $true;
             Write-Host "Building a test Rust program for $rustTarget linked using Zig...";
             & "rustc" "+$rustToolchain" $compilationTestRustFilePath `
