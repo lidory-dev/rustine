@@ -25,7 +25,7 @@ jobs:
           - gradle-plugins
           - cargo-packages
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Enable Docker CLI experimental features
         run: echo "DOCKER_CLI_EXPERIMENTAL=enabled" >> $GITHUB_ENV
       - name: Docker login to GitHub Container Registry
