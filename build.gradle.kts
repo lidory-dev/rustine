@@ -49,3 +49,14 @@ yarnInstallTaskNames.forEachIndexed { index, taskName ->
         mustRunAfter(tasks.matching { it.name in yarnInstallTaskNames.subList(0, index) })
     }
 }
+
+// The cargoCheck<Target>Release tasks only run `cargo check` with the release profile, and nothing
+// consumes their outputs. CI disables them in the jobs that only test the debug builds, where they
+// would cost minutes per project and target.
+if (propertyIsTrue("rustine.projects.skipReleaseCargoChecks", default = false)) {
+    allprojects {
+        tasks.matching { it.name.startsWith("cargoCheck") && it.name.endsWith("Release") }.configureEach {
+            enabled = false
+        }
+    }
+}

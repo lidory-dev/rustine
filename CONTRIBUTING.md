@@ -70,6 +70,15 @@ following Gradle properties to choose tests and examples to turn on and off.
 These following properties are already in `gradle.properties`. Simply replace
 `=true` to `=false` to turn them off.
 
+When you only need the debug builds of the Rust libraries, such as when you run
+the tests, pass `-Prustine.projects.skipReleaseCargoChecks=true` to disable the
+`cargoCheck<Target>Release` tasks of every project. They only run `cargo check`
+with the release profile, and no other task uses their outputs. The release
+builds themselves still run when a task needs them, such as `assemble`. The
+test scripts of the CI in
+[`.github/workflows/pr-build-test`](.github/workflows/pr-build-test) pass this
+property.
+
 ## Build and use the Gradle plugins locally
 
 ### Option 1 - Dynamically include the plugins in your project
