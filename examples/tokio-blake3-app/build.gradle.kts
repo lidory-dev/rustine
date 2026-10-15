@@ -30,9 +30,10 @@ if (RustineHost.Platform.Windows.isCurrent) {
                 // Like the Rustine plugins, use the latest NDK installed in the SDK directory. The
                 // NDK of Android Kotlin Multiplatform libraries can only be configured using the
                 // `com.android.settings` plugin.
+                val apiLevel = kotlin.android.minSdk ?: 21
                 val envVariables = rustTarget.ndkEnvVariables(
                     sdkRoot = androidComponents.sdkComponents.sdkDirectory.get().asFile,
-                    apiLevel = kotlin.android.minSdk ?: 21,
+                    apiLevel = apiLevel,
                 ).toMutableMap()
                 val envVariableNamesToModify = arrayOf(
                     "ANDROID_HOME",
@@ -53,6 +54,12 @@ if (RustineHost.Platform.Windows.isCurrent) {
                     }
                     envVariables[envVariableNameToModify] = envVariable.path.replace('\\', '/')
                 }
+                // Calling clang directly loses the API level that the wrapper scripts of the NDK pass
+                // in the target, and NDK r30 and later reject Android targets without one. cc-rs adds
+                // the flags of these variables after its own `--target`, so clang uses this one.
+                val clangTarget = "--target=${rustTarget.ndkLlvmTriple}$apiLevel"
+                envVariables["CFLAGS_${rustTarget.rustTriple}"] = clangTarget
+                envVariables["CXXFLAGS_${rustTarget.rustTriple}"] = clangTarget
                 variants {
                     buildTaskProvider.configure {
                         additionalEnvironment.putAll(envVariables)
