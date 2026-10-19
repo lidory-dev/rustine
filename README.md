@@ -6,6 +6,8 @@
 [![GitHub Actions Workflow Status (All Platforms)](https://img.shields.io/github/actions/workflow/status/lidory-dev/rustine/pr-build-test.yml?branch=main&label=tests:%20Windows%20•%20macOS%20•%20Linux)](https://github.com/lidory-dev/rustine/actions/workflows/pr-build-test.yml?query=branch%3Amain)
 [![GitHub Actions Workflow Status (Docker)](https://img.shields.io/github/actions/workflow/status/lidory-dev/rustine/pr-build-test-docker.yml?branch=main&label=tests:%20Docker)](https://github.com/lidory-dev/rustine/actions/workflows/pr-build-test-docker.yml?query=branch%3Amain)
 
+<img align="right" src=".idea/icon.svg" width="20%">
+
 A set of libraries and tools that help you mix Rust and Kotlin
 using [UniFFI](https://github.com/mozilla/uniffi-rs). Rustine is a hard fork
 of [Gobley](https://github.com/gobley/gobley), which was itself forked
