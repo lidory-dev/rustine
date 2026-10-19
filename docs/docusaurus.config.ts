@@ -11,7 +11,7 @@ import packageJson from "./package.json";
 const config: Config = {
   title: "Rustine",
   tagline: "Embed Rust into your Kotlin Multiplatform project",
-  favicon: "img/logo.svg",
+  favicon: "img/favicon.ico",
 
   // Set the production url of your site here
   url: "https://rustine.lidory.dev",
@@ -88,6 +88,7 @@ const config: Config = {
   ],
 
   themeConfig: {
+    image: "img/Rustine-Social-Card.png",
     colorMode: {
       respectPrefersColorScheme: true,
     },
