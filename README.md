@@ -35,8 +35,8 @@ Currently, Android, Kotlin/JVM, and Kotlin/Native are supported. WASM is not sup
 
 ## Getting started
 
-Please read the [tutorial](https://lidory-dev.github.io/rustine/docs/tutorial) and
-the [documentation](https://lidory-dev.github.io/rustine/docs) to get started. If you have trouble setting up your
+Please read the [tutorial](https://rustine.lidory.dev/docs/tutorial) and
+the [documentation](https://rustine.lidory.dev/docs) to get started. If you have trouble setting up your
 project, please create a question
 in [GitHub Discussions](https://github.com/lidory-dev/rustine/discussions). For the contribution guide,
 please refer to [here](./CONTRIBUTING.md).
